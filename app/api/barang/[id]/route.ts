@@ -20,7 +20,7 @@ const barangSchema = z.object({
 // GET - Get single item
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -28,8 +28,9 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const { id } = await params
     const barang = await prisma.barang.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         lokasi: true,
       },
@@ -52,7 +53,7 @@ export async function GET(
 // PUT - Update item
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -60,11 +61,12 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const { id } = await params
     const body = await request.json()
     const validatedData = barangSchema.parse(body)
 
     const barang = await prisma.barang.update({
-      where: { id: params.id },
+      where: { id },
       data: validatedData,
       include: {
         lokasi: true,
@@ -102,7 +104,7 @@ export async function PUT(
 // DELETE - Delete item
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -110,8 +112,9 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const { id } = await params
     const barang = await prisma.barang.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!barang) {
@@ -119,7 +122,7 @@ export async function DELETE(
     }
 
     await prisma.barang.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     // Log activity
@@ -129,7 +132,7 @@ export async function DELETE(
         userName: session.user.name || "",
         action: "DELETE",
         entity: "Barang",
-        entityId: params.id,
+        entityId: id,
         description: `Menghapus barang: ${barang.nama}`,
       },
     })
