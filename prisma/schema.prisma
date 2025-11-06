@@ -1,0 +1,181 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User Management
+model User {
+  id           String   @id @default(cuid())
+  nama         String
+  username     String   @unique
+  email        String?  @unique
+  password     String
+  role         UserRole
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  transaksiKasir TransaksiKasir[]
+  @@map("users")
+}
+
+enum UserRole {
+  KASIR
+  ADMIN
+  GUDANG
+  MANAJER
+}
+
+// Location/Warehouse Management
+model Lokasi {
+  id           String   @id @default(cuid())
+  namaLokasi   String
+  alamat       String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  barang          Barang[]
+  transaksiMasuk  TransaksiMasuk[]
+  transaksiKeluar TransaksiKeluar[]
+  @@map("lokasi")
+}
+
+// Product/Item Management
+model Barang {
+  id           String   @id @default(cuid())
+  nama         String
+  sku          String?  @unique
+  kategori     String
+  stok         Int      @default(0)
+  stokMinimum  Int      @default(10)
+  hargaBeli    Float
+  hargaJual    Float
+  satuan       String   @default("pcs")
+  deskripsi    String?
+  lokasiId     String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  lokasi          Lokasi            @relation(fields: [lokasiId], references: [id], onDelete: Cascade)
+  itemTransaksi   ItemTransaksi[]
+  transaksiMasuk  TransaksiMasuk[]
+  transaksiKeluar TransaksiKeluar[]
+  
+  @@index([kategori])
+  @@index([lokasiId])
+  @@map("barang")
+}
+
+// Cashier Transactions
+model TransaksiKasir {
+  id              String   @id @default(cuid())
+  nomorTransaksi  String   @unique
+  tanggal         DateTime @default(now())
+  subtotal        Float
+  pajak           Float    @default(0)
+  diskon          Float    @default(0)
+  total           Float
+  metodePembayaran String  @default("tunai")
+  jumlahBayar     Float
+  kembalian       Float
+  kasirId         String
+  catatan         String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  kasir         User            @relation(fields: [kasirId], references: [id])
+  itemTransaksi ItemTransaksi[]
+  
+  @@index([tanggal])
+  @@index([kasirId])
+  @@map("transaksi_kasir")
+}
+
+// Transaction Items (Cart Items)
+model ItemTransaksi {
+  id                String   @id @default(cuid())
+  transaksiKasirId  String
+  barangId          String
+  namaBarang        String
+  hargaSatuan       Float
+  qty               Int
+  subtotal          Float
+  createdAt         DateTime @default(now())
+  
+  transaksiKasir TransaksiKasir @relation(fields: [transaksiKasirId], references: [id], onDelete: Cascade)
+  barang         Barang         @relation(fields: [barangId], references: [id])
+  
+  @@index([transaksiKasirId])
+  @@index([barangId])
+  @@map("item_transaksi")
+}
+
+// Incoming Goods Transaction
+model TransaksiMasuk {
+  id              String   @id @default(cuid())
+  nomorTransaksi  String   @unique
+  tanggal         DateTime @default(now())
+  barangId        String
+  qty             Int
+  hargaBeli       Float
+  totalNilai      Float
+  sumber          String
+  lokasiId        String
+  keterangan      String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  barang Barang @relation(fields: [barangId], references: [id])
+  lokasi Lokasi @relation(fields: [lokasiId], references: [id])
+  
+  @@index([tanggal])
+  @@index([barangId])
+  @@index([lokasiId])
+  @@map("transaksi_masuk")
+}
+
+// Outgoing Goods Transaction
+model TransaksiKeluar {
+  id              String   @id @default(cuid())
+  nomorTransaksi  String   @unique
+  tanggal         DateTime @default(now())
+  barangId        String
+  qty             Int
+  hargaBarang     Float
+  totalNilai      Float
+  tujuan          String
+  lokasiId        String
+  keterangan      String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  barang Barang @relation(fields: [barangId], references: [id])
+  lokasi Lokasi @relation(fields: [lokasiId], references: [id])
+  
+  @@index([tanggal])
+  @@index([barangId])
+  @@index([lokasiId])
+  @@map("transaksi_keluar")
+}
+
+// Activity Log for Audit Trail
+model ActivityLog {
+  id          String   @id @default(cuid())
+  userId      String
+  userName    String
+  action      String
+  entity      String
+  entityId    String?
+  description String
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([createdAt])
+  @@map("activity_log")
+}
