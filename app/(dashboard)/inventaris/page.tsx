@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Header } from "@/components/header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -30,7 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Search, Edit, Trash2, Package, AlertTriangle } from "lucide-react"
+import { Plus, Search, Edit, Trash2, Package, AlertTriangle, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
 import { toast } from "sonner"
 
 interface Barang {
@@ -62,10 +62,12 @@ export default function InventarisPage() {
   const [lokasi, setLokasi] = useState<Lokasi[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
-  const [kategoriFilter, setKategoriFilter] = useState("")
-  const [lokasiFilter, setLokasiFilter] = useState("")
+  const [kategoriFilter, setKategoriFilter] = useState("ALL")
+  const [lokasiFilter, setLokasiFilter] = useState("ALL")
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<Barang | null>(null)
+  const [sortColumn, setSortColumn] = useState<string>("nama")
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
   const [formData, setFormData] = useState({
     nama: "",
     sku: "",
@@ -83,13 +85,48 @@ export default function InventarisPage() {
     fetchData()
   }, [search, kategoriFilter, lokasiFilter])
 
+  const sortedBarang = useMemo(() => {
+    return [...barang].sort((a, b) => {
+      let aValue: any = a[sortColumn as keyof Barang]
+      let bValue: any = b[sortColumn as keyof Barang]
+
+      if (sortColumn === "lokasi") {
+        aValue = a.lokasi.namaLokasi
+        bValue = b.lokasi.namaLokasi
+      }
+
+      if (typeof aValue === "string") {
+        aValue = aValue.toLowerCase()
+        bValue = bValue.toLowerCase()
+      }
+
+      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1
+      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1
+      return 0
+    })
+  }, [barang, sortColumn, sortDirection])
+
+  function handleSort(column: string) {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc")
+    } else {
+      setSortColumn(column)
+      setSortDirection("asc")
+    }
+  }
+
+  function getSortIcon(column: string) {
+    if (sortColumn !== column) return <ArrowUpDown className="ml-2 h-4 w-4" />
+    return sortDirection === "asc" ? <ArrowUp className="ml-2 h-4 w-4" /> : <ArrowDown className="ml-2 h-4 w-4" />
+  }
+
   async function fetchData() {
     try {
       setLoading(true)
       const params = new URLSearchParams()
       if (search) params.append("search", search)
-      if (kategoriFilter) params.append("kategori", kategoriFilter)
-      if (lokasiFilter) params.append("lokasiId", lokasiFilter)
+      if (kategoriFilter && kategoriFilter !== "ALL") params.append("kategori", kategoriFilter)
+      if (lokasiFilter && lokasiFilter !== "ALL") params.append("lokasiId", lokasiFilter)
 
       const [barangRes, lokasiRes] = await Promise.all([
         fetch(`/api/barang?${params}`),
@@ -215,7 +252,7 @@ export default function InventarisPage() {
                   <SelectValue placeholder="Semua Kategori" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Semua Kategori</SelectItem>
+                  <SelectItem value="ALL">Semua Kategori</SelectItem>
                   {kategoriList.map((kat) => (
                     <SelectItem key={kat} value={kat}>
                       {kat}
@@ -228,7 +265,7 @@ export default function InventarisPage() {
                   <SelectValue placeholder="Semua Lokasi" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Semua Lokasi</SelectItem>
+                  <SelectItem value="ALL">Semua Lokasi</SelectItem>
                   {lokasi.map((lok) => (
                     <SelectItem key={lok.id} value={lok.id}>
                       {lok.namaLokasi}
@@ -244,6 +281,64 @@ export default function InventarisPage() {
           </CardContent>
         </Card>
 
+        {/* Statistics */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Barang</CardTitle>
+              <Package className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{barang.length}</div>
+              <p className="text-xs text-muted-foreground">
+                Item dalam inventaris
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Nilai</CardTitle>
+              <Package className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                Rp {barang.reduce((sum, item) => sum + (item.stok * item.hargaBeli), 0).toLocaleString("id-ID")}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Berdasarkan harga beli
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Stok Rendah</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {barang.filter(item => item.stok <= item.stokMinimum).length}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Perlu restock
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Kategori</CardTitle>
+              <Package className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {new Set(barang.map(item => item.kategori)).size}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Kategori berbeda
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Table */}
         <Card>
           <CardHeader>
@@ -257,13 +352,48 @@ export default function InventarisPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Nama</TableHead>
-                    <TableHead>SKU</TableHead>
-                    <TableHead>Kategori</TableHead>
-                    <TableHead>Stok</TableHead>
-                    <TableHead>Harga Beli</TableHead>
-                    <TableHead>Harga Jual</TableHead>
-                    <TableHead>Lokasi</TableHead>
+                    <TableHead className="cursor-pointer select-none" onClick={() => handleSort("nama")}>
+                      <div className="flex items-center">
+                        Nama
+                        {getSortIcon("nama")}
+                      </div>
+                    </TableHead>
+                    <TableHead className="cursor-pointer select-none" onClick={() => handleSort("sku")}>
+                      <div className="flex items-center">
+                        SKU
+                        {getSortIcon("sku")}
+                      </div>
+                    </TableHead>
+                    <TableHead className="cursor-pointer select-none" onClick={() => handleSort("kategori")}>
+                      <div className="flex items-center">
+                        Kategori
+                        {getSortIcon("kategori")}
+                      </div>
+                    </TableHead>
+                    <TableHead className="cursor-pointer select-none" onClick={() => handleSort("stok")}>
+                      <div className="flex items-center">
+                        Stok
+                        {getSortIcon("stok")}
+                      </div>
+                    </TableHead>
+                    <TableHead className="cursor-pointer select-none" onClick={() => handleSort("hargaBeli")}>
+                      <div className="flex items-center">
+                        Harga Beli
+                        {getSortIcon("hargaBeli")}
+                      </div>
+                    </TableHead>
+                    <TableHead className="cursor-pointer select-none" onClick={() => handleSort("hargaJual")}>
+                      <div className="flex items-center">
+                        Harga Jual
+                        {getSortIcon("hargaJual")}
+                      </div>
+                    </TableHead>
+                    <TableHead className="cursor-pointer select-none" onClick={() => handleSort("lokasi")}>
+                      <div className="flex items-center">
+                        Lokasi
+                        {getSortIcon("lokasi")}
+                      </div>
+                    </TableHead>
                     <TableHead className="text-right">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -274,14 +404,14 @@ export default function InventarisPage() {
                         Memuat data...
                       </TableCell>
                     </TableRow>
-                  ) : barang.length === 0 ? (
+                  ) : sortedBarang.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={8} className="text-center">
                         Tidak ada data
                       </TableCell>
                     </TableRow>
                   ) : (
-                    barang.map((item) => (
+                    sortedBarang.map((item) => (
                       <TableRow key={item.id}>
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">
