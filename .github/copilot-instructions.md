@@ -3,50 +3,71 @@
 This file gives focused, repository-specific guidance so an AI coding agent can be productive quickly.
 
 1. Big picture
-   - Next.js 15 app-directory project (TypeScript + React 19). Server- and client-components are used.
-   - Authentication: NextAuth (credentials provider). Session checks happen via getServerSession in server code and via `next-auth` middleware (see `middleware.ts`).
-   - Database: PostgreSQL with Prisma. DB schema in `prisma/schema.prisma`, client helper at `lib/prisma.ts`.
-   - RBAC: role/permission table + helper at `lib/permissions.ts`. UI hides/show items using `hasPermission` (see `components/app-sidebar.tsx`).
-   - Transaction flows: APIs create transactions using `prisma.$transaction` and a centralized id generator in `lib/transaction-number.ts` (used by `app/api/transaksi-*/*`).
+   - Next.js 15 app-directory project (TypeScript + React 19). Mix of server and client components.
+   - Authentication: NextAuth (credentials provider). Session checks via `getServerSession` in server code and `next-auth` middleware (see `middleware.ts`).
+   - Database: PostgreSQL with Prisma. Schema in `prisma/schema.prisma`, client at `lib/prisma.ts`.
+   - RBAC: role/permission helper at `lib/permissions.ts`. UI uses `hasPermission` (see `components/app-sidebar.tsx`).
+   - Transaction flows: APIs use `prisma.$transaction` and centralized ID generator `lib/transaction-number.ts` (see `app/api/transaksi-*/*`).
 
 2. Where to change authentication/authorization
-   - Login/provider config: `lib/auth-options.ts` and `app/api/auth/[...nextauth]/route.ts`.
-   - Global route protection is delegated to `middleware.ts` which re-exports `next-auth/middleware`.
-   - Permission rules: edit `lib/permissions.ts` (trusted single source for role capabilities).
+   - Login/provider: `lib/auth-options.ts` and `app/api/auth/[...nextauth]/route.ts`.
+   - Route protection: `middleware.ts` (re-exports `next-auth/middleware`).
+   - Permission rules: `lib/permissions.ts` (single source of truth for role capabilities).
 
-3. Server data patterns and API conventions
-   - Server components and API routes call `getServerSession` + `authOptions` and then use `prisma` directly. See `app/(dashboard)/*/page.tsx` and `app/api/**/route.ts` for examples.
-   - Use `prisma.$transaction` for multi-step DB changes; activity logs are written via `prisma.activityLog.create(...)` in many API routes.
-   - Transaction IDs must come from `lib/transaction-number.ts` (do not hardcode formats).
+3. Server vs Client component patterns
+   - **Server components**: Used for data fetching, authentication checks. Call `getServerSession` + `prisma` directly. Example: `app/(dashboard)/dashboard/page.tsx` (wrapper only).
+   - **Client components**: Mark with `"use client"` for interactivity, state, filters. Fetch data via API routes. Examples: `app/(dashboard)/dashboard/dashboard-client.tsx`, `app/(dashboard)/inventaris/page.tsx`, `app/(dashboard)/kasir/page.tsx`.
+   - **Pattern**: Server page → client component for UX. Dashboard uses server wrapper + client for filters; inventaris/kasir/transaksi are fully client-side.
 
-4. Developer workflows & commands (exact)
+4. API route conventions
+   - All API routes call `getServerSession` + `authOptions`, then use `prisma` directly.
+   - Use `prisma.$transaction` for multi-step changes; write activity logs via `prisma.activityLog.create(...)`.
+   - Transaction IDs from `lib/transaction-number.ts` (never hardcode formats).
+   - Date filtering: Support `startDate`/`endDate` params for range queries (see `app/api/dashboard/route.ts`).
+   - Example APIs: `app/api/barang/route.ts`, `app/api/transaksi-kasir/route.ts`, `app/api/dashboard/route.ts`.
+
+5. Developer workflows & commands
    - Install: `npm install`
-   - Dev server: `npm run dev` (Next dev)
-   - DB: `npm run db:generate` (Prisma client), `npm run db:push`, `npm run db:seed` (uses `tsx prisma/seed.ts`)
-   - Prisma UI: `npm run db:studio`
-   - Build: `npm run build`; Start production: `npm start`
+   - Dev: `npm run dev` (Next.js dev server)
+   - DB: `npm run db:generate` (Prisma client), `npm run db:push` (push schema), `npm run db:seed` (seed data)
+   - Prisma Studio: `npm run db:studio`
+   - Build: `npm run build`; Production: `npm start`
    - Lint: `npm run lint`
-   - Important env keys: `DATABASE_URL`, `NEXTAUTH_URL`, `NEXTAUTH_SECRET` (edit `.env` from `.env.example`).
+   - **Docker**: PostgreSQL runs in Docker (`docker start finara-postgres`). Credentials in `.env`: user=finara, password=finara123, db=finara_db.
+   - Env vars: `DATABASE_URL`, `NEXTAUTH_URL`, `NEXTAUTH_SECRET` (see `.env`).
 
-5. Project-specific conventions to follow
-   - Route grouping: protected dashboard pages live under `app/(dashboard)` — follow this when adding new protected pages.
-   - API routes are organised under `app/api/<kebab-case>`; mirror that structure when adding endpoints.
-   - Server-side checks: prefer `getServerSession` + permission checks server-side. Client UI may call `hasPermission` to hide controls, but server must validate.
-   - Use `lib/*` helpers for cross-cutting logic (auth-options, prisma client, permissions, transaction-number).
-   - UI components use shadcn/ui primitives located under `components/ui/` — prefer reusing them.
+6. Project-specific conventions
+   - Protected routes under `app/(dashboard)` — follow this structure for new pages.
+   - API routes under `app/api/<kebab-case>`.
+   - Always validate permissions server-side; client UI may hide controls with `hasPermission` but server must enforce.
+   - Use `lib/*` helpers (auth-options, prisma, permissions, transaction-number).
+   - shadcn/ui components in `components/ui/` — reuse existing primitives.
+   - **Select components**: Use value="ALL" for "show all" filters, never empty string (see `app/(dashboard)/inventaris/page.tsx`).
+   - **Hydration**: Root layout has `suppressHydrationWarning` to prevent browser extension conflicts.
 
-6. Integration & testing notes for agents
-   - Seeding: database seed creates default users (see `prisma/seed.ts`) — run after pushing schema.
-   - To test auth-protected APIs locally, run `npm run dev` and ensure `NEXTAUTH_URL` points to `http://localhost:3000` and `NEXTAUTH_SECRET` is set.
-   - There are no automated tests present; small manual smoke checks: visit `/login`, sign in with seeded credentials, exercise API routes via the app UI or curl with cookies.
+7. Prisma schema gotchas
+   - Relation field names matter: `TransaksiKasir.itemTransaksi` (not `items`), `ItemTransaksi.qty` (not `jumlah`), `ItemTransaksi.hargaSatuan` (not `harga`).
+   - Always check `prisma/schema.prisma` for exact field names before writing queries.
+   - Use `prisma.barang.fields.stokMinimum` for dynamic field comparisons.
 
-7. Files to inspect first when changing behavior
-   - `lib/auth-options.ts` — NextAuth options & credentials provider
-   - `middleware.ts` — high-level route protection
-   - `lib/permissions.ts` — RBAC rules
-   - `lib/prisma.ts` & `prisma/schema.prisma` — DB client and schema
-   - `lib/transaction-number.ts` — transaction id formats
-   - `app/api/**/route.ts` — canonical API examples (transaksi-kasir, transaksi-masuk, transaksi-keluar, barang, lokasi)
-   - `components/providers.tsx`, `components/app-sidebar.tsx`, `components/header.tsx` — session and UI hooks
+8. Dashboard patterns (client-side with server API)
+   - Server page at `app/(dashboard)/dashboard/page.tsx` fetches session, renders client component.
+   - Client component at `dashboard-client.tsx` handles filters, API calls to `/api/dashboard`.
+   - Filter periods: today, yesterday, week, month, year, custom range (startDate/endDate).
+   - API at `app/api/dashboard/route.ts` supports date range queries, aggregations, top-selling items.
 
-If anything here is unclear or you'd like the instructions to emphasize more (tests, CI, or scaffolding new modules), tell me which area to expand and I'll iterate. Thank you — ready to update further based on feedback.
+9. Common workflows
+   - **Adding feature to dashboard**: Update API route (`app/api/dashboard/route.ts`) first, then client component.
+   - **New CRUD module**: Create client page under `app/(dashboard)/`, API routes under `app/api/`, follow kasir/inventaris patterns.
+   - **Filter with Select**: Use "ALL" value for all items, check `!== "ALL"` before API param (see inventaris filters).
+
+10. Files to inspect first
+   - `lib/auth-options.ts`, `middleware.ts`, `lib/permissions.ts` — auth & RBAC
+   - `lib/prisma.ts`, `prisma/schema.prisma` — database client & schema
+   - `lib/transaction-number.ts` — transaction ID formats
+   - `app/api/dashboard/route.ts` — date filtering, aggregations, groupBy patterns
+   - `app/(dashboard)/dashboard/dashboard-client.tsx` — client component with filters
+   - `app/(dashboard)/inventaris/page.tsx`, `app/(dashboard)/kasir/page.tsx` — client CRUD patterns
+   - `components/providers.tsx`, `components/app-sidebar.tsx` — session & UI
+
+Ready to assist! Let me know if you need clarification on server/client patterns, Prisma queries, or dashboard filtering.

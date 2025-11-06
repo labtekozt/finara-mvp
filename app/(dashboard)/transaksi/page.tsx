@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Header } from "@/components/header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { Plus, TrendingUp, TrendingDown, Calendar } from "lucide-react"
+import { Plus, TrendingUp, TrendingDown, Calendar, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
 import { toast } from "sonner"
 import { format } from "date-fns"
 
@@ -81,6 +81,9 @@ export default function TransaksiPage() {
   const [transaksiKeluar, setTransaksiKeluar] = useState<TransaksiKeluar[]>([])
   const [loading, setLoading] = useState(false)
   const [dialogType, setDialogType] = useState<"masuk" | "keluar" | null>(null)
+  const [sortColumn, setSortColumn] = useState<string>("tanggal")
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
+  const [dateFilter, setDateFilter] = useState("")
   
   const [formMasuk, setFormMasuk] = useState({
     barangId: "",
@@ -102,6 +105,52 @@ export default function TransaksiPage() {
   useEffect(() => {
     fetchData()
   }, [])
+
+  const sortedTransaksiKeluar = useMemo(() => {
+    let filtered = [...transaksiKeluar]
+    
+    if (dateFilter) {
+      const filterDate = new Date(dateFilter).toDateString()
+      filtered = filtered.filter(tr => new Date(tr.tanggal).toDateString() === filterDate)
+    }
+
+    return filtered.sort((a, b) => {
+      let aValue: any = a[sortColumn as keyof TransaksiKeluar]
+      let bValue: any = b[sortColumn as keyof TransaksiKeluar]
+
+      if (sortColumn === "tanggal") {
+        aValue = new Date(aValue).getTime()
+        bValue = new Date(bValue).getTime()
+      } else if (sortColumn === "barang") {
+        aValue = a.barang.nama.toLowerCase()
+        bValue = b.barang.nama.toLowerCase()
+      } else if (sortColumn === "lokasi") {
+        aValue = a.lokasi.namaLokasi.toLowerCase()
+        bValue = b.lokasi.namaLokasi.toLowerCase()
+      } else if (typeof aValue === "string") {
+        aValue = aValue.toLowerCase()
+        bValue = bValue.toLowerCase()
+      }
+
+      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1
+      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1
+      return 0
+    })
+  }, [transaksiKeluar, sortColumn, sortDirection, dateFilter])
+
+  function handleSort(column: string) {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc")
+    } else {
+      setSortColumn(column)
+      setSortDirection("desc")
+    }
+  }
+
+  function getSortIcon(column: string) {
+    if (sortColumn !== column) return <ArrowUpDown className="ml-2 h-4 w-4" />
+    return sortDirection === "asc" ? <ArrowUp className="ml-2 h-4 w-4" /> : <ArrowDown className="ml-2 h-4 w-4" />
+  }
 
   async function fetchData() {
     try {
@@ -314,6 +363,93 @@ export default function TransaksiPage() {
 
           {/* Barang Keluar Tab */}
           <TabsContent value="keluar">
+            {/* Filters and Stats */}
+            <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Filter & Analisis</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="date-filter">Filter Tanggal</Label>
+                      <Input
+                        id="date-filter"
+                        type="date"
+                        value={dateFilter}
+                        onChange={(e) => setDateFilter(e.target.value)}
+                      />
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setDateFilter("")}
+                      disabled={!dateFilter}
+                    >
+                      Reset Filter
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Statistics */}
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Transaksi</CardTitle>
+                    <TrendingDown className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{sortedTransaksiKeluar.length}</div>
+                    <p className="text-xs text-muted-foreground">
+                      Barang keluar
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Qty</CardTitle>
+                    <TrendingDown className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {sortedTransaksiKeluar.reduce((sum, tr) => sum + tr.qty, 0)}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Unit keluar
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Nilai</CardTitle>
+                    <TrendingDown className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      Rp {sortedTransaksiKeluar.reduce((sum, tr) => sum + tr.totalNilai, 0).toLocaleString("id-ID")}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Nilai barang keluar
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Rata-rata</CardTitle>
+                    <TrendingDown className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      Rp {sortedTransaksiKeluar.length > 0 ? (sortedTransaksiKeluar.reduce((sum, tr) => sum + tr.totalNilai, 0) / sortedTransaksiKeluar.length).toLocaleString("id-ID") : "0"}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Per transaksi
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+
             <Card>
               <CardHeader>
                 <CardTitle>Histori Barang Keluar</CardTitle>
@@ -324,25 +460,65 @@ export default function TransaksiPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>No. Transaksi</TableHead>
-                        <TableHead>Tanggal</TableHead>
-                        <TableHead>Barang</TableHead>
-                        <TableHead>Qty</TableHead>
-                        <TableHead>Harga</TableHead>
-                        <TableHead>Total Nilai</TableHead>
-                        <TableHead>Tujuan</TableHead>
-                        <TableHead>Lokasi</TableHead>
+                        <TableHead className="cursor-pointer select-none" onClick={() => handleSort("nomorTransaksi")}>
+                          <div className="flex items-center">
+                            No. Transaksi
+                            {getSortIcon("nomorTransaksi")}
+                          </div>
+                        </TableHead>
+                        <TableHead className="cursor-pointer select-none" onClick={() => handleSort("tanggal")}>
+                          <div className="flex items-center">
+                            Tanggal
+                            {getSortIcon("tanggal")}
+                          </div>
+                        </TableHead>
+                        <TableHead className="cursor-pointer select-none" onClick={() => handleSort("barang")}>
+                          <div className="flex items-center">
+                            Barang
+                            {getSortIcon("barang")}
+                          </div>
+                        </TableHead>
+                        <TableHead className="cursor-pointer select-none" onClick={() => handleSort("qty")}>
+                          <div className="flex items-center">
+                            Qty
+                            {getSortIcon("qty")}
+                          </div>
+                        </TableHead>
+                        <TableHead className="cursor-pointer select-none" onClick={() => handleSort("hargaBarang")}>
+                          <div className="flex items-center">
+                            Harga
+                            {getSortIcon("hargaBarang")}
+                          </div>
+                        </TableHead>
+                        <TableHead className="cursor-pointer select-none" onClick={() => handleSort("totalNilai")}>
+                          <div className="flex items-center">
+                            Total Nilai
+                            {getSortIcon("totalNilai")}
+                          </div>
+                        </TableHead>
+                        <TableHead className="cursor-pointer select-none" onClick={() => handleSort("tujuan")}>
+                          <div className="flex items-center">
+                            Tujuan
+                            {getSortIcon("tujuan")}
+                          </div>
+                        </TableHead>
+                        <TableHead className="cursor-pointer select-none" onClick={() => handleSort("lokasi")}>
+                          <div className="flex items-center">
+                            Lokasi
+                            {getSortIcon("lokasi")}
+                          </div>
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {transaksiKeluar.length === 0 ? (
+                      {sortedTransaksiKeluar.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={8} className="text-center">
-                            Belum ada transaksi
+                            {dateFilter ? "Tidak ada transaksi pada tanggal tersebut" : "Belum ada transaksi"}
                           </TableCell>
                         </TableRow>
                       ) : (
-                        transaksiKeluar.map((tr) => (
+                        sortedTransaksiKeluar.map((tr) => (
                           <TableRow key={tr.id}>
                             <TableCell className="font-medium">
                               {tr.nomorTransaksi}
