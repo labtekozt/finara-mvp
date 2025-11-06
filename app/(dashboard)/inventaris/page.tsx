@@ -62,8 +62,8 @@ export default function InventarisPage() {
   const [lokasi, setLokasi] = useState<Lokasi[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
-  const [kategoriFilter, setKategoriFilter] = useState("")
-  const [lokasiFilter, setLokasiFilter] = useState("")
+  const [kategoriFilter, setKategoriFilter] = useState("ALL")
+  const [lokasiFilter, setLokasiFilter] = useState("ALL")
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<Barang | null>(null)
   const [formData, setFormData] = useState({
@@ -88,8 +88,8 @@ export default function InventarisPage() {
       setLoading(true)
       const params = new URLSearchParams()
       if (search) params.append("search", search)
-      if (kategoriFilter) params.append("kategori", kategoriFilter)
-      if (lokasiFilter) params.append("lokasiId", lokasiFilter)
+      if (kategoriFilter && kategoriFilter !== "ALL") params.append("kategori", kategoriFilter)
+      if (lokasiFilter && lokasiFilter !== "ALL") params.append("lokasiId", lokasiFilter)
 
       const [barangRes, lokasiRes] = await Promise.all([
         fetch(`/api/barang?${params}`),
@@ -215,7 +215,7 @@ export default function InventarisPage() {
                   <SelectValue placeholder="Semua Kategori" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Semua Kategori</SelectItem>
+                  <SelectItem value="ALL">Semua Kategori</SelectItem>
                   {kategoriList.map((kat) => (
                     <SelectItem key={kat} value={kat}>
                       {kat}
@@ -228,7 +228,7 @@ export default function InventarisPage() {
                   <SelectValue placeholder="Semua Lokasi" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Semua Lokasi</SelectItem>
+                  <SelectItem value="ALL">Semua Lokasi</SelectItem>
                   {lokasi.map((lok) => (
                     <SelectItem key={lok.id} value={lok.id}>
                       {lok.namaLokasi}
