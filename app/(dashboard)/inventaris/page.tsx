@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Plus,Minus, Search, Edit, Trash2, Package, AlertTriangle, ArrowUpDown, ArrowUp, ArrowDown, TrendingDown, History } from "lucide-react"
+import { Plus, Minus, Search, Edit, Trash2, Package, AlertTriangle, ArrowUpDown, ArrowUp, ArrowDown, TrendingDown, History } from "lucide-react"
 import { toast } from "sonner"
 import { format } from "date-fns"
 
@@ -118,16 +118,16 @@ export default function InventarisPage() {
   const [sortDirectionKeluar, setSortDirectionKeluar] = useState<"asc" | "desc">("desc")
   const [sortColumnKasir, setSortColumnKasir] = useState<string>("tanggal")
   const [sortDirectionKasir, setSortDirectionKasir] = useState<"asc" | "desc">("desc")
-  
+
   // Pagination states
   const [currentPageBarang, setCurrentPageBarang] = useState(1)
   const [currentPageKeluar, setCurrentPageKeluar] = useState(1)
   const [currentPageKasir, setCurrentPageKasir] = useState(1)
   const itemsPerPage = 10
-  
+
   // Mode: "new" untuk barang baru custom, "existing" untuk update stok barang existing
   const [tambahMode, setTambahMode] = useState<"new" | "existing">("existing")
-  
+
   const [formData, setFormData] = useState({
     nama: "",
     sku: "",
@@ -179,12 +179,12 @@ export default function InventarisPage() {
 
   const sortedBarang = useMemo(() => {
     let filtered = [...barang]
-    
+
     // Filter stok rendah jika diaktifkan
     if (stokRendahFilter) {
       filtered = filtered.filter(item => item.stok <= item.stokMinimum)
     }
-    
+
     return filtered.sort((a, b) => {
       let aValue: any = a[sortColumn as keyof Barang]
       let bValue: any = b[sortColumn as keyof Barang]
@@ -207,19 +207,19 @@ export default function InventarisPage() {
 
   const sortedTransaksiKeluar = useMemo(() => {
     let filtered = [...transaksiKeluar]
-    
+
     // Filter berdasarkan range tanggal
     if (startDateKeluar || endDateKeluar) {
       filtered = filtered.filter(tr => {
         const transaksiDate = new Date(tr.tanggal)
         const start = startDateKeluar ? new Date(startDateKeluar) : null
         const end = endDateKeluar ? new Date(endDateKeluar) : null
-        
+
         // Set time untuk perbandingan yang akurat
         if (start) start.setHours(0, 0, 0, 0)
         if (end) end.setHours(23, 59, 59, 999)
         transaksiDate.setHours(0, 0, 0, 0)
-        
+
         if (start && end) {
           return transaksiDate >= start && transaksiDate <= end
         } else if (start) {
@@ -257,19 +257,19 @@ export default function InventarisPage() {
 
   const sortedTransaksiKasir = useMemo(() => {
     let filtered = [...transaksiKasir]
-    
+
     // Filter berdasarkan range tanggal
     if (startDateKasir || endDateKasir) {
       filtered = filtered.filter(tr => {
         const transaksiDate = new Date(tr.tanggal)
         const start = startDateKasir ? new Date(startDateKasir) : null
         const end = endDateKasir ? new Date(endDateKasir) : null
-        
+
         // Set time untuk perbandingan yang akurat
         if (start) start.setHours(0, 0, 0, 0)
         if (end) end.setHours(23, 59, 59, 999)
         transaksiDate.setHours(0, 0, 0, 0)
-        
+
         if (start && end) {
           return transaksiDate >= start && transaksiDate <= end
         } else if (start) {
@@ -329,7 +329,7 @@ export default function InventarisPage() {
     const allItems = sortedTransaksiKasir.flatMap((tr) =>
       tr.itemTransaksi.map((item) => ({ tr, item }))
     )
-    
+
     const startIndex = (currentPageKasir - 1) * itemsPerPage
     const endIndex = startIndex + itemsPerPage
     return allItems.slice(startIndex, endIndex)
@@ -646,14 +646,14 @@ export default function InventarisPage() {
   const kategoriList = Array.from(new Set(barang.map(item => item.kategori)))
 
   // Komponen Pagination
-  const Pagination = ({ 
-    currentPage, 
-    totalPages, 
-    onPageChange 
-  }: { 
+  const Pagination = ({
+    currentPage,
+    totalPages,
+    onPageChange
+  }: {
     currentPage: number
     totalPages: number
-    onPageChange: (page: number) => void 
+    onPageChange: (page: number) => void
   }) => {
     const pages = []
     const maxPagesToShow = 5
@@ -733,160 +733,161 @@ export default function InventarisPage() {
     <div className="flex flex-col h-full">
       <Header title="Inventaris" description="Kelola data barang dan stok" />
 
-      <div className="flex-1 p-6 space-y-6">
-        {/* Filters */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Filter & Pencarian</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-4">
-              <div className="flex-1 min-w-[200px]">
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Cari nama atau SKU..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-              </div>
-              <Select value={kategoriFilter} onValueChange={setKategoriFilter}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Semua Kategori" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">Semua Kategori</SelectItem>
-                  {kategoriList.map((kat) => (
-                    <SelectItem key={kat} value={kat}>
-                      {kat}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={lokasiFilter} onValueChange={setLokasiFilter}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Semua Lokasi" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">Semua Lokasi</SelectItem>
-                  {lokasi.map((lok) => (
-                    <SelectItem key={lok.id} value={lok.id}>
-                      {lok.namaLokasi}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                variant={stokRendahFilter ? "default" : "outline"}
-                onClick={() => setStokRendahFilter(!stokRendahFilter)}
-                className="w-[200px]"
-              >
-                <AlertTriangle className="mr-2 h-4 w-4" />
-                {stokRendahFilter ? "Stok Rendah Aktif" : "Tampilkan Stok Rendah"}
-              </Button>
-              <div className="flex gap-2">
-                <Button onClick={openTambahDialog}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Tambah Barang
-                </Button>
-                <Button onClick={() => setDialogKeluarOpen(true)} variant="outline">
-                  <Minus className="mr-2 h-4 w-4" />
-                  Barang Keluar
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Statistics */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Barang</CardTitle>
-              <Package className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{barang.length}</div>
-              <p className="text-xs text-muted-foreground">
-                Item dalam inventaris
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Nilai</CardTitle>
-              <Package className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                Rp {barang.reduce((sum, item) => sum + (item.stok * item.hargaBeli), 0).toLocaleString("id-ID")}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Berdasarkan harga beli
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Stok Rendah</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {barang.filter(item => item.stok <= item.stokMinimum).length}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Perlu restock
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Kategori</CardTitle>
-              <Package className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {new Set(barang.map(item => item.kategori)).size}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Kategori berbeda
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="flex-1 p-3 space-y-6">
 
         {/* Tabs: Daftar Barang & History Keluar */}
         <Tabs defaultValue="barang" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="barang">
-              <Package className="mr-2 h-4 w-4" />
-              Daftar Barang ({barang.length})
-            </TabsTrigger>
-            <TabsTrigger value="history">
-              <History className="mr-2 h-4 w-4" />
-              History Barang Keluar ({transaksiKeluar.length})
-            </TabsTrigger>
-            <TabsTrigger value="kasir">
-              <TrendingDown className="mr-2 h-4 w-4" />
-              History Penjualan Barang ({transaksiKasir.length})
-            </TabsTrigger>
-          </TabsList>
-
+          <div className="flex justify-between items-center">
+            <TabsList>
+              <TabsTrigger value="barang">
+                <Package className="mr-2 h-4 w-4" />
+                Daftar Barang ({barang.length})
+              </TabsTrigger>
+              <TabsTrigger value="history">
+                <History className="mr-2 h-4 w-4" />
+                History Barang Keluar ({transaksiKeluar.length})
+              </TabsTrigger>
+              <TabsTrigger value="kasir">
+                <TrendingDown className="mr-2 h-4 w-4" />
+                History Penjualan Barang ({transaksiKasir.length})
+              </TabsTrigger>
+            </TabsList>
+          </div>
           {/* Tab Daftar Barang */}
           <TabsContent value="barang">
             <Card>
               <CardHeader>
                 <CardTitle>Daftar Barang</CardTitle>
                 <CardDescription>
-                  {stokRendahFilter 
+                  {stokRendahFilter
                     ? `Menampilkan ${sortedBarang.length} barang dengan stok rendah dari total ${barang.length} barang`
                     : `Total: ${sortedBarang.length} barang`}
                 </CardDescription>
               </CardHeader>
               <CardContent>
+                <Button onClick={openTambahDialog} className="my-3">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Tambah Barang
+                </Button>
+                {/* Statistics */}
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                      <CardTitle className="text-sm font-medium">Total Barang</CardTitle>
+                      <Package className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{barang.length}</div>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        Item dalam inventaris
+                      </p>
+                      {/* <Button
+                        variant="default"
+                        size="sm"
+                      >
+                        Lihat Semua Barang
+                      </Button> */}
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                      <CardTitle className="text-sm font-medium">Total Nilai</CardTitle>
+                      <Package className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        Rp {barang.reduce((sum, item) => sum + (item.stok * item.hargaBeli), 0).toLocaleString("id-ID")}
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        Berdasarkan harga beli
+                      </p>
+                      {/* <Button
+                        variant="default"
+                        size="sm"
+                      >
+                        Lihat Semua Barang
+                      </Button> */}
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                      <CardTitle className="text-sm font-medium">Stok Rendah</CardTitle>
+                      <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        {barang.filter(item => item.stok <= item.stokMinimum).length}
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        Perlu restock
+                      </p>
+                      <Button
+                        variant={stokRendahFilter ? "default" : "outline"}
+                        onClick={() => setStokRendahFilter(!stokRendahFilter)}
+                        className="w-full"
+                      >
+                        <AlertTriangle className="mr-2 h-4 w-4" />
+                        {stokRendahFilter ? "Stok Rendah Aktif" : "Tampilkan Stok Rendah"}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Kategori</CardTitle>
+                      <Package className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        {new Set(barang.map(item => item.kategori)).size}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Kategori berbeda
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Filters */}
+                <div className="flex flex-wrap gap-4 my-5">
+                  <div className="flex-1 min-w-[200px]">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Cari nama atau SKU..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="pl-9"
+                      />
+                    </div>
+                  </div>
+                  <Select value={kategoriFilter} onValueChange={setKategoriFilter}>
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue placeholder="Semua Kategori" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">Semua Kategori</SelectItem>
+                      {kategoriList.map((kat) => (
+                        <SelectItem key={kat} value={kat}>
+                          {kat}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={lokasiFilter} onValueChange={setLokasiFilter}>
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue placeholder="Semua Lokasi" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">Semua Lokasi</SelectItem>
+                      {lokasi.map((lok) => (
+                        <SelectItem key={lok.id} value={lok.id}>
+                          {lok.namaLokasi}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {/* Table */}
                 <div className="rounded-md border">
                   <Table>
                     <TableHeader>
@@ -1025,10 +1026,14 @@ export default function InventarisPage() {
                 <CardHeader>
                   <CardTitle>Filter Transaksi</CardTitle>
                   <CardDescription>
-                    Filter transaksi berdasarkan rentang tanggal
+                    <Button onClick={() => setDialogKeluarOpen(true)} variant="default">
+                      <Minus className="mr-2 h-4 w-4" />
+                      Barang Keluar
+                    </Button>
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
+
                   <div className="flex gap-4 items-end">
                     <div className="flex-1">
                       <Label>Dari Tanggal</Label>
@@ -1083,7 +1088,7 @@ export default function InventarisPage() {
                       })()}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {startDateKeluar || endDateKeluar 
+                      {startDateKeluar || endDateKeluar
                         ? `${startDateKeluar ? format(new Date(startDateKeluar), "dd/MM/yyyy") : "..."} - ${endDateKeluar ? format(new Date(endDateKeluar), "dd/MM/yyyy") : "..."}`
                         : "Total keseluruhan"}
                     </p>
@@ -1315,7 +1320,7 @@ export default function InventarisPage() {
                       })()}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {startDateKasir || endDateKasir 
+                      {startDateKasir || endDateKasir
                         ? `${startDateKasir ? format(new Date(startDateKasir), "dd/MM/yyyy") : "..."} - ${endDateKasir ? format(new Date(endDateKasir), "dd/MM/yyyy") : "..."}`
                         : "Total keseluruhan"}
                     </p>
@@ -1460,6 +1465,7 @@ export default function InventarisPage() {
             </div>
           </TabsContent>
         </Tabs>
+
       </div>
 
       {/* Dialog Tambah/Edit Barang */}
@@ -1473,7 +1479,7 @@ export default function InventarisPage() {
               {editingItem ? "Edit Barang" : "Tambah Barang"}
             </DialogTitle>
           </DialogHeader>
-          
+
           <form onSubmit={handleSubmit}>
             <div className="grid gap-4 py-4">
               {/* Pilih barang atau tambah baru (gabungan) - tampil jika bukan edit */}
