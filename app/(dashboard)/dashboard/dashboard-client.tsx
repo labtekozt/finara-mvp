@@ -5,9 +5,33 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { DollarSign, TrendingDown, TrendingUp, AlertTriangle, Calendar } from "lucide-react"
+import { DollarSign, TrendingDown, TrendingUp, AlertTriangle, Calendar, TrendingUpIcon } from "lucide-react"
 import { format } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
+import { Line } from "react-chartjs-2"
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+} from "chart.js"
+
+// Register Chart.js components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+)
 
 interface DashboardData {
   stats: {
@@ -20,6 +44,11 @@ interface DashboardData {
   recentTransactions: any[]
   lowStockItems: any[]
   topSellingItems: any[]
+  dailyRevenueData: Array<{
+    date: string
+    dateLabel: string
+    revenue: number
+  }>
 }
 
 export function DashboardClient() {
@@ -153,34 +182,41 @@ export function DashboardClient() {
                 </div>
               </div>
             </div>
-            
-            {/* Current Period Label */}
-            <div className="flex items-center justify-center px-4 py-3 bg-primary/10 rounded-md border-2 border-primary/20">
-              <span className="text-sm font-semibold text-primary">{getPeriodLabel()}</span>
-            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-3">
+        {/* Total Penjualan & Barang Terjual */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Total Penjualan
+              Penjualan & Transaksi
             </CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              Rp {data.stats.totalPenjualan.toLocaleString("id-ID")}
+          <CardContent className="space-y-3">
+            <div>
+              <div className="text-2xl font-bold">
+                Rp {data.stats.totalPenjualan.toLocaleString("id-ID")}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Total Pendapatan
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground">
-              {data.stats.totalTransaksi} transaksi
-            </p>
+            <div className="border-t pt-3">
+              <div className="text-xl font-bold">
+                {data.stats.totalTransaksi}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Jumlah Barang Terjual
+              </p>
+            </div>
           </CardContent>
         </Card>
 
+        {/* Barang Stok Rendah */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -196,33 +232,175 @@ export function DashboardClient() {
           </CardContent>
         </Card>
 
+        {/* Barang Masuk & Keluar */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Barang Masuk
+              Pergerakan Barang
             </CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-600" />
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-green-600" />
+                <div className="text-xl font-bold text-green-600">
+                  {data.stats.totalBarangMasuk}
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Barang Masuk
+              </p>
+            </div>
+            <div className="border-t pt-3">
+              <div className="flex items-center gap-2">
+                <TrendingDown className="h-4 w-4 text-red-600" />
+                <div className="text-xl font-bold text-red-600">
+                  {data.stats.totalBarangKeluar}
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Barang Keluar
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts Section */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Top Selling Items Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Barang Terlaris</CardTitle>
+            <CardDescription>Top 5 barang dengan penjualan tertinggi - {getPeriodLabel()}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.stats.totalBarangMasuk}</div>
-            <p className="text-xs text-muted-foreground">
-              Periode ini
-            </p>
+            {data.topSellingItems.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Belum ada data penjualan pada periode ini</p>
+            ) : (
+              <div className="space-y-4">
+                {data.topSellingItems.map((item: any, index: number) => {
+                  const maxJumlah = data.topSellingItems[0]?.jumlah || 1
+                  const percentage = (item.jumlah / maxJumlah) * 100
+                  
+                  return (
+                    <div key={index} className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">
+                            {index + 1}
+                          </span>
+                          <span className="font-medium">{item.nama}</span>
+                        </div>
+                        <span className="font-bold">{item.jumlah} terjual</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <div 
+                          className="bg-primary h-2.5 rounded-full transition-all duration-500" 
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
 
+        {/* Daily Revenue Line Chart */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Barang Keluar
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUpIcon className="h-5 w-5" />
+              Pendapatan Harian
             </CardTitle>
-            <TrendingDown className="h-4 w-4 text-red-600" />
+            <CardDescription>Grafik pendapatan per hari dalam 30 hari terakhir</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.stats.totalBarangKeluar}</div>
-            <p className="text-xs text-muted-foreground">
-              Periode ini
-            </p>
+            {data.dailyRevenueData && data.dailyRevenueData.length > 0 ? (
+              <div style={{ height: '300px' }}>
+                <Line
+                  data={{
+                    labels: data.dailyRevenueData.map(item => item.dateLabel),
+                    datasets: [
+                      {
+                        label: 'Pendapatan',
+                        data: data.dailyRevenueData.map(item => item.revenue),
+                        borderColor: '#0e0e0eff',
+                        backgroundColor: 'rgba(14, 14, 14, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        pointBackgroundColor: '#0e0e0eff',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                      }
+                    ]
+                  }}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        display: true,
+                        position: 'bottom' as const,
+                      },
+                      tooltip: {
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        titleColor: '#000',
+                        bodyColor: '#000',
+                        borderColor: '#ccc',
+                        borderWidth: 1,
+                        padding: 10,
+                        displayColors: true,
+                        callbacks: {
+                          label: function(context) {
+                            const value = context.parsed.y ?? 0
+                            return `Pendapatan: Rp ${value.toLocaleString("id-ID")}`
+                          }
+                        }
+                      }
+                    },
+                    scales: {
+                      x: {
+                        ticks: {
+                          font: {
+                            size: 11
+                          },
+                          maxRotation: 45,
+                          minRotation: 45
+                        },
+                        grid: {
+                          display: true,
+                          color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                      },
+                      y: {
+                        ticks: {
+                          font: {
+                            size: 11
+                          },
+                          callback: function(value) {
+                            return `Rp ${(Number(value) / 1000).toFixed(0)}k`
+                          }
+                        },
+                        grid: {
+                          display: true,
+                          color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                      }
+                    }
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-[300px]">
+                <p className="text-sm text-muted-foreground">Belum ada data pendapatan</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -232,10 +410,12 @@ export function DashboardClient() {
         <Card>
           <CardHeader>
             <CardTitle>Transaksi Terakhir</CardTitle>
-            <CardDescription>5 transaksi kasir terbaru</CardDescription>
+            <CardDescription>
+              {data.recentTransactions.length} transaksi - {getPeriodLabel()}
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="max-h-[500px] overflow-y-auto pr-2 space-y-4">
               {data.recentTransactions.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Belum ada transaksi pada periode ini</p>
               ) : (
@@ -321,46 +501,6 @@ export function DashboardClient() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Top Selling Items Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Barang Terlaris</CardTitle>
-          <CardDescription>Top 5 barang dengan penjualan tertinggi pada periode ini</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {data.topSellingItems.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Belum ada data penjualan pada periode ini</p>
-          ) : (
-            <div className="space-y-4">
-              {data.topSellingItems.map((item: any, index: number) => {
-                const maxJumlah = data.topSellingItems[0]?.jumlah || 1
-                const percentage = (item.jumlah / maxJumlah) * 100
-                
-                return (
-                  <div key={index} className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">
-                          {index + 1}
-                        </span>
-                        <span className="font-medium">{item.nama}</span>
-                      </div>
-                      <span className="font-bold">{item.jumlah} terjual</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2.5">
-                      <div 
-                        className="bg-primary h-2.5 rounded-full transition-all duration-500" 
-                        style={{ width: `${percentage}%` }}
-                      />
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </div>
   )
 }

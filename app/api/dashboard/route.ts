@@ -96,9 +96,8 @@ export async function GET(request: Request) {
       },
     })
 
-    // Transaksi terakhir
+    // Transaksi terakhir - ambil semua dalam periode yang dipilih
     const recentTransactions = await prisma.transaksiKasir.findMany({
-      take: 5,
       where: {
         tanggal: {
           gte: startDate,
@@ -173,6 +172,44 @@ export async function GET(request: Request) {
       }
     })
 
+    // Pendapatan harian dalam 1 bulan terakhir (30 hari)
+    const thirtyDaysAgo = subDays(new Date(), 29) // 30 hari termasuk hari ini
+    const dailyRevenueStart = startOfDay(thirtyDaysAgo)
+    const dailyRevenueEnd = endOfDay(new Date())
+
+    const dailyRevenue = await prisma.transaksiKasir.groupBy({
+      by: ['tanggal'],
+      where: {
+        tanggal: {
+          gte: dailyRevenueStart,
+          lte: dailyRevenueEnd,
+        },
+      },
+      _sum: {
+        total: true,
+      },
+      orderBy: {
+        tanggal: 'asc',
+      },
+    })
+
+    // Format data untuk chart (isi hari yang tidak ada transaksi dengan 0)
+    const dailyRevenueData = []
+    for (let i = 0; i < 30; i++) {
+      const date = subDays(new Date(), 29 - i)
+      const dateStr = startOfDay(date).toISOString()
+      const revenue = dailyRevenue.find((r) => {
+        const rDate = startOfDay(new Date(r.tanggal)).toISOString()
+        return rDate === dateStr
+      })
+      
+      dailyRevenueData.push({
+        date: date.toISOString(),
+        dateLabel: date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }),
+        revenue: revenue?._sum.total || 0,
+      })
+    }
+
     return NextResponse.json({
       stats: {
         totalPenjualan: penjualan._sum.total || 0,
@@ -184,6 +221,7 @@ export async function GET(request: Request) {
       recentTransactions,
       lowStockItems,
       topSellingItems,
+      dailyRevenueData,
     })
   } catch (error) {
     console.error("Dashboard API error:", error)
