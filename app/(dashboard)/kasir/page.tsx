@@ -226,6 +226,8 @@ export default function KasirPage() {
         }),
       })
 
+      const data = await response.json()
+
       if (!response.ok) {
         const error: any = await response.json()
         throw new Error(error.error || "Gagal memproses transaksi")

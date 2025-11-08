@@ -121,6 +121,31 @@ export async function DELETE(
       return NextResponse.json({ error: "Item not found" }, { status: 404 })
     }
 
+    // Cek apakah barang sudah digunakan dalam transaksi
+    const [itemTransaksiCount, transaksiMasukCount, transaksiKeluarCount] = await Promise.all([
+      prisma.itemTransaksi.count({ where: { barangId: id } }),
+      prisma.transaksiMasuk.count({ where: { barangId: id } }),
+      prisma.transaksiKeluar.count({ where: { barangId: id } }),
+    ])
+
+    const totalTransaksi = itemTransaksiCount + transaksiMasukCount + transaksiKeluarCount
+
+    if (totalTransaksi > 0) {
+      const messages = []
+      if (itemTransaksiCount > 0) messages.push(`${itemTransaksiCount} transaksi penjualan`)
+      if (transaksiMasukCount > 0) messages.push(`${transaksiMasukCount} transaksi masuk`)
+      if (transaksiKeluarCount > 0) messages.push(`${transaksiKeluarCount} transaksi keluar`)
+
+      return NextResponse.json(
+        {
+          error: "Barang tidak dapat dihapus",
+          message: `Barang "${barang.nama}" sudah digunakan dalam ${messages.join(", ")}. Hapus transaksi terkait terlebih dahulu atau nonaktifkan barang ini.`,
+          transactionCount: totalTransaksi,
+        },
+        { status: 400 }
+      )
+    }
+
     await prisma.barang.delete({
       where: { id },
     })
