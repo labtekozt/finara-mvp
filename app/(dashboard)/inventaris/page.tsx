@@ -104,6 +104,7 @@ export default function InventarisPage() {
   const [search, setSearch] = useState("")
   const [kategoriFilter, setKategoriFilter] = useState("ALL")
   const [lokasiFilter, setLokasiFilter] = useState("ALL")
+  const [stokRendahFilter, setStokRendahFilter] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dialogKeluarOpen, setDialogKeluarOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<Barang | null>(null)
@@ -117,6 +118,12 @@ export default function InventarisPage() {
   const [sortDirectionKeluar, setSortDirectionKeluar] = useState<"asc" | "desc">("desc")
   const [sortColumnKasir, setSortColumnKasir] = useState<string>("tanggal")
   const [sortDirectionKasir, setSortDirectionKasir] = useState<"asc" | "desc">("desc")
+  
+  // Pagination states
+  const [currentPageBarang, setCurrentPageBarang] = useState(1)
+  const [currentPageKeluar, setCurrentPageKeluar] = useState(1)
+  const [currentPageKasir, setCurrentPageKasir] = useState(1)
+  const itemsPerPage = 10
   
   // Mode: "new" untuk barang baru custom, "existing" untuk update stok barang existing
   const [tambahMode, setTambahMode] = useState<"new" | "existing">("existing")
@@ -157,8 +164,28 @@ export default function InventarisPage() {
     fetchData()
   }, [search, kategoriFilter, lokasiFilter])
 
+  // Reset pagination saat filter/sort berubah
+  useEffect(() => {
+    setCurrentPageBarang(1)
+  }, [search, kategoriFilter, lokasiFilter, stokRendahFilter, sortColumn, sortDirection])
+
+  useEffect(() => {
+    setCurrentPageKeluar(1)
+  }, [startDateKeluar, endDateKeluar, sortColumnKeluar, sortDirectionKeluar])
+
+  useEffect(() => {
+    setCurrentPageKasir(1)
+  }, [startDateKasir, endDateKasir, sortColumnKasir, sortDirectionKasir])
+
   const sortedBarang = useMemo(() => {
-    return [...barang].sort((a, b) => {
+    let filtered = [...barang]
+    
+    // Filter stok rendah jika diaktifkan
+    if (stokRendahFilter) {
+      filtered = filtered.filter(item => item.stok <= item.stokMinimum)
+    }
+    
+    return filtered.sort((a, b) => {
       let aValue: any = a[sortColumn as keyof Barang]
       let bValue: any = b[sortColumn as keyof Barang]
 
@@ -176,7 +203,7 @@ export default function InventarisPage() {
       if (aValue > bValue) return sortDirection === "asc" ? 1 : -1
       return 0
     })
-  }, [barang, sortColumn, sortDirection])
+  }, [barang, sortColumn, sortDirection, stokRendahFilter])
 
   const sortedTransaksiKeluar = useMemo(() => {
     let filtered = [...transaksiKeluar]
@@ -277,6 +304,40 @@ export default function InventarisPage() {
       return 0
     })
   }, [transaksiKasir, sortColumnKasir, sortDirectionKasir, startDateKasir, endDateKasir])
+
+  // Pagination untuk Barang
+  const paginatedBarang = useMemo(() => {
+    const startIndex = (currentPageBarang - 1) * itemsPerPage
+    const endIndex = startIndex + itemsPerPage
+    return sortedBarang.slice(startIndex, endIndex)
+  }, [sortedBarang, currentPageBarang, itemsPerPage])
+
+  const totalPagesBarang = Math.ceil(sortedBarang.length / itemsPerPage)
+
+  // Pagination untuk Transaksi Keluar
+  const paginatedTransaksiKeluar = useMemo(() => {
+    const startIndex = (currentPageKeluar - 1) * itemsPerPage
+    const endIndex = startIndex + itemsPerPage
+    return sortedTransaksiKeluar.slice(startIndex, endIndex)
+  }, [sortedTransaksiKeluar, currentPageKeluar, itemsPerPage])
+
+  const totalPagesKeluar = Math.ceil(sortedTransaksiKeluar.length / itemsPerPage)
+
+  // Pagination untuk Transaksi Kasir (per item)
+  const paginatedTransaksiKasir = useMemo(() => {
+    // Flatten dulu untuk menghitung total items
+    const allItems = sortedTransaksiKasir.flatMap((tr) =>
+      tr.itemTransaksi.map((item) => ({ tr, item }))
+    )
+    
+    const startIndex = (currentPageKasir - 1) * itemsPerPage
+    const endIndex = startIndex + itemsPerPage
+    return allItems.slice(startIndex, endIndex)
+  }, [sortedTransaksiKasir, currentPageKasir, itemsPerPage])
+
+  const totalPagesKasir = Math.ceil(
+    sortedTransaksiKasir.reduce((sum, tr) => sum + tr.itemTransaksi.length, 0) / itemsPerPage
+  )
 
   function handleSort(column: string) {
     if (sortColumn === column) {
@@ -572,6 +633,90 @@ export default function InventarisPage() {
 
   const kategoriList = Array.from(new Set(barang.map(item => item.kategori)))
 
+  // Komponen Pagination
+  const Pagination = ({ 
+    currentPage, 
+    totalPages, 
+    onPageChange 
+  }: { 
+    currentPage: number
+    totalPages: number
+    onPageChange: (page: number) => void 
+  }) => {
+    const pages = []
+    const maxPagesToShow = 5
+    let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2))
+    let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1)
+
+    if (endPage - startPage < maxPagesToShow - 1) {
+      startPage = Math.max(1, endPage - maxPagesToShow + 1)
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i)
+    }
+
+    return (
+      <div className="flex items-center justify-between px-2 py-4">
+        <div className="text-sm text-muted-foreground">
+          Halaman {currentPage} dari {totalPages}
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            Sebelumnya
+          </Button>
+          {startPage > 1 && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onPageChange(1)}
+              >
+                1
+              </Button>
+              {startPage > 2 && <span className="px-2">...</span>}
+            </>
+          )}
+          {pages.map((page) => (
+            <Button
+              key={page}
+              variant={currentPage === page ? "default" : "outline"}
+              size="sm"
+              onClick={() => onPageChange(page)}
+            >
+              {page}
+            </Button>
+          ))}
+          {endPage < totalPages && (
+            <>
+              {endPage < totalPages - 1 && <span className="px-2">...</span>}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onPageChange(totalPages)}
+              >
+                {totalPages}
+              </Button>
+            </>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            Selanjutnya
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col h-full">
       <Header title="Inventaris" description="Kelola data barang dan stok" />
@@ -621,6 +766,14 @@ export default function InventarisPage() {
                   ))}
                 </SelectContent>
               </Select>
+              <Button
+                variant={stokRendahFilter ? "default" : "outline"}
+                onClick={() => setStokRendahFilter(!stokRendahFilter)}
+                className="w-[200px]"
+              >
+                <AlertTriangle className="mr-2 h-4 w-4" />
+                {stokRendahFilter ? "Stok Rendah Aktif" : "Tampilkan Stok Rendah"}
+              </Button>
               <div className="flex gap-2">
                 <Button onClick={openTambahDialog}>
                   <Plus className="mr-2 h-4 w-4" />
@@ -716,7 +869,9 @@ export default function InventarisPage() {
               <CardHeader>
                 <CardTitle>Daftar Barang</CardTitle>
                 <CardDescription>
-                  Total: {barang.length} barang
+                  {stokRendahFilter 
+                    ? `Menampilkan ${sortedBarang.length} barang dengan stok rendah dari total ${barang.length} barang`
+                    : `Total: ${sortedBarang.length} barang`}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -776,14 +931,14 @@ export default function InventarisPage() {
                             Memuat data...
                           </TableCell>
                         </TableRow>
-                      ) : sortedBarang.length === 0 ? (
+                      ) : paginatedBarang.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={8} className="text-center">
                             Tidak ada data
                           </TableCell>
                         </TableRow>
                       ) : (
-                        sortedBarang.map((item) => (
+                        paginatedBarang.map((item) => (
                           <TableRow key={item.id}>
                             <TableCell className="font-medium">
                               <div className="flex items-center gap-2">
@@ -839,6 +994,13 @@ export default function InventarisPage() {
                     </TableBody>
                   </Table>
                 </div>
+                {totalPagesBarang > 1 && (
+                  <Pagination
+                    currentPage={currentPageBarang}
+                    totalPages={totalPagesBarang}
+                    onPageChange={setCurrentPageBarang}
+                  />
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -860,6 +1022,7 @@ export default function InventarisPage() {
                       <Label>Dari Tanggal</Label>
                       <Input
                         type="date"
+                        className="mt-2"
                         value={startDateKeluar}
                         onChange={(e) => setStartDateKeluar(e.target.value)}
                         max={endDateKeluar || format(new Date(), "yyyy-MM-dd")}
@@ -869,6 +1032,7 @@ export default function InventarisPage() {
                       <Label>Sampai Tanggal</Label>
                       <Input
                         type="date"
+                        className="mt-2"
                         value={endDateKeluar}
                         onChange={(e) => setEndDateKeluar(e.target.value)}
                         min={startDateKeluar}
@@ -1016,14 +1180,14 @@ export default function InventarisPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {sortedTransaksiKeluar.length === 0 ? (
+                        {paginatedTransaksiKeluar.length === 0 ? (
                           <TableRow>
                             <TableCell colSpan={8} className="text-center">
                               {startDateKeluar || endDateKeluar ? "Tidak ada transaksi pada rentang tanggal tersebut" : "Belum ada transaksi"}
                             </TableCell>
                           </TableRow>
                         ) : (
-                          sortedTransaksiKeluar.map((tr) => (
+                          paginatedTransaksiKeluar.map((tr) => (
                             <TableRow key={tr.id}>
                               <TableCell className="font-medium">
                                 {tr.nomorTransaksi}
@@ -1051,6 +1215,13 @@ export default function InventarisPage() {
                       </TableBody>
                     </Table>
                   </div>
+                  {totalPagesKeluar > 1 && (
+                    <Pagination
+                      currentPage={currentPageKeluar}
+                      totalPages={totalPagesKeluar}
+                      onPageChange={setCurrentPageKeluar}
+                    />
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -1073,6 +1244,7 @@ export default function InventarisPage() {
                       <Label>Dari Tanggal</Label>
                       <Input
                         type="date"
+                        className="mt-2"
                         value={startDateKasir}
                         onChange={(e) => setStartDateKasir(e.target.value)}
                         max={endDateKasir || format(new Date(), "yyyy-MM-dd")}
@@ -1082,6 +1254,7 @@ export default function InventarisPage() {
                       <Label>Sampai Tanggal</Label>
                       <Input
                         type="date"
+                        className="mt-2"
                         value={endDateKasir}
                         onChange={(e) => setEndDateKasir(e.target.value)}
                         min={startDateKasir}
@@ -1211,47 +1384,52 @@ export default function InventarisPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {sortedTransaksiKasir.length === 0 ? (
+                        {paginatedTransaksiKasir.length === 0 ? (
                           <TableRow>
                             <TableCell colSpan={8} className="text-center">
                               {startDateKasir || endDateKasir ? "Tidak ada transaksi pada rentang tanggal tersebut" : "Belum ada transaksi"}
                             </TableCell>
                           </TableRow>
                         ) : (
-                          sortedTransaksiKasir.flatMap((tr) =>
-                            tr.itemTransaksi.map((item, index) => (
-                              <TableRow key={`${tr.id}-${item.id}`}>
-                                <TableCell className="font-medium">
-                                  {tr.nomorTransaksi}
-                                </TableCell>
-                                <TableCell>
-                                  {format(new Date(tr.tanggal), "dd/MM/yyyy HH:mm")}
-                                </TableCell>
-                                <TableCell>{item.namaBarang}</TableCell>
-                                <TableCell>
-                                  <Badge variant="outline">
-                                    {item.qty} {item.barang.satuan}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell>
-                                  Rp {item.hargaSatuan.toLocaleString("id-ID")}
-                                </TableCell>
-                                <TableCell className="font-semibold">
-                                  Rp {item.subtotal.toLocaleString("id-ID")}
-                                </TableCell>
-                                <TableCell>
-                                  <Badge variant="outline">
-                                    {tr.metodePembayaran}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell>{tr.kasir.nama}</TableCell>
-                              </TableRow>
-                            ))
-                          )
+                          paginatedTransaksiKasir.map(({ tr, item }) => (
+                            <TableRow key={`${tr.id}-${item.id}`}>
+                              <TableCell className="font-medium">
+                                {tr.nomorTransaksi}
+                              </TableCell>
+                              <TableCell>
+                                {format(new Date(tr.tanggal), "dd/MM/yyyy HH:mm")}
+                              </TableCell>
+                              <TableCell>{item.namaBarang}</TableCell>
+                              <TableCell>
+                                <Badge variant="outline">
+                                  {item.qty} {item.barang.satuan}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                Rp {item.hargaSatuan.toLocaleString("id-ID")}
+                              </TableCell>
+                              <TableCell className="font-semibold">
+                                Rp {item.subtotal.toLocaleString("id-ID")}
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="outline">
+                                  {tr.metodePembayaran}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>{tr.kasir.nama}</TableCell>
+                            </TableRow>
+                          ))
                         )}
                       </TableBody>
                     </Table>
                   </div>
+                  {totalPagesKasir > 1 && (
+                    <Pagination
+                      currentPage={currentPageKasir}
+                      totalPages={totalPagesKasir}
+                      onPageChange={setCurrentPageKasir}
+                    />
+                  )}
                 </CardContent>
               </Card>
             </div>
