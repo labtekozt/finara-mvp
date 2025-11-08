@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Minus, Trash2, ShoppingCart, Search, Receipt, ChevronLeft, ChevronRight, X } from "lucide-react"
+import { Plus, Minus, Trash2, ShoppingCart, Search, Receipt, ChevronLeft, ChevronRight, X, ChevronDown, ChevronUp } from "lucide-react"
 import { toast } from "sonner"
 import { CartItem } from "@/types"
 
@@ -50,6 +50,8 @@ export default function KasirPage() {
   const [itemToDelete, setItemToDelete] = useState<{ barangId: string; nama: string } | null>(null)
   const [deleteAllDialog, setDeleteAllDialog] = useState(false)
   const [jumlahBayarDisplay, setJumlahBayarDisplay] = useState("")
+  const [confirmPaymentDialog, setConfirmPaymentDialog] = useState(false)
+  const [cartMinimized, setCartMinimized] = useState(false)
 
   // Calculations
   const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0)
@@ -182,7 +184,7 @@ export default function KasirPage() {
     toast.success("Semua item berhasil dihapus dari keranjang")
   }
 
-  async function handleCheckout() {
+  function openConfirmPayment() {
     if (cart.length === 0) {
       toast.error("Keranjang masih kosong")
       return
@@ -193,6 +195,11 @@ export default function KasirPage() {
       return
     }
 
+    setConfirmPaymentDialog(true)
+  }
+
+  async function handleCheckout() {
+    setConfirmPaymentDialog(false)
     setLoading(true)
     try {
       const response = await fetch("/api/transaksi-kasir", {
@@ -236,121 +243,6 @@ export default function KasirPage() {
     } finally {
       setLoading(false)
     }
-  }
-
-  function printReceipt() {
-    if (!lastTransaction) return
-
-    const printWindow = window.open("", "_blank")
-    if (!printWindow) return
-
-    const receiptHTML = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Struk - ${lastTransaction.nomorTransaksi}</title>
-        <style>
-          body {
-            font-family: 'Courier New', monospace;
-            width: 300px;
-            margin: 20px auto;
-          }
-          .header {
-            text-align: center;
-            margin-bottom: 20px;
-          }
-          .header h1 {
-            margin: 0;
-            font-size: 24px;
-          }
-          .info {
-            margin-bottom: 10px;
-            font-size: 12px;
-          }
-          .items {
-            margin: 20px 0;
-          }
-          .item {
-            display: flex;
-            justify-content: space-between;
-            margin: 5px 0;
-            font-size: 12px;
-          }
-          .separator {
-            border-top: 1px dashed #000;
-            margin: 10px 0;
-          }
-          .total {
-            font-weight: bold;
-            font-size: 14px;
-          }
-          @media print {
-            body { margin: 0; }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <h1>FINARA</h1>
-          <p>Sistem Ritel & Gudang</p>
-        </div>
-        <div class="separator"></div>
-        <div class="info">
-          <div>No: ${lastTransaction.nomorTransaksi}</div>
-          <div>Tanggal: ${new Date(lastTransaction.tanggal).toLocaleString("id-ID")}</div>
-          <div>Kasir: ${lastTransaction.kasir.nama}</div>
-        </div>
-        <div class="separator"></div>
-        <div class="items">
-          ${lastTransaction.itemTransaksi.map((item: any) => `
-            <div class="item">
-              <span>${item.namaBarang} (${item.qty}x)</span>
-              <span>Rp ${item.subtotal.toLocaleString("id-ID")}</span>
-            </div>
-          `).join("")}
-        </div>
-        <div class="separator"></div>
-        <div class="item">
-          <span>Subtotal:</span>
-          <span>Rp ${lastTransaction.subtotal.toLocaleString("id-ID")}</span>
-        </div>
-        <div class="item">
-          <span>Pajak (10%):</span>
-          <span>Rp ${lastTransaction.pajak.toLocaleString("id-ID")}</span>
-        </div>
-        <div class="item">
-          <span>Diskon:</span>
-          <span>Rp ${lastTransaction.diskon.toLocaleString("id-ID")}</span>
-        </div>
-        <div class="separator"></div>
-        <div class="item total">
-          <span>TOTAL:</span>
-          <span>Rp ${lastTransaction.total.toLocaleString("id-ID")}</span>
-        </div>
-        <div class="item">
-          <span>Bayar:</span>
-          <span>Rp ${lastTransaction.jumlahBayar.toLocaleString("id-ID")}</span>
-        </div>
-        <div class="item">
-          <span>Kembalian:</span>
-          <span>Rp ${lastTransaction.kembalian.toLocaleString("id-ID")}</span>
-        </div>
-        <div class="separator"></div>
-        <div class="info" style="text-align: center; margin-top: 20px;">
-          <p>Terima Kasih!</p>
-        </div>
-        <script>
-          window.onload = () => {
-            window.print();
-            window.close();
-          };
-        </script>
-      </body>
-      </html>
-    `
-
-    printWindow.document.write(receiptHTML)
-    printWindow.document.close()
   }
 
   const filteredBarang = barang.filter((item) =>
@@ -403,6 +295,19 @@ export default function KasirPage() {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div className="relative">
+                    {/* sorting barang */}
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sortir berdasarkan" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="nama">Nama</SelectItem>
+                        <SelectItem value="harga">Harga</SelectItem>
+                        <SelectItem value="stok">Stok</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="flex-1 overflow-y-auto">
@@ -419,7 +324,7 @@ export default function KasirPage() {
                       </Button>
                     </div>
                   )}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   {paginatedBarang.map((item) => {
                     const cartItem = cart.find((c) => c.barangId === item.id)
                     const isInCart = !!cartItem
@@ -439,16 +344,16 @@ export default function KasirPage() {
                             {cartItem.qty}
                           </div>
                         )}
-                        <CardContent className="p-4">
-                          <div className="font-medium text-sm mb-1">{item.nama}</div>
-                          <div className="text-lg font-bold text-primary mb-1">
+                        <CardContent className="p-3">
+                          <div className="font-medium text-xl mb-1">{item.nama}</div>
+                          <div className="text-2xl font-bold text-primary mb-1">
                             Rp {item.hargaJual.toLocaleString("id-ID")}
                           </div>
                           <div className="flex flex-col">
-                            <Badge variant="secondary" className="text-xs">
+                            <Badge variant="outline" className="text-xs">
                               {item.kategori}
                             </Badge>
-                            <span className="text-lg text-muted-foreground">
+                            <span className="text-sm text-muted-foreground">
                               Stok: {item.stok}
                             </span>
                           </div>
@@ -533,19 +438,34 @@ export default function KasirPage() {
                     <ShoppingCart className="h-5 w-5" />
                     Keranjang ({cart.length})
                   </CardTitle>
-                  {cart.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    {cart.length > 0 && !cartMinimized && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={openDeleteAllDialog}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Hapus Semua
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={openDeleteAllDialog}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      onClick={() => setCartMinimized(!cartMinimized)}
+                      className="hover:bg-accent"
                     >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      Hapus Semua
+                      {cartMinimized ? (
+                        <ChevronUp className="h-5 w-5" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5" />
+                      )}
                     </Button>
-                  )}
+                  </div>
                 </div>
               </CardHeader>
+              {!cartMinimized && (
               <CardContent className="flex-1 flex flex-col">
                 <div className="flex-1 overflow-y-auto space-y-2 mb-4">
                   {cart.length === 0 ? (
@@ -624,7 +544,7 @@ export default function KasirPage() {
                   {jumlahBayar > 0 && (
                     <div className="flex flex-col justify-between text-sm">
                       <span>Kembalian:</span>
-                      <span className={kembalian < 0 ? "text-red-600 text-2xl" : "text-green-600 text-2xl"}>
+                      <span className={kembalian < 0 ? "text-red-600 text-xl" : "text-green-600 text-xl"}>
                         Rp {kembalian.toLocaleString("id-ID")}
                       </span>
                     </div>
@@ -632,18 +552,104 @@ export default function KasirPage() {
 
                   <Button
                     className="w-full"
-                    onClick={handleCheckout}
+                    onClick={openConfirmPayment}
                     disabled={loading || cart.length === 0 || kembalian < 0}
                   >
                     <ShoppingCart className="mr-2 h-4 w-4" />
-                    {loading ? "Memproses..." : "Bayar"}
+                    Bayar
                   </Button>
                 </div>
               </CardContent>
+              )}
             </Card>
           </div>
         </div>
       </div>
+
+      {/* Payment Confirmation Dialog */}
+      <Dialog open={confirmPaymentDialog} onOpenChange={setConfirmPaymentDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Konfirmasi Pembayaran</DialogTitle>
+            <DialogDescription>
+              Pastikan semua detail pembayaran sudah benar
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="flex items-center gap-3 mb-3">
+                <ShoppingCart className="h-8 w-8 text-blue-600" />
+                <div>
+                  <div className="font-medium text-sm text-gray-900">
+                    {cart.length} item dalam keranjang
+                  </div>
+                  <div className="text-xs text-blue-600">
+                    Pastikan jumlah dan pembayaran sudah benar
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Cart Items Summary */}
+            <div className="max-h-48 overflow-y-auto space-y-2 border rounded-lg p-3 bg-gray-50">
+              <div className="text-xs font-medium text-gray-700 mb-2">Rincian Belanja:</div>
+              {cart.map((item) => (
+                <div key={item.id} className="flex justify-between items-center text-sm py-1 border-b last:border-0">
+                  <div className="flex-1">
+                    <span className="font-medium">{item.nama}</span>
+                    <span className="text-gray-500 text-xs ml-2">x{item.qty}</span>
+                  </div>
+                  <span className="font-medium">Rp {item.subtotal.toLocaleString("id-ID")}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Payment Details */}
+            <div className="space-y-2 p-4 bg-gray-50 rounded-lg">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Total Belanja:</span>
+                <span className="font-bold text-lg">Rp {total.toLocaleString("id-ID")}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Jumlah Bayar:</span>
+                <span className="font-bold text-lg text-blue-600">Rp {jumlahBayar.toLocaleString("id-ID")}</span>
+              </div>
+              <div className="border-t pt-2 flex justify-between">
+                <span className="text-gray-600">Kembalian:</span>
+                <span className="font-bold text-xl text-green-600">Rp {kembalian.toLocaleString("id-ID")}</span>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setConfirmPaymentDialog(false)}
+                disabled={loading}
+              >
+                Batal
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={handleCheckout}
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <span className="animate-spin mr-2">⏳</span>
+                    Memproses...
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="mr-2 h-4 w-4" />
+                    Konfirmasi Bayar
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialog} onOpenChange={setDeleteDialog}>
@@ -787,10 +793,6 @@ export default function KasirPage() {
                   </span>
                 </div>
               </div>
-              <Button className="w-full" onClick={printReceipt}>
-                <Receipt className="mr-2 h-4 w-4" />
-                Cetak Struk
-              </Button>
             </div>
           )}
         </DialogContent>
