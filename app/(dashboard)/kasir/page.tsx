@@ -226,13 +226,21 @@ export default function KasirPage() {
         }),
       })
 
-      if (!response.ok) {
-        const error: any = await response.json()
-        throw new Error(error.error || "Gagal memproses transaksi")
-      }
+      const data = await response.json()
 
-      const transaction: any = await response.json()
-      setLastTransaction(transaction)
+      if (!response.ok) {
+        if (response.status === 401 && data.requireRelogin) {
+          toast.error(data.error || "Session tidak valid", {
+            duration: 4000,
+          })
+          setTimeout(() => {
+            window.location.href = "/login"
+          }, 2000)
+          return
+        }
+        throw new Error(data.error || "Gagal memproses transaksi")
+      }
+      setLastTransaction(data)
       setReceiptDialog(true)
 
       // Reset
