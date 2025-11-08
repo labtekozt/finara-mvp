@@ -336,6 +336,19 @@ enum TipeLaporan {
   TRIAL_BALANCE      // Neraca Saldo
 }
 
+enum KategoriPengeluaran {
+  GAJI_KARYAWAN     // Gaji dan Tunjangan Karyawan
+  UTILITAS          // Listrik, Air, Telepon
+  SEWA              // Sewa Tempat Usaha
+  PERLENGKAPAN_KANTOR // ATK, Alat Tulis
+  TRANSPORTASI      // Transportasi dan Perjalanan
+  PERBAIKAN         // Perbaikan dan Pemeliharaan
+  IKLAN_PROMOSI     // Iklan dan Promosi
+  PAJAK             // Pajak dan Retribusi
+  ASURANSI          // Asuransi
+  LAINNYA           // Pengeluaran Lain
+}
+
 // Expense Tracking
 model Pengeluaran {
   id                String   @id @default(cuid())
@@ -358,15 +371,22 @@ model Pengeluaran {
   @@map("pengeluaran")
 }
 
-enum KategoriPengeluaran {
-  GAJI_KARYAWAN     // Gaji dan Tunjangan Karyawan
-  UTILITAS          // Listrik, Air, Telepon
-  SEWA              // Sewa Tempat Usaha
-  PERLENGKAPAN_KANTOR // ATK, Alat Tulis
-  TRANSPORTASI      // Transportasi dan Perjalanan
-  PERBAIKAN         // Perbaikan dan Pemeliharaan
-  IKLAN_PROMOSI     // Iklan dan Promosi
-  PAJAK             // Pajak dan Retribusi
-  ASURANSI          // Asuransi
-  LAINNYA           // Pengeluaran Lain
+// Financial Audit Log for XBRL Compliance and Regulatory Requirements
+model FinancialAuditLog {
+  id            String   @id @default(cuid())
+  tableName     String
+  recordId      String
+  action        String
+  oldValues     Json?
+  newValues     Json?
+  changeReason  String?
+  metadata      Json?
+  changedBy     String
+  changedAt     DateTime @default(now())
+
+  @@index([tableName])
+  @@index([recordId])
+  @@index([changedBy])
+  @@index([changedAt])
+  @@map("financial_audit_log")
 }

@@ -164,6 +164,12 @@ export interface TrialBalanceData {
   totalMutasiKredit: number;
   totalSaldoAkhir: number;
   isBalanced: boolean;
+  validation?: {
+    totalDebit: number;
+    totalCredit: number;
+    variance: number;
+    message?: string;
+  };
 }
 
 export interface FinancialStatementEntry {
@@ -183,9 +189,16 @@ export interface BalanceSheetData {
   assets: FinancialStatementSection;
   liabilities: FinancialStatementSection;
   equity: FinancialStatementSection;
+  netIncome: number;
   totalAssets: number;
   totalLiabilitiesEquity: number;
   isBalanced: boolean;
+  validation?: {
+    totalDebit: number;
+    totalCredit: number;
+    variance: number;
+    message?: string;
+  };
 }
 
 export interface IncomeStatementData {

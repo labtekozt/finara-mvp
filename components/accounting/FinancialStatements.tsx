@@ -34,6 +34,7 @@ import {
   TrendingUp,
   AlertTriangle,
   CheckCircle,
+  Calculator,
 } from "lucide-react";
 import { useBalanceSheet, useIncomeStatement } from "@/hooks/accounting";
 import { useAccountingDashboard } from "@/hooks/accounting";
@@ -103,7 +104,16 @@ export function FinancialStatements({ className }: FinancialStatementsProps) {
       pdf.text("Periode: Sampai Saat Ini", 20, 35);
     }
 
-    let yPosition = 60;
+    // Add balance sheet equation explanation
+    pdf.setFontSize(10);
+    pdf.text("Persamaan Neraca: ASET = KEWAJIBAN + EKUITAS", 20, 50);
+    pdf.text(
+      "Neraca harus selalu seimbang karena setiap transaksi memengaruhi kedua sisi persamaan secara seimbang.",
+      20,
+      58,
+    );
+
+    let yPosition = 75;
 
     // Assets
     pdf.setFontSize(14);
@@ -183,9 +193,14 @@ export function FinancialStatements({ className }: FinancialStatementsProps) {
       finalY,
     );
     pdf.text(
-      `Total Kewajiban + Ekuitas: ${formatCurrency(balanceSheetData.totalLiabilitiesEquity)}`,
+      `Laba Bersih: ${formatCurrency(balanceSheetData.netIncome || 0)}`,
       20,
       finalY + 10,
+    );
+    pdf.text(
+      `Total Kewajiban + Ekuitas + Laba: ${formatCurrency(balanceSheetData.totalLiabilitiesEquity)}`,
+      20,
+      finalY + 20,
     );
 
     pdf.save(
@@ -327,16 +342,38 @@ export function FinancialStatements({ className }: FinancialStatementsProps) {
             <TabsContent value="balance-sheet" className="space-y-4">
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold">Neraca</h3>
-                {balanceSheetData && (
+                <div className="flex gap-2">
                   <Button
-                    onClick={exportBalanceSheetPDF}
+                    onClick={async () => {
+                      try {
+                        const result =
+                          await AccountingService.calculateInitialCapital();
+                        toast.success(
+                          `Modal awal berhasil dihitung: Rp ${result.totalInventoryValue.toLocaleString("id-ID")}`,
+                        );
+                        refetchBS(); // Refresh balance sheet data
+                      } catch (error) {
+                        toast.error("Gagal menghitung modal awal");
+                        console.error(error);
+                      }
+                    }}
                     variant="outline"
                     size="sm"
                   >
-                    <Download className="h-4 w-4 mr-2" />
-                    Export PDF
+                    <Calculator className="h-4 w-4 mr-2" />
+                    Hitung Modal Awal
                   </Button>
-                )}
+                  {balanceSheetData && (
+                    <Button
+                      onClick={exportBalanceSheetPDF}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Export PDF
+                    </Button>
+                  )}
+                </div>
               </div>
 
               {/* Balance Status */}
@@ -393,54 +430,64 @@ export function FinancialStatements({ className }: FinancialStatementsProps) {
 
               {/* Balance Sheet Content */}
               {balanceSheetData && !bsLoading && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Assets */}
-                  <Card>
+                <div className="space-y-6">
+                  {/* Balance Sheet Explanation */}
+                  <Card className="bg-blue-50 border-blue-200">
                     <CardHeader>
-                      <CardTitle className="text-green-700">ASET</CardTitle>
+                      <CardTitle className="text-blue-800 flex items-center gap-2">
+                        <TrendingUp className="h-5 w-5" />
+                        Persamaan Neraca
+                      </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Kode</TableHead>
-                            <TableHead>Nama Akun</TableHead>
-                            <TableHead className="text-right">Saldo</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {balanceSheetData.assets.entries.map((entry) => (
-                            <TableRow key={entry.akun.id}>
-                              <TableCell className="font-mono">
-                                {entry.akun.kode}
-                              </TableCell>
-                              <TableCell>{entry.akun.nama}</TableCell>
-                              <TableCell className="text-right font-medium">
-                                {formatCurrency(entry.saldo)}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                          <TableRow className="border-t-2 font-bold">
-                            <TableCell colSpan={2} className="text-right">
-                              TOTAL ASET
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {formatCurrency(balanceSheetData.totalAssets)}
-                            </TableCell>
-                          </TableRow>
-                        </TableBody>
-                      </Table>
+                      <div className="space-y-3">
+                        <p className="text-sm text-blue-700">
+                          <strong>Persamaan Dasar Akuntansi:</strong>
+                        </p>
+                        <div className="bg-white p-3 rounded border border-blue-200">
+                          <p className="text-lg font-mono text-center text-blue-800">
+                            <span className="text-green-600 font-bold">
+                              ASET
+                            </span>{" "}
+                            ={" "}
+                            <span className="text-red-600 font-bold">
+                              KEWAJIBAN
+                            </span>{" "}
+                            +{" "}
+                            <span className="text-blue-600 font-bold">
+                              EKUITAS
+                            </span>
+                          </p>
+                        </div>
+                        <div className="text-sm text-blue-700 space-y-1">
+                          <p>
+                            <strong>Mengapa neraca harus seimbang?</strong>{" "}
+                            Karena setiap transaksi bisnis memengaruhi kedua
+                            sisi persamaan secara seimbang (double-entry
+                            bookkeeping).
+                          </p>
+                          <p>
+                            <strong>Aset:</strong> Sumber daya yang dimiliki
+                            perusahaan (kas, inventaris, piutang, dll.)
+                          </p>
+                          <p>
+                            <strong>Kewajiban:</strong> Utang perusahaan kepada
+                            pihak luar (hutang dagang, pinjaman, dll.)
+                          </p>
+                          <p>
+                            <strong>Ekuitas:</strong> Kepemilikan pemilik dalam
+                            perusahaan (modal awal, laba ditahan, dll.)
+                          </p>
+                        </div>
+                      </div>
                     </CardContent>
                   </Card>
 
-                  {/* Liabilities & Equity */}
-                  <div className="space-y-4">
-                    {/* Liabilities */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Assets */}
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-red-700">
-                          KEWAJIBAN
-                        </CardTitle>
+                        <CardTitle className="text-green-700">ASET</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <Table>
@@ -454,52 +501,7 @@ export function FinancialStatements({ className }: FinancialStatementsProps) {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {balanceSheetData.liabilities.entries.map(
-                              (entry) => (
-                                <TableRow key={entry.akun.id}>
-                                  <TableCell className="font-mono">
-                                    {entry.akun.kode}
-                                  </TableCell>
-                                  <TableCell>{entry.akun.nama}</TableCell>
-                                  <TableCell className="text-right font-medium">
-                                    {formatCurrency(entry.saldo)}
-                                  </TableCell>
-                                </TableRow>
-                              ),
-                            )}
-                            <TableRow className="border-t font-semibold">
-                              <TableCell colSpan={2} className="text-right">
-                                Total Kewajiban
-                              </TableCell>
-                              <TableCell className="text-right">
-                                {formatCurrency(
-                                  balanceSheetData.liabilities.total,
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          </TableBody>
-                        </Table>
-                      </CardContent>
-                    </Card>
-
-                    {/* Equity */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-blue-700">EKUITAS</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Kode</TableHead>
-                              <TableHead>Nama Akun</TableHead>
-                              <TableHead className="text-right">
-                                Saldo
-                              </TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {balanceSheetData.equity.entries.map((entry) => (
+                            {balanceSheetData.assets.entries.map((entry) => (
                               <TableRow key={entry.akun.id}>
                                 <TableCell className="font-mono">
                                   {entry.akun.kode}
@@ -510,34 +512,137 @@ export function FinancialStatements({ className }: FinancialStatementsProps) {
                                 </TableCell>
                               </TableRow>
                             ))}
-                            <TableRow className="border-t font-semibold">
-                              <TableCell colSpan={2} className="text-right">
-                                Total Ekuitas
-                              </TableCell>
-                              <TableCell className="text-right">
-                                {formatCurrency(balanceSheetData.equity.total)}
-                              </TableCell>
-                            </TableRow>
                             <TableRow className="border-t-2 font-bold">
                               <TableCell colSpan={2} className="text-right">
-                                TOTAL KEWAJIBAN + EKUITAS
+                                TOTAL ASET
                               </TableCell>
                               <TableCell className="text-right">
-                                {formatCurrency(
-                                  balanceSheetData.totalLiabilitiesEquity,
-                                )}
+                                {formatCurrency(balanceSheetData.totalAssets)}
                               </TableCell>
                             </TableRow>
                           </TableBody>
                         </Table>
                       </CardContent>
                     </Card>
+
+                    {/* Liabilities & Equity */}
+                    <div className="space-y-4">
+                      {/* Liabilities */}
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-red-700">
+                            KEWAJIBAN
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Kode</TableHead>
+                                <TableHead>Nama Akun</TableHead>
+                                <TableHead className="text-right">
+                                  Saldo
+                                </TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {balanceSheetData.liabilities.entries.map(
+                                (entry) => (
+                                  <TableRow key={entry.akun.id}>
+                                    <TableCell className="font-mono">
+                                      {entry.akun.kode}
+                                    </TableCell>
+                                    <TableCell>{entry.akun.nama}</TableCell>
+                                    <TableCell className="text-right font-medium">
+                                      {formatCurrency(entry.saldo)}
+                                    </TableCell>
+                                  </TableRow>
+                                ),
+                              )}
+                              <TableRow className="border-t font-semibold">
+                                <TableCell colSpan={2} className="text-right">
+                                  Total Kewajiban
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {formatCurrency(
+                                    balanceSheetData.liabilities.total,
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            </TableBody>
+                          </Table>
+                        </CardContent>
+                      </Card>
+
+                      {/* Equity */}
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-blue-700">
+                            EKUITAS
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Kode</TableHead>
+                                <TableHead>Nama Akun</TableHead>
+                                <TableHead className="text-right">
+                                  Saldo
+                                </TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {balanceSheetData.equity.entries.map((entry) => (
+                                <TableRow key={entry.akun.id}>
+                                  <TableCell className="font-mono">
+                                    {entry.akun.kode}
+                                  </TableCell>
+                                  <TableCell>{entry.akun.nama}</TableCell>
+                                  <TableCell className="text-right font-medium">
+                                    {formatCurrency(entry.saldo)}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                              <TableRow className="border-t font-semibold">
+                                <TableCell colSpan={2} className="text-right">
+                                  Total Ekuitas
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {formatCurrency(
+                                    balanceSheetData.equity.total,
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                              <TableRow className="border-t">
+                                <TableCell colSpan={2} className="text-right">
+                                  Laba Bersih
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {formatCurrency(
+                                    balanceSheetData.netIncome || 0,
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                              <TableRow className="border-t-2 font-bold">
+                                <TableCell colSpan={2} className="text-right">
+                                  TOTAL KEWAJIBAN + EKUITAS + LABA
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {formatCurrency(
+                                    balanceSheetData.totalLiabilitiesEquity,
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            </TableBody>
+                          </Table>
+                        </CardContent>
+                      </Card>
+                    </div>
                   </div>
                 </div>
               )}
             </TabsContent>
-
-            {/* Income Statement Tab */}
             <TabsContent value="income-statement" className="space-y-4">
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold">Laporan Laba Rugi</h3>

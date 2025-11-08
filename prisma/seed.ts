@@ -109,7 +109,7 @@ async function main() {
       deskripsi: "Piutang dari penjualan",
     },
     {
-      kode: "1003",
+      kode: "1201",
       nama: "Persediaan Barang",
       tipe: "ASSET",
       kategori: "CURRENT_ASSET",

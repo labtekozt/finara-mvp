@@ -6,6 +6,7 @@ import { generateKasirNumber } from "@/lib/transaction-number";
 import {
   createJournalEntryForSale,
   createJournalEntryForCOGS,
+  createJournalEntryForCompleteSale,
 } from "@/lib/accounting-utils";
 import { z } from "zod";
 
@@ -173,27 +174,29 @@ export async function POST(request: NextRequest) {
 
     // Create accounting journal entries
     try {
-      // Journal entry for sales revenue
-      await createJournalEntryForSale(
-        transaksi.nomorTransaksi,
-        validatedData.total,
-        session.user.id,
+      // Create complete sales journal entry (revenue + COGS in one balanced entry)
+      const itemsWithCost = await Promise.all(
+        validatedData.items.map(async (item) => {
+          const barang = await prisma.barang.findUnique({
+            where: { id: item.barangId },
+          });
+          if (!barang) {
+            throw new Error(`Barang ${item.namaBarang} tidak ditemukan`);
+          }
+          return {
+            barangId: item.barangId,
+            qty: item.qty,
+            costPrice: barang.hargaBeli,
+          };
+        }),
       );
 
-      // Journal entries for cost of goods sold (COGS)
-      for (const item of validatedData.items) {
-        const barang = await prisma.barang.findUnique({
-          where: { id: item.barangId },
-        });
-        if (barang) {
-          await createJournalEntryForCOGS(
-            item.barangId,
-            item.qty,
-            barang.hargaBeli,
-            session.user.id,
-          );
-        }
-      }
+      await createJournalEntryForCompleteSale(
+        transaksi.nomorTransaksi,
+        validatedData.total,
+        itemsWithCost,
+        session.user.id,
+      );
     } catch (accountingError) {
       console.error("Error creating accounting entries:", accountingError);
       // Don't fail the transaction if accounting fails, just log it

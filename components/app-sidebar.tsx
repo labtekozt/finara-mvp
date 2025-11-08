@@ -60,12 +60,6 @@ const menuItems = [
     icon: Calculator,
     permission: "canAccessAkuntansi" as const,
   },
-  {
-    title: "Pengaturan",
-    href: "/settings",
-    icon: Settings,
-    permission: "canManageUsers" as const,
-  },
 ];
 
 export function AppSidebar() {

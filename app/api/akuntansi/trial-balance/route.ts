@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/prisma";
 import { hasPermission } from "@/lib/permissions";
 import { TrialBalanceData } from "@/types/accounting";
+import { FinancialValidator } from "@/lib/financial-validator";
+import { AuditLogger } from "@/lib/audit-logger";
 
 export async function GET(request: Request) {
   try {
@@ -83,24 +85,19 @@ export async function GET(request: Request) {
         // Calculate ending balance based on account type and normal balance
         let saldoAkhir = saldoAwal;
 
-        // For balance sheet accounts (Asset, Liability, Equity):
-        // Normal balance is carried forward, then mutations are added/subtracted
-        // For income statement accounts (Revenue, Expense):
-        // They start at 0 each period, mutations create the balance
-        if (akun.tipe === "ASSET") {
-          // Assets: Debit normal, increase with debit, decrease with credit
+        // Apply mutations based on account type
+        if (akun.tipe === "ASSET" || akun.tipe === "EXPENSE") {
+          // Debit normal accounts: increase with debits, decrease with credits
+          // Result: positive balances for debit normal accounts
           saldoAkhir = saldoAkhir + mutasiDebit - mutasiKredit;
-        } else if (akun.tipe === "LIABILITY" || akun.tipe === "EQUITY") {
-          // Liabilities & Equity: Credit normal, increase with credit, decrease with debit
-          saldoAkhir = saldoAkhir + mutasiKredit - mutasiDebit;
-        } else if (akun.tipe === "REVENUE") {
-          // Revenue: Credit normal, increases with credit, decreases with debit
-          // Revenue accounts typically start at 0 each period
-          saldoAkhir = mutasiKredit - mutasiDebit;
-        } else if (akun.tipe === "EXPENSE") {
-          // Expense: Debit normal, increases with debit, decreases with credit
-          // Expense accounts typically start at 0 each period
-          saldoAkhir = mutasiDebit - mutasiKredit;
+        } else if (
+          akun.tipe === "LIABILITY" ||
+          akun.tipe === "EQUITY" ||
+          akun.tipe === "REVENUE"
+        ) {
+          // Credit normal accounts: increase with credits, decrease with debits
+          // Result: negative balances for credit normal accounts (to represent credit balances)
+          saldoAkhir = -(saldoAwal + mutasiKredit - mutasiDebit);
         }
 
         return {
@@ -113,7 +110,7 @@ export async function GET(request: Request) {
       }),
     );
 
-    // Calculate totals
+    // Calculate totals for trial balance format
     const totalSaldoAwal = entries.reduce(
       (sum, entry) => sum + entry.saldoAwal,
       0,
@@ -126,16 +123,36 @@ export async function GET(request: Request) {
       (sum, entry) => sum + entry.mutasiKredit,
       0,
     );
+
+    // For trial balance, calculate debit and credit column totals
+    const totalDebitBalances = entries
+      .filter((entry) => entry.saldoAkhir > 0)
+      .reduce((sum, entry) => sum + entry.saldoAkhir, 0);
+
+    const totalCreditBalances = entries
+      .filter((entry) => entry.saldoAkhir < 0)
+      .reduce((sum, entry) => sum + Math.abs(entry.saldoAkhir), 0);
+
+    // Total ending balance should be algebraic sum (debits + credits = 0 for balanced)
     const totalSaldoAkhir = entries.reduce(
       (sum, entry) => sum + entry.saldoAkhir,
       0,
     );
 
-    // Check if balanced (total debits should equal total credits)
-    const isBalanced =
-      Math.abs(
-        totalSaldoAwal + totalMutasiDebit - totalMutasiKredit - totalSaldoAkhir,
-      ) < 0.01;
+    // Check if balanced using FinancialValidator (FinOps Framework best practice)
+    const validation = FinancialValidator.validateTrialBalance(entries);
+    const isBalanced = validation.isBalanced;
+
+    // Log report generation for audit trail (XBRL compliance)
+    if (session?.user?.id) {
+      await AuditLogger.logReportGeneration(
+        "trial_balance",
+        periodeId || "all_periods",
+        session.user.id,
+        "JSON",
+        { periodeId, isBalanced: validation.isBalanced },
+      );
+    }
 
     const result: TrialBalanceData = {
       periodeId: periodeId || undefined,
@@ -146,6 +163,13 @@ export async function GET(request: Request) {
       totalMutasiKredit,
       totalSaldoAkhir,
       isBalanced,
+      // Add validation details for enhanced reporting
+      validation: {
+        totalDebit: validation.totalDebit,
+        totalCredit: validation.totalCredit,
+        variance: validation.variance,
+        message: validation.message,
+      },
     };
 
     return NextResponse.json(result);

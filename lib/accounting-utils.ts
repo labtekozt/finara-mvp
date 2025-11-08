@@ -6,7 +6,7 @@ export const ACCOUNT_CODES = {
   // Assets
   CASH: "1001",
   ACCOUNTS_RECEIVABLE: "1002",
-  INVENTORY: "1003",
+  INVENTORY: "1201",
 
   // Liabilities
   ACCOUNTS_PAYABLE: "2001",
@@ -168,6 +168,160 @@ export async function createJournalEntryForPurchase(
   return jurnalEntry;
 }
 
+// Create journal entry for complete sales transaction (revenue + COGS)
+export async function createJournalEntryForCompleteSale(
+  transaksiKasirId: string,
+  totalRevenue: number,
+  items: Array<{ barangId: string; qty: number; costPrice: number }>,
+  userId: string,
+) {
+  const periode = await getActiveAccountingPeriod();
+  if (!periode) {
+    throw new Error("Tidak ada periode akuntansi aktif");
+  }
+
+  const cashAccount = await getAccountByCode(ACCOUNT_CODES.CASH);
+  const salesRevenueAccount = await getAccountByCode(
+    ACCOUNT_CODES.SALES_REVENUE,
+  );
+  const inventoryAccount = await getAccountByCode(ACCOUNT_CODES.INVENTORY);
+  const cogsAccount = await getAccountByCode(ACCOUNT_CODES.COST_OF_GOODS_SOLD);
+
+  if (
+    !cashAccount ||
+    !salesRevenueAccount ||
+    !inventoryAccount ||
+    !cogsAccount
+  ) {
+    throw new Error("Salah satu akun tidak ditemukan");
+  }
+
+  // Calculate total COGS
+  const totalCOGS = items.reduce(
+    (sum, item) => sum + item.qty * item.costPrice,
+    0,
+  );
+
+  const nomorJurnal = generateTransactionNumber("JR");
+
+  const jurnalEntry = await prisma.jurnalEntry.create({
+    data: {
+      nomorJurnal,
+      tanggal: new Date(),
+      deskripsi: `Penjualan Tunai - ${transaksiKasirId}`,
+      referensi: transaksiKasirId,
+      tipeReferensi: "SALE",
+      periodeId: periode.id,
+      userId,
+      isPosted: true,
+      details: {
+        create: [
+          // Debit Cash (Asset increases)
+          {
+            akunId: cashAccount.id,
+            debit: totalRevenue,
+            kredit: 0,
+            deskripsi: "Penerimaan kas dari penjualan",
+          },
+          // Debit COGS (Expense increases)
+          {
+            akunId: cogsAccount.id,
+            debit: totalCOGS,
+            kredit: 0,
+            deskripsi: "Harga pokok penjualan",
+          },
+          // Credit Sales Revenue (Revenue increases)
+          {
+            akunId: salesRevenueAccount.id,
+            debit: 0,
+            kredit: totalRevenue,
+            deskripsi: "Pendapatan dari penjualan",
+          },
+          // Credit Inventory (Asset decreases)
+          {
+            akunId: inventoryAccount.id,
+            debit: 0,
+            kredit: totalCOGS,
+            deskripsi: "Pengurangan persediaan akibat penjualan",
+          },
+        ],
+      },
+    },
+    include: {
+      details: {
+        include: {
+          akun: true,
+        },
+      },
+    },
+  });
+
+  return jurnalEntry;
+}
+
+// Create journal entry for cost of goods sold (COGS)
+export async function createJournalEntryForCOGS(
+  barangId: string,
+  quantity: number,
+  costPrice: number,
+  userId: string,
+) {
+  const periode = await getActiveAccountingPeriod();
+  if (!periode) {
+    throw new Error("Tidak ada periode akuntansi aktif");
+  }
+
+  const inventoryAccount = await getAccountByCode(ACCOUNT_CODES.INVENTORY);
+  const cogsAccount = await getAccountByCode(ACCOUNT_CODES.COST_OF_GOODS_SOLD);
+
+  if (!inventoryAccount || !cogsAccount) {
+    throw new Error("Akun persediaan atau HPP tidak ditemukan");
+  }
+
+  const totalCOGS = quantity * costPrice;
+  const nomorJurnal = generateTransactionNumber("JR");
+
+  const jurnalEntry = await prisma.jurnalEntry.create({
+    data: {
+      nomorJurnal,
+      tanggal: new Date(),
+      deskripsi: `HPP Penjualan - Barang ${barangId}`,
+      referensi: `COGS-${barangId}`,
+      tipeReferensi: "COGS",
+      periodeId: periode.id,
+      userId,
+      isPosted: true,
+      details: {
+        create: [
+          // Debit COGS (Expense increases)
+          {
+            akunId: cogsAccount.id,
+            debit: totalCOGS,
+            kredit: 0,
+            deskripsi: `HPP ${quantity} unit @ Rp ${costPrice.toLocaleString("id-ID")}`,
+          },
+          // Credit Inventory (Asset decreases)
+          {
+            akunId: inventoryAccount.id,
+            debit: 0,
+            kredit: totalCOGS,
+            deskripsi: "Pengurangan persediaan akibat penjualan",
+          },
+        ],
+      },
+    },
+    include: {
+      details: {
+        include: {
+          akun: true,
+        },
+      },
+    },
+  });
+
+  return jurnalEntry;
+}
+
 // Create journal entry for salary expense
 export async function createJournalEntryForSalary(
   employeeName: string,
@@ -215,69 +369,6 @@ export async function createJournalEntryForSalary(
             debit: 0,
             kredit: amount,
             deskripsi: "Pembayaran gaji",
-          },
-        ],
-      },
-    },
-    include: {
-      details: {
-        include: {
-          akun: true,
-        },
-      },
-    },
-  });
-
-  return jurnalEntry;
-}
-
-// Create journal entry for inventory adjustment (cost of goods sold)
-export async function createJournalEntryForCOGS(
-  barangId: string,
-  quantity: number,
-  costPerUnit: number,
-  userId: string,
-) {
-  const periode = await getActiveAccountingPeriod();
-  if (!periode) {
-    throw new Error("Tidak ada periode akuntansi aktif");
-  }
-
-  const cogsAccount = await getAccountByCode(ACCOUNT_CODES.COST_OF_GOODS_SOLD);
-  const inventoryAccount = await getAccountByCode(ACCOUNT_CODES.INVENTORY);
-
-  if (!cogsAccount || !inventoryAccount) {
-    throw new Error("Akun COGS atau persediaan tidak ditemukan");
-  }
-
-  const totalAmount = quantity * costPerUnit;
-  const nomorJurnal = generateTransactionNumber("JR");
-
-  const jurnalEntry = await prisma.jurnalEntry.create({
-    data: {
-      nomorJurnal,
-      tanggal: new Date(),
-      deskripsi: `Harga Pokok Penjualan - ${barangId}`,
-      referensi: `COGS-${barangId}`,
-      tipeReferensi: "COGS",
-      periodeId: periode.id,
-      userId,
-      isPosted: true,
-      details: {
-        create: [
-          // Debit COGS (Expense increases)
-          {
-            akunId: cogsAccount.id,
-            debit: totalAmount,
-            kredit: 0,
-            deskripsi: "Harga pokok penjualan",
-          },
-          // Credit Inventory (Asset decreases)
-          {
-            akunId: inventoryAccount.id,
-            debit: 0,
-            kredit: totalAmount,
-            deskripsi: "Pengurangan persediaan",
           },
         ],
       },

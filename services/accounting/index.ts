@@ -419,6 +419,24 @@ export class AccountingService {
   }
 
   // Period Closing
+  static async calculateInitialCapital(): Promise<{
+    totalInventoryValue: number;
+    capitalAccountId: string;
+    inventoryAccountId: string;
+  }> {
+    const response = await fetch(
+      `${this.BASE_URL}/periode/calculate-initial-capital`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+    if (!response.ok) {
+      throw new Error("Failed to calculate initial capital");
+    }
+    return response.json();
+  }
+
   static async closePeriod(periodeId: string): Promise<PeriodClosingData> {
     const response = await fetch(
       `${this.BASE_URL}/periode/${periodeId}/close`,
