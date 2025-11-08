@@ -45,12 +45,6 @@ const menuItems = [
     permission: "canAccessInventaris" as const,
   },
   {
-    title: "Transaksi Barang",
-    href: "/transaksi",
-    icon: ArrowLeftRight,
-    permission: "canAccessTransaksi" as const,
-  },
-  {
     title: "Pengaturan",
     href: "/settings",
     icon: Settings,
