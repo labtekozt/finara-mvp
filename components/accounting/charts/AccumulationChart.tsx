@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   Table,
@@ -7,51 +7,65 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { AccumulationData, AccumulationPeriod } from "@/types/accounting"
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { AccumulationData, AccumulationPeriod } from "@/types/accounting";
 
 interface AccumulationChartProps {
-  data: AccumulationData[]
-  period: AccumulationPeriod
-  loading?: boolean
+  data: AccumulationData[];
+  period: AccumulationPeriod;
+  loading?: boolean;
 }
 
-export function AccumulationChart({ data, period, loading }: AccumulationChartProps) {
+export function AccumulationChart({
+  data,
+  period,
+  loading,
+}: AccumulationChartProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <div className="text-sm text-muted-foreground">Memuat data akumulasi...</div>
+        <div className="text-sm text-muted-foreground">
+          Memuat data akumulasi...
+        </div>
       </div>
-    )
+    );
   }
 
   if (data.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-sm text-muted-foreground">Tidak ada data untuk ditampilkan</p>
+        <p className="text-sm text-muted-foreground">
+          Tidak ada data untuk ditampilkan
+        </p>
       </div>
-    )
+    );
   }
 
-  const formatPeriodLabel = (periodStr: string, periodType: AccumulationPeriod) => {
+  const formatPeriodLabel = (
+    periodStr: string,
+    periodType: AccumulationPeriod,
+  ) => {
     switch (periodType) {
-      case 'daily':
-        return new Date(periodStr).toLocaleDateString('id-ID')
-      case 'monthly':
-        const [year, month] = periodStr.split('-')
-        return `${month}/${year}`
-      case 'yearly':
-        return periodStr
+      case "daily":
+        return new Date(periodStr).toLocaleDateString("id-ID");
+      case "monthly":
+        const [year, month] = periodStr.split("-");
+        return `${month}/${year}`;
+      case "yearly":
+        return periodStr;
       default:
-        return periodStr
+        return periodStr;
     }
-  }
+  };
 
-  const totalDebit = data.reduce((sum, item) => sum + item.totalDebit, 0)
-  const totalKredit = data.reduce((sum, item) => sum + item.totalKredit, 0)
-  const totalTransactions = data.reduce((sum, item) => sum + item.transactionCount, 0)
-  const balancedCount = data.filter(item => item.isBalanced).length
+  const totalDebit = data.reduce((sum, item) => sum + item.totalDebit, 0);
+  const totalKredit = data.reduce((sum, item) => sum + item.totalKredit, 0);
+  const totalTransactions = data.reduce(
+    (sum, item) => sum + item.transactionCount,
+    0,
+  );
+  const balancedCount = data.filter((item) => item.isBalanced).length;
 
   return (
     <div className="space-y-4">
@@ -62,15 +76,21 @@ export function AccumulationChart({ data, period, loading }: AccumulationChartPr
           <div className="text-xs text-muted-foreground">Total Transaksi</div>
         </div>
         <div className="text-center p-3 bg-muted/50 rounded-lg">
-          <div className="text-lg font-semibold">Rp {totalDebit.toLocaleString('id-ID')}</div>
+          <div className="text-lg font-semibold">
+            Rp {totalDebit.toLocaleString("id-ID")}
+          </div>
           <div className="text-xs text-muted-foreground">Total Debit</div>
         </div>
         <div className="text-center p-3 bg-muted/50 rounded-lg">
-          <div className="text-lg font-semibold">Rp {totalKredit.toLocaleString('id-ID')}</div>
+          <div className="text-lg font-semibold">
+            Rp {totalKredit.toLocaleString("id-ID")}
+          </div>
           <div className="text-xs text-muted-foreground">Total Kredit</div>
         </div>
         <div className="text-center p-3 bg-muted/50 rounded-lg">
-          <div className="text-lg font-semibold">{balancedCount}/{data.length}</div>
+          <div className="text-lg font-semibold">
+            {balancedCount}/{data.length}
+          </div>
           <div className="text-xs text-muted-foreground">Seimbang</div>
         </div>
       </div>
@@ -93,12 +113,14 @@ export function AccumulationChart({ data, period, loading }: AccumulationChartPr
                 <TableCell className="font-medium">
                   {formatPeriodLabel(item.period, period)}
                 </TableCell>
-                <TableCell className="text-right">{item.transactionCount}</TableCell>
                 <TableCell className="text-right">
-                  Rp {item.totalDebit.toLocaleString('id-ID')}
+                  {item.transactionCount}
                 </TableCell>
                 <TableCell className="text-right">
-                  Rp {item.totalKredit.toLocaleString('id-ID')}
+                  Rp {item.totalDebit.toLocaleString("id-ID")}
+                </TableCell>
+                <TableCell className="text-right">
+                  Rp {item.totalKredit.toLocaleString("id-ID")}
                 </TableCell>
                 <TableCell className="text-center">
                   <Badge variant={item.isBalanced ? "default" : "destructive"}>
@@ -113,13 +135,17 @@ export function AccumulationChart({ data, period, loading }: AccumulationChartPr
               <TableCell>Total</TableCell>
               <TableCell className="text-right">{totalTransactions}</TableCell>
               <TableCell className="text-right">
-                Rp {totalDebit.toLocaleString('id-ID')}
+                Rp {totalDebit.toLocaleString("id-ID")}
               </TableCell>
               <TableCell className="text-right">
-                Rp {totalKredit.toLocaleString('id-ID')}
+                Rp {totalKredit.toLocaleString("id-ID")}
               </TableCell>
               <TableCell className="text-center">
-                <Badge variant={totalDebit === totalKredit ? "default" : "destructive"}>
+                <Badge
+                  variant={
+                    totalDebit === totalKredit ? "default" : "destructive"
+                  }
+                >
                   {totalDebit === totalKredit ? "✓" : "✗"}
                 </Badge>
               </TableCell>
@@ -128,5 +154,5 @@ export function AccumulationChart({ data, period, loading }: AccumulationChartPr
         </Table>
       </div>
     </div>
-  )
+  );
 }

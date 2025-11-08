@@ -130,53 +130,53 @@ export default function NewModulePage() {
 ```
 
 ```typescript
-import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth-options"
-import { prisma } from "@/lib/prisma"
-import { z } from "zod"
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth-options";
+import { prisma } from "@/lib/prisma";
+import { z } from "zod";
 
 const schema = z.object({
   // Define your schema
-})
+});
 
 export async function GET(request: NextRequest) {
-  const session = await getServerSession(authOptions)
+  const session = await getServerSession(authOptions);
   if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  
+
   // Your logic here
-  const data = await prisma.yourModel.findMany()
-  return NextResponse.json(data)
+  const data = await prisma.yourModel.findMany();
+  return NextResponse.json(data);
 }
 
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions)
+  const session = await getServerSession(authOptions);
   if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  
+
   try {
-    const body = await request.json()
-    const validatedData = schema.parse(body)
-    
+    const body = await request.json();
+    const validatedData = schema.parse(body);
+
     const result = await prisma.yourModel.create({
-      data: validatedData
-    })
-    
-    return NextResponse.json(result, { status: 201 })
+      data: validatedData,
+    });
+
+    return NextResponse.json(result, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Validation error", details: error.errors },
-        { status: 400 }
-      )
+        { status: 400 },
+      );
     }
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
-    )
+      { status: 500 },
+    );
   }
 }
 ```
@@ -193,7 +193,7 @@ model YourModel {
   name      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@map("your_table_name")
 }
 ```
@@ -227,7 +227,7 @@ const menuItems = [
     icon: YourIcon,
     permission: "canAccessNewModule" as const,
   },
-]
+];
 ```
 
 Update `lib/permissions.ts`:
@@ -239,7 +239,7 @@ export const permissions = {
     canAccessNewModule: true,
   },
   // ... other roles
-}
+};
 ```
 
 ## Common Tasks
@@ -247,6 +247,7 @@ export const permissions = {
 ### Add New User Role
 
 1. Update `prisma/schema.prisma`:
+
 ```prisma
 enum UserRole {
   KASIR
@@ -260,6 +261,7 @@ enum UserRole {
 2. Update permissions in `lib/permissions.ts`
 
 3. Run:
+
 ```bash
 npm run db:generate
 npm run db:push
@@ -269,16 +271,16 @@ npm run db:push
 
 ```typescript
 // hooks/use-your-hook.ts
-import { useState, useEffect } from "react"
+import { useState, useEffect } from "react";
 
 export function useYourHook() {
-  const [state, setState] = useState()
-  
+  const [state, setState] = useState();
+
   useEffect(() => {
     // Your logic
-  }, [])
-  
-  return { state, setState }
+  }, []);
+
+  return { state, setState };
 }
 ```
 
@@ -288,7 +290,7 @@ export function useYourHook() {
 // lib/your-utils.ts
 export function yourUtilityFunction(param: string): string {
   // Your logic
-  return result
+  return result;
 }
 ```
 
@@ -314,11 +316,11 @@ export function YourForm() {
       email: "",
     },
   })
-  
+
   async function onSubmit(data: FormData) {
     // Handle submission
   }
-  
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -386,24 +388,24 @@ npm run lint -- --fix
 ### Fetch Data from API
 
 ```typescript
-const [data, setData] = useState([])
-const [loading, setLoading] = useState(true)
+const [data, setData] = useState([]);
+const [loading, setLoading] = useState(true);
 
 useEffect(() => {
   async function fetchData() {
     try {
-      setLoading(true)
-      const response = await fetch('/api/endpoint')
-      const data = await response.json()
-      setData(data)
+      setLoading(true);
+      const response = await fetch("/api/endpoint");
+      const data = await response.json();
+      setData(data);
     } catch (error) {
-      toast.error('Failed to fetch data')
+      toast.error("Failed to fetch data");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
-  fetchData()
-}, [])
+  fetchData();
+}, []);
 ```
 
 ### Create with API
@@ -411,22 +413,22 @@ useEffect(() => {
 ```typescript
 async function handleCreate(formData: any) {
   try {
-    const response = await fetch('/api/endpoint', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const response = await fetch("/api/endpoint", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData),
-    })
-    
+    });
+
     if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to create')
+      const error = await response.json();
+      throw new Error(error.error || "Failed to create");
     }
-    
-    const result = await response.json()
-    toast.success('Created successfully')
+
+    const result = await response.json();
+    toast.success("Created successfully");
     // Refresh data or redirect
   } catch (error: any) {
-    toast.error(error.message)
+    toast.error(error.message);
   }
 }
 ```
@@ -437,17 +439,17 @@ async function handleCreate(formData: any) {
 async function handleUpdate(id: string, formData: any) {
   try {
     const response = await fetch(`/api/endpoint/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData),
-    })
-    
-    if (!response.ok) throw new Error('Failed to update')
-    
-    toast.success('Updated successfully')
+    });
+
+    if (!response.ok) throw new Error("Failed to update");
+
+    toast.success("Updated successfully");
     // Refresh data
   } catch (error: any) {
-    toast.error(error.message)
+    toast.error(error.message);
   }
 }
 ```
@@ -456,19 +458,19 @@ async function handleUpdate(id: string, formData: any) {
 
 ```typescript
 async function handleDelete(id: string) {
-  if (!confirm('Are you sure?')) return
-  
+  if (!confirm("Are you sure?")) return;
+
   try {
     const response = await fetch(`/api/endpoint/${id}`, {
-      method: 'DELETE',
-    })
-    
-    if (!response.ok) throw new Error('Failed to delete')
-    
-    toast.success('Deleted successfully')
+      method: "DELETE",
+    });
+
+    if (!response.ok) throw new Error("Failed to delete");
+
+    toast.success("Deleted successfully");
     // Refresh data
   } catch (error: any) {
-    toast.error(error.message)
+    toast.error(error.message);
   }
 }
 ```
@@ -482,15 +484,15 @@ import { redirect } from "next/navigation"
 
 export default async function ProtectedPage() {
   const session = await getServerSession(authOptions)
-  
+
   if (!session) {
     redirect('/login')
   }
-  
+
   if (session.user.role !== 'ADMIN') {
     redirect('/dashboard')
   }
-  
+
   return <div>Admin Only Content</div>
 }
 ```
@@ -499,16 +501,16 @@ export default async function ProtectedPage() {
 
 ```typescript
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions)
-  
+  const session = await getServerSession(authOptions);
+
   if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  
-  if (!hasPermission(session.user.role, 'requiredPermission')) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+
+  if (!hasPermission(session.user.role, "requiredPermission")) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
-  
+
   // Your logic here
 }
 ```
@@ -527,15 +529,15 @@ function formatRupiah(amount: number): string {
 ### Format Date (Indonesian)
 
 ```typescript
-import { format } from 'date-fns'
-import { id } from 'date-fns/locale'
+import { format } from "date-fns";
+import { id } from "date-fns/locale";
 
 function formatDate(date: Date): string {
-  return format(date, 'dd MMMM yyyy', { locale: id })
+  return format(date, "dd MMMM yyyy", { locale: id });
 }
 
 function formatDateTime(date: Date): string {
-  return format(date, 'dd/MM/yyyy HH:mm', { locale: id })
+  return format(date, "dd/MM/yyyy HH:mm", { locale: id });
 }
 ```
 
@@ -606,5 +608,3 @@ git push origin fix/bug-description
 💡 **Pro Tip**: Bookmark this file for quick access during development!
 
 Keep this guide open in a separate tab while coding for quick reference.
-
-

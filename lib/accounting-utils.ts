@@ -1,5 +1,5 @@
-import { prisma } from "./prisma"
-import { generateTransactionNumber } from "./transaction-number"
+import { prisma } from "./prisma";
+import { generateTransactionNumber } from "./transaction-number";
 
 // Account codes (these should match your chart of accounts)
 export const ACCOUNT_CODES = {
@@ -22,14 +22,14 @@ export const ACCOUNT_CODES = {
   COST_OF_GOODS_SOLD: "5001",
   SALARY_EXPENSE: "5002",
   UTILITY_EXPENSE: "5003",
-  OTHER_EXPENSE: "5004"
-}
+  OTHER_EXPENSE: "5004",
+};
 
 // Get active accounting period
 export async function getActiveAccountingPeriod() {
   return await prisma.periodeAkuntansi.findFirst({
-    where: { isActive: true }
-  })
+    where: { isActive: true },
+  });
 }
 
 // Get account by code
@@ -37,30 +37,32 @@ export async function getAccountByCode(code: string) {
   return await prisma.akun.findFirst({
     where: {
       kode: code,
-      isActive: true
-    }
-  })
+      isActive: true,
+    },
+  });
 }
 
 // Create journal entry for POS transaction
 export async function createJournalEntryForSale(
   transaksiKasirId: string,
   totalAmount: number,
-  userId: string
+  userId: string,
 ) {
-  const periode = await getActiveAccountingPeriod()
+  const periode = await getActiveAccountingPeriod();
   if (!periode) {
-    throw new Error("Tidak ada periode akuntansi aktif")
+    throw new Error("Tidak ada periode akuntansi aktif");
   }
 
-  const cashAccount = await getAccountByCode(ACCOUNT_CODES.CASH)
-  const salesRevenueAccount = await getAccountByCode(ACCOUNT_CODES.SALES_REVENUE)
+  const cashAccount = await getAccountByCode(ACCOUNT_CODES.CASH);
+  const salesRevenueAccount = await getAccountByCode(
+    ACCOUNT_CODES.SALES_REVENUE,
+  );
 
   if (!cashAccount || !salesRevenueAccount) {
-    throw new Error("Akun kas atau pendapatan penjualan tidak ditemukan")
+    throw new Error("Akun kas atau pendapatan penjualan tidak ditemukan");
   }
 
-  const nomorJurnal = generateTransactionNumber("JR")
+  const nomorJurnal = generateTransactionNumber("JR");
 
   const jurnalEntry = await prisma.jurnalEntry.create({
     data: {
@@ -79,49 +81,51 @@ export async function createJournalEntryForSale(
             akunId: cashAccount.id,
             debit: totalAmount,
             kredit: 0,
-            deskripsi: "Penerimaan kas dari penjualan"
+            deskripsi: "Penerimaan kas dari penjualan",
           },
           // Credit Sales Revenue (Revenue increases)
           {
             akunId: salesRevenueAccount.id,
             debit: 0,
             kredit: totalAmount,
-            deskripsi: "Pendapatan dari penjualan"
-          }
-        ]
-      }
+            deskripsi: "Pendapatan dari penjualan",
+          },
+        ],
+      },
     },
     include: {
       details: {
         include: {
-          akun: true
-        }
-      }
-    }
-  })
+          akun: true,
+        },
+      },
+    },
+  });
 
-  return jurnalEntry
+  return jurnalEntry;
 }
 
 // Create journal entry for inventory purchase
 export async function createJournalEntryForPurchase(
   transaksiMasukId: string,
   totalAmount: number,
-  userId: string
+  userId: string,
 ) {
-  const periode = await getActiveAccountingPeriod()
+  const periode = await getActiveAccountingPeriod();
   if (!periode) {
-    throw new Error("Tidak ada periode akuntansi aktif")
+    throw new Error("Tidak ada periode akuntansi aktif");
   }
 
-  const inventoryAccount = await getAccountByCode(ACCOUNT_CODES.INVENTORY)
-  const accountsPayableAccount = await getAccountByCode(ACCOUNT_CODES.ACCOUNTS_PAYABLE)
+  const inventoryAccount = await getAccountByCode(ACCOUNT_CODES.INVENTORY);
+  const accountsPayableAccount = await getAccountByCode(
+    ACCOUNT_CODES.ACCOUNTS_PAYABLE,
+  );
 
   if (!inventoryAccount || !accountsPayableAccount) {
-    throw new Error("Akun persediaan atau hutang tidak ditemukan")
+    throw new Error("Akun persediaan atau hutang tidak ditemukan");
   }
 
-  const nomorJurnal = generateTransactionNumber("JR")
+  const nomorJurnal = generateTransactionNumber("JR");
 
   const jurnalEntry = await prisma.jurnalEntry.create({
     data: {
@@ -140,49 +144,51 @@ export async function createJournalEntryForPurchase(
             akunId: inventoryAccount.id,
             debit: totalAmount,
             kredit: 0,
-            deskripsi: "Pembelian persediaan"
+            deskripsi: "Pembelian persediaan",
           },
           // Credit Accounts Payable (Liability increases)
           {
             akunId: accountsPayableAccount.id,
             debit: 0,
             kredit: totalAmount,
-            deskripsi: "Hutang pembelian"
-          }
-        ]
-      }
+            deskripsi: "Hutang pembelian",
+          },
+        ],
+      },
     },
     include: {
       details: {
         include: {
-          akun: true
-        }
-      }
-    }
-  })
+          akun: true,
+        },
+      },
+    },
+  });
 
-  return jurnalEntry
+  return jurnalEntry;
 }
 
 // Create journal entry for salary expense
 export async function createJournalEntryForSalary(
   employeeName: string,
   amount: number,
-  userId: string
+  userId: string,
 ) {
-  const periode = await getActiveAccountingPeriod()
+  const periode = await getActiveAccountingPeriod();
   if (!periode) {
-    throw new Error("Tidak ada periode akuntansi aktif")
+    throw new Error("Tidak ada periode akuntansi aktif");
   }
 
-  const salaryExpenseAccount = await getAccountByCode(ACCOUNT_CODES.SALARY_EXPENSE)
-  const cashAccount = await getAccountByCode(ACCOUNT_CODES.CASH)
+  const salaryExpenseAccount = await getAccountByCode(
+    ACCOUNT_CODES.SALARY_EXPENSE,
+  );
+  const cashAccount = await getAccountByCode(ACCOUNT_CODES.CASH);
 
   if (!salaryExpenseAccount || !cashAccount) {
-    throw new Error("Akun gaji atau kas tidak ditemukan")
+    throw new Error("Akun gaji atau kas tidak ditemukan");
   }
 
-  const nomorJurnal = generateTransactionNumber("JR")
+  const nomorJurnal = generateTransactionNumber("JR");
 
   const jurnalEntry = await prisma.jurnalEntry.create({
     data: {
@@ -201,28 +207,28 @@ export async function createJournalEntryForSalary(
             akunId: salaryExpenseAccount.id,
             debit: amount,
             kredit: 0,
-            deskripsi: `Gaji ${employeeName}`
+            deskripsi: `Gaji ${employeeName}`,
           },
           // Credit Cash (Asset decreases)
           {
             akunId: cashAccount.id,
             debit: 0,
             kredit: amount,
-            deskripsi: "Pembayaran gaji"
-          }
-        ]
-      }
+            deskripsi: "Pembayaran gaji",
+          },
+        ],
+      },
     },
     include: {
       details: {
         include: {
-          akun: true
-        }
-      }
-    }
-  })
+          akun: true,
+        },
+      },
+    },
+  });
 
-  return jurnalEntry
+  return jurnalEntry;
 }
 
 // Create journal entry for inventory adjustment (cost of goods sold)
@@ -230,22 +236,22 @@ export async function createJournalEntryForCOGS(
   barangId: string,
   quantity: number,
   costPerUnit: number,
-  userId: string
+  userId: string,
 ) {
-  const periode = await getActiveAccountingPeriod()
+  const periode = await getActiveAccountingPeriod();
   if (!periode) {
-    throw new Error("Tidak ada periode akuntansi aktif")
+    throw new Error("Tidak ada periode akuntansi aktif");
   }
 
-  const cogsAccount = await getAccountByCode(ACCOUNT_CODES.COST_OF_GOODS_SOLD)
-  const inventoryAccount = await getAccountByCode(ACCOUNT_CODES.INVENTORY)
+  const cogsAccount = await getAccountByCode(ACCOUNT_CODES.COST_OF_GOODS_SOLD);
+  const inventoryAccount = await getAccountByCode(ACCOUNT_CODES.INVENTORY);
 
   if (!cogsAccount || !inventoryAccount) {
-    throw new Error("Akun COGS atau persediaan tidak ditemukan")
+    throw new Error("Akun COGS atau persediaan tidak ditemukan");
   }
 
-  const totalAmount = quantity * costPerUnit
-  const nomorJurnal = generateTransactionNumber("JR")
+  const totalAmount = quantity * costPerUnit;
+  const nomorJurnal = generateTransactionNumber("JR");
 
   const jurnalEntry = await prisma.jurnalEntry.create({
     data: {
@@ -264,49 +270,51 @@ export async function createJournalEntryForCOGS(
             akunId: cogsAccount.id,
             debit: totalAmount,
             kredit: 0,
-            deskripsi: "Harga pokok penjualan"
+            deskripsi: "Harga pokok penjualan",
           },
           // Credit Inventory (Asset decreases)
           {
             akunId: inventoryAccount.id,
             debit: 0,
             kredit: totalAmount,
-            deskripsi: "Pengurangan persediaan"
-          }
-        ]
-      }
+            deskripsi: "Pengurangan persediaan",
+          },
+        ],
+      },
     },
     include: {
       details: {
         include: {
-          akun: true
-        }
-      }
-    }
-  })
+          akun: true,
+        },
+      },
+    },
+  });
 
-  return jurnalEntry
+  return jurnalEntry;
 }
 
 // Create journal entry for inventory adjustment (outgoing goods)
 export async function createJournalEntryForInventoryAdjustment(
   transaksiKeluarId: string,
   totalAmount: number,
-  userId: string
+  userId: string,
 ) {
-  const periode = await getActiveAccountingPeriod()
+  const periode = await getActiveAccountingPeriod();
   if (!periode) {
-    throw new Error("Tidak ada periode akuntansi aktif")
+    throw new Error("Tidak ada periode akuntansi aktif");
   }
 
-  const inventoryAccount = await getAccountByCode(ACCOUNT_CODES.INVENTORY)
-  const otherExpenseAccount = await getAccountByCode(ACCOUNT_CODES.OTHER_EXPENSE)
+  const inventoryAccount = await getAccountByCode(ACCOUNT_CODES.INVENTORY);
+  const otherExpenseAccount = await getAccountByCode(
+    ACCOUNT_CODES.OTHER_EXPENSE,
+  );
 
   if (!inventoryAccount || !otherExpenseAccount) {
-    throw new Error("Akun persediaan atau beban lain tidak ditemukan")
+    throw new Error("Akun persediaan atau beban lain tidak ditemukan");
   }
 
-  const nomorJurnal = generateTransactionNumber("JR")
+  const nomorJurnal = generateTransactionNumber("JR");
 
   const jurnalEntry = await prisma.jurnalEntry.create({
     data: {
@@ -325,42 +333,42 @@ export async function createJournalEntryForInventoryAdjustment(
             akunId: otherExpenseAccount.id,
             debit: totalAmount,
             kredit: 0,
-            deskripsi: "Penyesuaian persediaan keluar"
+            deskripsi: "Penyesuaian persediaan keluar",
           },
           // Credit Inventory (Asset decreases)
           {
             akunId: inventoryAccount.id,
             debit: 0,
             kredit: totalAmount,
-            deskripsi: "Pengurangan persediaan"
-          }
-        ]
-      }
+            deskripsi: "Pengurangan persediaan",
+          },
+        ],
+      },
     },
     include: {
       details: {
         include: {
-          akun: true
-        }
-      }
-    }
-  })
+          akun: true,
+        },
+      },
+    },
+  });
 
-  return jurnalEntry
+  return jurnalEntry;
 }
 
 // Create journal entry for expense
 export async function createJournalEntryForExpense(
   tx: any,
   pengeluaran: any,
-  userId: string
+  userId: string,
 ) {
   const periode = await tx.periodeAkuntansi.findFirst({
-    where: { isActive: true }
-  })
+    where: { isActive: true },
+  });
 
   if (!periode) {
-    throw new Error("Tidak ada periode akuntansi aktif")
+    throw new Error("Tidak ada periode akuntansi aktif");
   }
 
   // Map expense categories to account codes
@@ -374,30 +382,31 @@ export async function createJournalEntryForExpense(
     IKLAN_PROMOSI: "5008", // Advertising
     PAJAK: "5009", // Taxes
     ASURANSI: "5010", // Insurance
-    LAINNYA: ACCOUNT_CODES.OTHER_EXPENSE
-  }
+    LAINNYA: ACCOUNT_CODES.OTHER_EXPENSE,
+  };
 
-  const expenseAccountCode = expenseAccountMap[pengeluaran.kategori] || ACCOUNT_CODES.OTHER_EXPENSE
+  const expenseAccountCode =
+    expenseAccountMap[pengeluaran.kategori] || ACCOUNT_CODES.OTHER_EXPENSE;
 
   const expenseAccount = await tx.akun.findFirst({
     where: {
       kode: expenseAccountCode,
-      isActive: true
-    }
-  })
+      isActive: true,
+    },
+  });
 
   const cashAccount = await tx.akun.findFirst({
     where: {
       kode: ACCOUNT_CODES.CASH,
-      isActive: true
-    }
-  })
+      isActive: true,
+    },
+  });
 
   if (!expenseAccount || !cashAccount) {
-    throw new Error("Akun pengeluaran atau kas tidak ditemukan")
+    throw new Error("Akun pengeluaran atau kas tidak ditemukan");
   }
 
-  const nomorJurnal = generateTransactionNumber("JR")
+  const nomorJurnal = generateTransactionNumber("JR");
 
   const jurnalEntry = await tx.jurnalEntry.create({
     data: {
@@ -416,26 +425,26 @@ export async function createJournalEntryForExpense(
             akunId: expenseAccount.id,
             debit: pengeluaran.jumlah,
             kredit: 0,
-            deskripsi: pengeluaran.deskripsi
+            deskripsi: pengeluaran.deskripsi,
           },
           // Credit Cash (Asset decreases)
           {
             akunId: cashAccount.id,
             debit: 0,
             kredit: pengeluaran.jumlah,
-            deskripsi: `Pembayaran ke ${pengeluaran.penerima}`
-          }
-        ]
-      }
+            deskripsi: `Pembayaran ke ${pengeluaran.penerima}`,
+          },
+        ],
+      },
     },
     include: {
       details: {
         include: {
-          akun: true
-        }
-      }
-    }
-  })
+          akun: true,
+        },
+      },
+    },
+  });
 
-  return jurnalEntry
+  return jurnalEntry;
 }

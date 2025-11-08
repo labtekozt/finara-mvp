@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { signOut } from "next-auth/react"
-import { Button } from "@/components/ui/button"
-import { LogOut } from "lucide-react"
+import { signOut } from "next-auth/react";
+import { Button } from "@/components/ui/button";
+import { LogOut } from "lucide-react";
 
 interface HeaderProps {
-  title: string
-  description?: string
+  title: string;
+  description?: string;
 }
 
 export function Header({ title, description }: HeaderProps) {
@@ -29,7 +29,5 @@ export function Header({ title, description }: HeaderProps) {
         </Button>
       </div>
     </div>
-  )
+  );
 }
-
-

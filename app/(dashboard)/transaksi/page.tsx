@@ -1,18 +1,24 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useMemo } from "react"
-import { Header } from "@/components/header"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
+import { useState, useEffect, useMemo } from "react";
+import { Header } from "@/components/header";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -20,7 +26,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -28,63 +34,71 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { Plus, TrendingUp, TrendingDown, Calendar, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
-import { toast } from "sonner"
-import { format } from "date-fns"
+} from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import {
+  Plus,
+  TrendingUp,
+  TrendingDown,
+  Calendar,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+} from "lucide-react";
+import { toast } from "sonner";
+import { format } from "date-fns";
 
 interface Barang {
-  id: string
-  nama: string
-  stok: number
-  satuan: string
-  hargaBeli: number
+  id: string;
+  nama: string;
+  stok: number;
+  satuan: string;
+  hargaBeli: number;
 }
 
 interface Lokasi {
-  id: string
-  namaLokasi: string
+  id: string;
+  namaLokasi: string;
 }
 
 interface TransaksiMasuk {
-  id: string
-  nomorTransaksi: string
-  tanggal: string
-  qty: number
-  hargaBeli: number
-  totalNilai: number
-  sumber: string
-  keterangan?: string
-  barang: Barang
-  lokasi: Lokasi
+  id: string;
+  nomorTransaksi: string;
+  tanggal: string;
+  qty: number;
+  hargaBeli: number;
+  totalNilai: number;
+  sumber: string;
+  keterangan?: string;
+  barang: Barang;
+  lokasi: Lokasi;
 }
 
 interface TransaksiKeluar {
-  id: string
-  nomorTransaksi: string
-  tanggal: string
-  qty: number
-  hargaBarang: number
-  totalNilai: number
-  tujuan: string
-  keterangan?: string
-  barang: Barang
-  lokasi: Lokasi
+  id: string;
+  nomorTransaksi: string;
+  tanggal: string;
+  qty: number;
+  hargaBarang: number;
+  totalNilai: number;
+  tujuan: string;
+  keterangan?: string;
+  barang: Barang;
+  lokasi: Lokasi;
 }
 
 export default function TransaksiPage() {
-  const [barang, setBarang] = useState<Barang[]>([])
-  const [lokasi, setLokasi] = useState<Lokasi[]>([])
-  const [transaksiMasuk, setTransaksiMasuk] = useState<TransaksiMasuk[]>([])
-  const [transaksiKeluar, setTransaksiKeluar] = useState<TransaksiKeluar[]>([])
-  const [loading, setLoading] = useState(false)
-  const [dialogType, setDialogType] = useState<"masuk" | "keluar" | null>(null)
-  const [sortColumn, setSortColumn] = useState<string>("tanggal")
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
-  const [dateFilter, setDateFilter] = useState("")
-  
+  const [barang, setBarang] = useState<Barang[]>([]);
+  const [lokasi, setLokasi] = useState<Lokasi[]>([]);
+  const [transaksiMasuk, setTransaksiMasuk] = useState<TransaksiMasuk[]>([]);
+  const [transaksiKeluar, setTransaksiKeluar] = useState<TransaksiKeluar[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [dialogType, setDialogType] = useState<"masuk" | "keluar" | null>(null);
+  const [sortColumn, setSortColumn] = useState<string>("tanggal");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [dateFilter, setDateFilter] = useState("");
+
   const [formMasuk, setFormMasuk] = useState({
     barangId: "",
     qty: 0,
@@ -92,7 +106,7 @@ export default function TransaksiPage() {
     sumber: "",
     lokasiId: "",
     keterangan: "",
-  })
+  });
 
   const [formKeluar, setFormKeluar] = useState({
     barangId: "",
@@ -100,130 +114,136 @@ export default function TransaksiPage() {
     tujuan: "",
     lokasiId: "",
     keterangan: "",
-  })
+  });
 
   useEffect(() => {
-    fetchData()
-  }, [])
+    fetchData();
+  }, []);
 
   const sortedTransaksiKeluar = useMemo(() => {
-    let filtered = [...transaksiKeluar]
-    
+    let filtered = [...transaksiKeluar];
+
     if (dateFilter) {
-      const filterDate = new Date(dateFilter).toDateString()
-      filtered = filtered.filter(tr => new Date(tr.tanggal).toDateString() === filterDate)
+      const filterDate = new Date(dateFilter).toDateString();
+      filtered = filtered.filter(
+        (tr) => new Date(tr.tanggal).toDateString() === filterDate,
+      );
     }
 
     return filtered.sort((a, b) => {
-      let aValue: any = a[sortColumn as keyof TransaksiKeluar]
-      let bValue: any = b[sortColumn as keyof TransaksiKeluar]
+      let aValue: any = a[sortColumn as keyof TransaksiKeluar];
+      let bValue: any = b[sortColumn as keyof TransaksiKeluar];
 
       if (sortColumn === "tanggal") {
-        aValue = new Date(aValue).getTime()
-        bValue = new Date(bValue).getTime()
+        aValue = new Date(aValue).getTime();
+        bValue = new Date(bValue).getTime();
       } else if (sortColumn === "barang") {
-        aValue = a.barang.nama.toLowerCase()
-        bValue = b.barang.nama.toLowerCase()
+        aValue = a.barang.nama.toLowerCase();
+        bValue = b.barang.nama.toLowerCase();
       } else if (sortColumn === "lokasi") {
-        aValue = a.lokasi.namaLokasi.toLowerCase()
-        bValue = b.lokasi.namaLokasi.toLowerCase()
+        aValue = a.lokasi.namaLokasi.toLowerCase();
+        bValue = b.lokasi.namaLokasi.toLowerCase();
       } else if (typeof aValue === "string") {
-        aValue = aValue.toLowerCase()
-        bValue = bValue.toLowerCase()
+        aValue = aValue.toLowerCase();
+        bValue = bValue.toLowerCase();
       }
 
-      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1
-      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1
-      return 0
-    })
-  }, [transaksiKeluar, sortColumn, sortDirection, dateFilter])
+      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [transaksiKeluar, sortColumn, sortDirection, dateFilter]);
 
   function handleSort(column: string) {
     if (sortColumn === column) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc")
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
-      setSortColumn(column)
-      setSortDirection("desc")
+      setSortColumn(column);
+      setSortDirection("desc");
     }
   }
 
   function getSortIcon(column: string) {
-    if (sortColumn !== column) return <ArrowUpDown className="ml-2 h-4 w-4" />
-    return sortDirection === "asc" ? <ArrowUp className="ml-2 h-4 w-4" /> : <ArrowDown className="ml-2 h-4 w-4" />
+    if (sortColumn !== column) return <ArrowUpDown className="ml-2 h-4 w-4" />;
+    return sortDirection === "asc" ? (
+      <ArrowUp className="ml-2 h-4 w-4" />
+    ) : (
+      <ArrowDown className="ml-2 h-4 w-4" />
+    );
   }
 
   async function fetchData() {
     try {
-      setLoading(true)
+      setLoading(true);
       const [barangRes, lokasiRes, masukRes, keluarRes] = await Promise.all([
         fetch("/api/barang"),
         fetch("/api/lokasi"),
         fetch("/api/transaksi-masuk"),
         fetch("/api/transaksi-keluar"),
-      ])
+      ]);
 
-      setBarang(await barangRes.json())
-      setLokasi(await lokasiRes.json())
-      setTransaksiMasuk(await masukRes.json())
-      setTransaksiKeluar(await keluarRes.json())
+      setBarang(await barangRes.json());
+      setLokasi(await lokasiRes.json());
+      setTransaksiMasuk(await masukRes.json());
+      setTransaksiKeluar(await keluarRes.json());
     } catch (error) {
-      toast.error("Gagal memuat data")
+      toast.error("Gagal memuat data");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   async function handleSubmitMasuk(e: React.FormEvent) {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    setLoading(true);
 
     try {
       const response = await fetch("/api/transaksi-masuk", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formMasuk),
-      })
+      });
 
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || "Gagal menyimpan transaksi")
+        const error = await response.json();
+        throw new Error(error.error || "Gagal menyimpan transaksi");
       }
 
-      toast.success("Transaksi barang masuk berhasil dicatat")
-      setDialogType(null)
-      resetFormMasuk()
-      fetchData()
+      toast.success("Transaksi barang masuk berhasil dicatat");
+      setDialogType(null);
+      resetFormMasuk();
+      fetchData();
     } catch (error: any) {
-      toast.error(error.message)
+      toast.error(error.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   async function handleSubmitKeluar(e: React.FormEvent) {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    setLoading(true);
 
     try {
       const response = await fetch("/api/transaksi-keluar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formKeluar),
-      })
+      });
 
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || "Gagal menyimpan transaksi")
+        const error = await response.json();
+        throw new Error(error.error || "Gagal menyimpan transaksi");
       }
 
-      toast.success("Transaksi barang keluar berhasil dicatat")
-      setDialogType(null)
-      resetFormKeluar()
-      fetchData()
+      toast.success("Transaksi barang keluar berhasil dicatat");
+      setDialogType(null);
+      resetFormKeluar();
+      fetchData();
     } catch (error: any) {
-      toast.error(error.message)
+      toast.error(error.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
@@ -235,7 +255,7 @@ export default function TransaksiPage() {
       sumber: "",
       lokasiId: "",
       keterangan: "",
-    })
+    });
   }
 
   function resetFormKeluar() {
@@ -245,32 +265,32 @@ export default function TransaksiPage() {
       tujuan: "",
       lokasiId: "",
       keterangan: "",
-    })
+    });
   }
 
   function handleBarangChange(barangId: string, type: "masuk" | "keluar") {
-    const selectedBarang = barang.find((b) => b.id === barangId)
-    if (!selectedBarang) return
+    const selectedBarang = barang.find((b) => b.id === barangId);
+    if (!selectedBarang) return;
 
     if (type === "masuk") {
       setFormMasuk({
         ...formMasuk,
         barangId,
         hargaBeli: selectedBarang.hargaBeli,
-      })
+      });
     } else {
       setFormKeluar({
         ...formKeluar,
         barangId,
-      })
+      });
     }
   }
 
   return (
     <div className="flex flex-col h-full">
-      <Header 
-        title="Transaksi Barang" 
-        description="Kelola barang masuk dan keluar gudang" 
+      <Header
+        title="Transaksi Barang"
+        description="Kelola barang masuk dan keluar gudang"
       />
 
       <div className="flex-1 p-6 space-y-6">
@@ -280,7 +300,11 @@ export default function TransaksiPage() {
             <TrendingUp className="mr-2 h-4 w-4" />
             Barang Masuk
           </Button>
-          <Button onClick={() => setDialogType("keluar")} variant="outline" className="flex-1">
+          <Button
+            onClick={() => setDialogType("keluar")}
+            variant="outline"
+            className="flex-1"
+          >
             <TrendingDown className="mr-2 h-4 w-4" />
             Barang Keluar
           </Button>
@@ -304,7 +328,9 @@ export default function TransaksiPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Histori Barang Masuk</CardTitle>
-                <CardDescription>Riwayat transaksi barang masuk gudang</CardDescription>
+                <CardDescription>
+                  Riwayat transaksi barang masuk gudang
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="rounded-md border">
@@ -380,8 +406,8 @@ export default function TransaksiPage() {
                         onChange={(e) => setDateFilter(e.target.value)}
                       />
                     </div>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={() => setDateFilter("")}
                       disabled={!dateFilter}
                     >
@@ -395,11 +421,15 @@ export default function TransaksiPage() {
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Transaksi</CardTitle>
+                    <CardTitle className="text-sm font-medium">
+                      Total Transaksi
+                    </CardTitle>
                     <TrendingDown className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{sortedTransaksiKeluar.length}</div>
+                    <div className="text-2xl font-bold">
+                      {sortedTransaksiKeluar.length}
+                    </div>
                     <p className="text-xs text-muted-foreground">
                       Barang keluar
                     </p>
@@ -407,26 +437,34 @@ export default function TransaksiPage() {
                 </Card>
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Qty</CardTitle>
+                    <CardTitle className="text-sm font-medium">
+                      Total Qty
+                    </CardTitle>
                     <TrendingDown className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {sortedTransaksiKeluar.reduce((sum, tr) => sum + tr.qty, 0)}
+                      {sortedTransaksiKeluar.reduce(
+                        (sum, tr) => sum + tr.qty,
+                        0,
+                      )}
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      Unit keluar
-                    </p>
+                    <p className="text-xs text-muted-foreground">Unit keluar</p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Nilai</CardTitle>
+                    <CardTitle className="text-sm font-medium">
+                      Total Nilai
+                    </CardTitle>
                     <TrendingDown className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      Rp {sortedTransaksiKeluar.reduce((sum, tr) => sum + tr.totalNilai, 0).toLocaleString("id-ID")}
+                      Rp{" "}
+                      {sortedTransaksiKeluar
+                        .reduce((sum, tr) => sum + tr.totalNilai, 0)
+                        .toLocaleString("id-ID")}
                     </div>
                     <p className="text-xs text-muted-foreground">
                       Nilai barang keluar
@@ -435,12 +473,22 @@ export default function TransaksiPage() {
                 </Card>
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Rata-rata</CardTitle>
+                    <CardTitle className="text-sm font-medium">
+                      Rata-rata
+                    </CardTitle>
                     <TrendingDown className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      Rp {sortedTransaksiKeluar.length > 0 ? (sortedTransaksiKeluar.reduce((sum, tr) => sum + tr.totalNilai, 0) / sortedTransaksiKeluar.length).toLocaleString("id-ID") : "0"}
+                      Rp{" "}
+                      {sortedTransaksiKeluar.length > 0
+                        ? (
+                            sortedTransaksiKeluar.reduce(
+                              (sum, tr) => sum + tr.totalNilai,
+                              0,
+                            ) / sortedTransaksiKeluar.length
+                          ).toLocaleString("id-ID")
+                        : "0"}
                     </div>
                     <p className="text-xs text-muted-foreground">
                       Per transaksi
@@ -453,56 +501,82 @@ export default function TransaksiPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Histori Barang Keluar</CardTitle>
-                <CardDescription>Riwayat transaksi barang keluar gudang</CardDescription>
+                <CardDescription>
+                  Riwayat transaksi barang keluar gudang
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="rounded-md border">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="cursor-pointer select-none" onClick={() => handleSort("nomorTransaksi")}>
+                        <TableHead
+                          className="cursor-pointer select-none"
+                          onClick={() => handleSort("nomorTransaksi")}
+                        >
                           <div className="flex items-center">
                             No. Transaksi
                             {getSortIcon("nomorTransaksi")}
                           </div>
                         </TableHead>
-                        <TableHead className="cursor-pointer select-none" onClick={() => handleSort("tanggal")}>
+                        <TableHead
+                          className="cursor-pointer select-none"
+                          onClick={() => handleSort("tanggal")}
+                        >
                           <div className="flex items-center">
                             Tanggal
                             {getSortIcon("tanggal")}
                           </div>
                         </TableHead>
-                        <TableHead className="cursor-pointer select-none" onClick={() => handleSort("barang")}>
+                        <TableHead
+                          className="cursor-pointer select-none"
+                          onClick={() => handleSort("barang")}
+                        >
                           <div className="flex items-center">
                             Barang
                             {getSortIcon("barang")}
                           </div>
                         </TableHead>
-                        <TableHead className="cursor-pointer select-none" onClick={() => handleSort("qty")}>
+                        <TableHead
+                          className="cursor-pointer select-none"
+                          onClick={() => handleSort("qty")}
+                        >
                           <div className="flex items-center">
                             Qty
                             {getSortIcon("qty")}
                           </div>
                         </TableHead>
-                        <TableHead className="cursor-pointer select-none" onClick={() => handleSort("hargaBarang")}>
+                        <TableHead
+                          className="cursor-pointer select-none"
+                          onClick={() => handleSort("hargaBarang")}
+                        >
                           <div className="flex items-center">
                             Harga
                             {getSortIcon("hargaBarang")}
                           </div>
                         </TableHead>
-                        <TableHead className="cursor-pointer select-none" onClick={() => handleSort("totalNilai")}>
+                        <TableHead
+                          className="cursor-pointer select-none"
+                          onClick={() => handleSort("totalNilai")}
+                        >
                           <div className="flex items-center">
                             Total Nilai
                             {getSortIcon("totalNilai")}
                           </div>
                         </TableHead>
-                        <TableHead className="cursor-pointer select-none" onClick={() => handleSort("tujuan")}>
+                        <TableHead
+                          className="cursor-pointer select-none"
+                          onClick={() => handleSort("tujuan")}
+                        >
                           <div className="flex items-center">
                             Tujuan
                             {getSortIcon("tujuan")}
                           </div>
                         </TableHead>
-                        <TableHead className="cursor-pointer select-none" onClick={() => handleSort("lokasi")}>
+                        <TableHead
+                          className="cursor-pointer select-none"
+                          onClick={() => handleSort("lokasi")}
+                        >
                           <div className="flex items-center">
                             Lokasi
                             {getSortIcon("lokasi")}
@@ -514,7 +588,9 @@ export default function TransaksiPage() {
                       {sortedTransaksiKeluar.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={8} className="text-center">
-                            {dateFilter ? "Tidak ada transaksi pada tanggal tersebut" : "Belum ada transaksi"}
+                            {dateFilter
+                              ? "Tidak ada transaksi pada tanggal tersebut"
+                              : "Belum ada transaksi"}
                           </TableCell>
                         </TableRow>
                       ) : (
@@ -553,18 +629,19 @@ export default function TransaksiPage() {
       </div>
 
       {/* Dialog Barang Masuk */}
-      <Dialog open={dialogType === "masuk"} onOpenChange={(open) => {
-        if (!open) {
-          setDialogType(null)
-          resetFormMasuk()
-        }
-      }}>
+      <Dialog
+        open={dialogType === "masuk"}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDialogType(null);
+            resetFormMasuk();
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Transaksi Barang Masuk</DialogTitle>
-            <DialogDescription>
-              Catat barang masuk ke gudang
-            </DialogDescription>
+            <DialogDescription>Catat barang masuk ke gudang</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmitMasuk}>
             <div className="grid gap-4 py-4">
@@ -596,7 +673,10 @@ export default function TransaksiPage() {
                     type="number"
                     value={formMasuk.qty || ""}
                     onChange={(e) =>
-                      setFormMasuk({ ...formMasuk, qty: parseInt(e.target.value) || 0 })
+                      setFormMasuk({
+                        ...formMasuk,
+                        qty: parseInt(e.target.value) || 0,
+                      })
                     }
                     required
                     min="1"
@@ -609,7 +689,10 @@ export default function TransaksiPage() {
                     type="number"
                     value={formMasuk.hargaBeli || ""}
                     onChange={(e) =>
-                      setFormMasuk({ ...formMasuk, hargaBeli: parseFloat(e.target.value) || 0 })
+                      setFormMasuk({
+                        ...formMasuk,
+                        hargaBeli: parseFloat(e.target.value) || 0,
+                      })
                     }
                     required
                     min="0"
@@ -622,7 +705,9 @@ export default function TransaksiPage() {
                 <Input
                   id="sumber"
                   value={formMasuk.sumber}
-                  onChange={(e) => setFormMasuk({ ...formMasuk, sumber: e.target.value })}
+                  onChange={(e) =>
+                    setFormMasuk({ ...formMasuk, sumber: e.target.value })
+                  }
                   placeholder="Contoh: Supplier A, Transfer Cabang B"
                   required
                 />
@@ -632,7 +717,9 @@ export default function TransaksiPage() {
                 <Label htmlFor="lokasi-masuk">Lokasi Gudang *</Label>
                 <Select
                   value={formMasuk.lokasiId}
-                  onValueChange={(value) => setFormMasuk({ ...formMasuk, lokasiId: value })}
+                  onValueChange={(value) =>
+                    setFormMasuk({ ...formMasuk, lokasiId: value })
+                  }
                   required
                 >
                   <SelectTrigger>
@@ -653,15 +740,22 @@ export default function TransaksiPage() {
                 <Input
                   id="keterangan-masuk"
                   value={formMasuk.keterangan}
-                  onChange={(e) => setFormMasuk({ ...formMasuk, keterangan: e.target.value })}
+                  onChange={(e) =>
+                    setFormMasuk({ ...formMasuk, keterangan: e.target.value })
+                  }
                 />
               </div>
 
               {formMasuk.qty > 0 && formMasuk.hargaBeli > 0 && (
                 <div className="p-4 bg-muted rounded-lg">
-                  <div className="text-sm text-muted-foreground">Total Nilai</div>
+                  <div className="text-sm text-muted-foreground">
+                    Total Nilai
+                  </div>
                   <div className="text-2xl font-bold">
-                    Rp {(formMasuk.qty * formMasuk.hargaBeli).toLocaleString("id-ID")}
+                    Rp{" "}
+                    {(formMasuk.qty * formMasuk.hargaBeli).toLocaleString(
+                      "id-ID",
+                    )}
                   </div>
                 </div>
               )}
@@ -684,12 +778,15 @@ export default function TransaksiPage() {
       </Dialog>
 
       {/* Dialog Barang Keluar */}
-      <Dialog open={dialogType === "keluar"} onOpenChange={(open) => {
-        if (!open) {
-          setDialogType(null)
-          resetFormKeluar()
-        }
-      }}>
+      <Dialog
+        open={dialogType === "keluar"}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDialogType(null);
+            resetFormKeluar();
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Transaksi Barang Keluar</DialogTitle>
@@ -726,7 +823,10 @@ export default function TransaksiPage() {
                   type="number"
                   value={formKeluar.qty || ""}
                   onChange={(e) =>
-                    setFormKeluar({ ...formKeluar, qty: parseInt(e.target.value) || 0 })
+                    setFormKeluar({
+                      ...formKeluar,
+                      qty: parseInt(e.target.value) || 0,
+                    })
                   }
                   required
                   min="1"
@@ -738,7 +838,9 @@ export default function TransaksiPage() {
                 <Input
                   id="tujuan"
                   value={formKeluar.tujuan}
-                  onChange={(e) => setFormKeluar({ ...formKeluar, tujuan: e.target.value })}
+                  onChange={(e) =>
+                    setFormKeluar({ ...formKeluar, tujuan: e.target.value })
+                  }
                   placeholder="Contoh: Toko Cabang A, Retur, Rusak"
                   required
                 />
@@ -748,7 +850,9 @@ export default function TransaksiPage() {
                 <Label htmlFor="lokasi-keluar">Lokasi Gudang *</Label>
                 <Select
                   value={formKeluar.lokasiId}
-                  onValueChange={(value) => setFormKeluar({ ...formKeluar, lokasiId: value })}
+                  onValueChange={(value) =>
+                    setFormKeluar({ ...formKeluar, lokasiId: value })
+                  }
                   required
                 >
                   <SelectTrigger>
@@ -769,7 +873,9 @@ export default function TransaksiPage() {
                 <Input
                   id="keterangan-keluar"
                   value={formKeluar.keterangan}
-                  onChange={(e) => setFormKeluar({ ...formKeluar, keterangan: e.target.value })}
+                  onChange={(e) =>
+                    setFormKeluar({ ...formKeluar, keterangan: e.target.value })
+                  }
                 />
               </div>
             </div>
@@ -790,6 +896,5 @@ export default function TransaksiPage() {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }
-

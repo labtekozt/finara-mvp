@@ -278,7 +278,7 @@ Show Success Toast
                              │ 1
                 ┌────────────┼────────────┐
                 │ has many   │ has many   │
-                ↓ *          ↓ *          
+                ↓ *          ↓ *
         ┌─────────────┐  ┌─────────────┐
         │ Transaksi   │  │ Transaksi   │
         │   Masuk     │  │   Keluar    │
@@ -294,40 +294,40 @@ Show Success Toast
 
 ```typescript
 // Component-level state
-const [loading, setLoading] = useState(false)
-const [data, setData] = useState([])
-const [formData, setFormData] = useState({})
-const [dialogOpen, setDialogOpen] = useState(false)
+const [loading, setLoading] = useState(false);
+const [data, setData] = useState([]);
+const [formData, setFormData] = useState({});
+const [dialogOpen, setDialogOpen] = useState(false);
 
 // Effects for data fetching
 useEffect(() => {
-  fetchData()
-}, [dependencies])
+  fetchData();
+}, [dependencies]);
 ```
 
 ### Server State (API Calls)
 
 ```typescript
 // Fetch from API
-const response = await fetch('/api/endpoint')
-const data = await response.json()
+const response = await fetch("/api/endpoint");
+const data = await response.json();
 
 // Update via API
-await fetch('/api/endpoint', {
-  method: 'POST',
-  body: JSON.stringify(data)
-})
+await fetch("/api/endpoint", {
+  method: "POST",
+  body: JSON.stringify(data),
+});
 ```
 
 ### Global State (NextAuth Session)
 
 ```typescript
 // Access session anywhere
-const { data: session } = useSession()
-const userRole = session?.user?.role
+const { data: session } = useSession();
+const userRole = session?.user?.role;
 
 // Server-side session
-const session = await getServerSession(authOptions)
+const session = await getServerSession(authOptions);
 ```
 
 ## Security Architecture
@@ -407,47 +407,46 @@ Client
 ```typescript
 try {
   // Validation
-  const validatedData = schema.parse(body)
-  
+  const validatedData = schema.parse(body);
+
   // Business logic
-  const result = await performOperation(validatedData)
-  
+  const result = await performOperation(validatedData);
+
   // Success response
-  return NextResponse.json(result, { status: 200 })
-  
+  return NextResponse.json(result, { status: 200 });
 } catch (error) {
   if (error instanceof z.ZodError) {
     // Validation error
     return NextResponse.json(
       { error: "Validation error", details: error.errors },
-      { status: 400 }
-    )
+      { status: 400 },
+    );
   }
-  
+
   // Other errors
-  console.error(error)
-  return NextResponse.json(
-    { error: "Internal server error" },
-    { status: 500 }
-  )
+  console.error(error);
+  return NextResponse.json({ error: "Internal server error" }, { status: 500 });
 }
 ```
 
 ## Performance Optimizations
 
 ### 1. Database Level
+
 - Indexed columns for fast queries
 - Efficient relationships
 - Query optimization
 - Connection pooling (Prisma)
 
 ### 2. Application Level
+
 - Server-side rendering (Next.js)
 - Automatic code splitting
 - Lazy loading components
 - Optimized re-renders
 
 ### 3. Network Level
+
 - API response caching
 - Minimized payload size
 - Compressed assets
@@ -489,6 +488,7 @@ try {
 ## Technology Decisions
 
 ### Why Next.js?
+
 - Full-stack framework (Frontend + Backend)
 - Server-side rendering for SEO
 - API routes for backend
@@ -496,6 +496,7 @@ try {
 - Great developer experience
 
 ### Why Prisma?
+
 - Type-safe database client
 - Great migrations system
 - Excellent TypeScript support
@@ -503,6 +504,7 @@ try {
 - Database agnostic
 
 ### Why shadcn/ui?
+
 - Customizable components
 - Not a dependency (copy-paste)
 - Built on Radix UI (accessible)
@@ -510,6 +512,7 @@ try {
 - Easy to modify
 
 ### Why NextAuth?
+
 - Industry standard for Next.js
 - Multiple providers support
 - JWT or database sessions
@@ -519,10 +522,9 @@ try {
 ---
 
 This architecture is designed to be:
+
 - **Scalable**: Can handle growing data and users
 - **Maintainable**: Clear structure and separation
 - **Secure**: Multiple layers of protection
 - **Performant**: Optimized at every level
 - **Developer-friendly**: Clear patterns and conventions
-
-

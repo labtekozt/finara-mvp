@@ -1,10 +1,13 @@
-import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth-options"
-import { prisma } from "@/lib/prisma"
-import { generateKasirNumber } from "@/lib/transaction-number"
-import { createJournalEntryForSale, createJournalEntryForCOGS } from "@/lib/accounting-utils"
-import { z } from "zod"
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth-options";
+import { prisma } from "@/lib/prisma";
+import { generateKasirNumber } from "@/lib/transaction-number";
+import {
+  createJournalEntryForSale,
+  createJournalEntryForCOGS,
+} from "@/lib/accounting-utils";
+import { z } from "zod";
 
 const itemSchema = z.object({
   barangId: z.string(),
@@ -12,7 +15,7 @@ const itemSchema = z.object({
   hargaSatuan: z.number(),
   qty: z.number().int().positive(),
   subtotal: z.number(),
-})
+});
 
 const transaksiSchema = z.object({
   items: z.array(itemSchema).min(1, "Minimal 1 item harus dipilih"),
@@ -24,25 +27,25 @@ const transaksiSchema = z.object({
   jumlahBayar: z.number(),
   kembalian: z.number(),
   catatan: z.string().optional(),
-})
+});
 
 // GET - List transactions with filters
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const searchParams = request.nextUrl.searchParams
-    const startDate = searchParams.get("startDate")
-    const endDate = searchParams.get("endDate")
+    const searchParams = request.nextUrl.searchParams;
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
 
-    const where: any = {}
+    const where: any = {};
     if (startDate || endDate) {
-      where.tanggal = {}
-      if (startDate) where.tanggal.gte = new Date(startDate)
-      if (endDate) where.tanggal.lte = new Date(endDate)
+      where.tanggal = {};
+      if (startDate) where.tanggal.gte = new Date(startDate);
+      if (endDate) where.tanggal.lte = new Date(endDate);
     }
 
     const transaksi = await prisma.transaksiKasir.findMany({
@@ -65,49 +68,49 @@ export async function GET(request: NextRequest) {
         tanggal: "desc",
       },
       take: 100,
-    })
+    });
 
-    return NextResponse.json(transaksi)
+    return NextResponse.json(transaksi);
   } catch (error) {
-    console.error("Error fetching transaksi:", error)
+    console.error("Error fetching transaksi:", error);
     return NextResponse.json(
       { error: "Failed to fetch transactions" },
-      { status: 500 }
-    )
+      { status: 500 },
+    );
   }
 }
 
 // POST - Create new transaction
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json()
-    const validatedData = transaksiSchema.parse(body)
+    const body = await request.json();
+    const validatedData = transaksiSchema.parse(body);
 
     // Check stock availability for all items
     for (const item of validatedData.items) {
       const barang = await prisma.barang.findUnique({
         where: { id: item.barangId },
-      })
+      });
 
       if (!barang) {
         return NextResponse.json(
           { error: `Barang ${item.namaBarang} tidak ditemukan` },
-          { status: 400 }
-        )
+          { status: 400 },
+        );
       }
 
       if (barang.stok < item.qty) {
         return NextResponse.json(
-          { 
-            error: `Stok ${item.namaBarang} tidak cukup. Tersedia: ${barang.stok} ${barang.satuan}` 
+          {
+            error: `Stok ${item.namaBarang} tidak cukup. Tersedia: ${barang.stok} ${barang.satuan}`,
           },
-          { status: 400 }
-        )
+          { status: 400 },
+        );
       }
     }
 
@@ -127,7 +130,7 @@ export async function POST(request: NextRequest) {
           kasirId: session.user.id,
           catatan: validatedData.catatan,
         },
-      })
+      });
 
       // Create transaction items and update stock
       for (const item of validatedData.items) {
@@ -140,7 +143,7 @@ export async function POST(request: NextRequest) {
             qty: item.qty,
             subtotal: item.subtotal,
           },
-        })
+        });
 
         // Update stock
         await tx.barang.update({
@@ -150,7 +153,7 @@ export async function POST(request: NextRequest) {
               decrement: item.qty,
             },
           },
-        })
+        });
       }
 
       // Log activity
@@ -163,10 +166,10 @@ export async function POST(request: NextRequest) {
           entityId: newTransaksi.id,
           description: `Transaksi kasir ${newTransaksi.nomorTransaksi} - Total: Rp ${validatedData.total.toLocaleString("id-ID")}`,
         },
-      })
+      });
 
-      return newTransaksi
-    })
+      return newTransaksi;
+    });
 
     // Create accounting journal entries
     try {
@@ -174,25 +177,25 @@ export async function POST(request: NextRequest) {
       await createJournalEntryForSale(
         transaksi.nomorTransaksi,
         validatedData.total,
-        session.user.id
-      )
+        session.user.id,
+      );
 
       // Journal entries for cost of goods sold (COGS)
       for (const item of validatedData.items) {
         const barang = await prisma.barang.findUnique({
-          where: { id: item.barangId }
-        })
+          where: { id: item.barangId },
+        });
         if (barang) {
           await createJournalEntryForCOGS(
             item.barangId,
             item.qty,
             barang.hargaBeli,
-            session.user.id
-          )
+            session.user.id,
+          );
         }
       }
     } catch (accountingError) {
-      console.error("Error creating accounting entries:", accountingError)
+      console.error("Error creating accounting entries:", accountingError);
       // Don't fail the transaction if accounting fails, just log it
     }
 
@@ -207,21 +210,20 @@ export async function POST(request: NextRequest) {
           },
         },
       },
-    })
+    });
 
-    return NextResponse.json(completeTransaksi, { status: 201 })
+    return NextResponse.json(completeTransaksi, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Validation error", details: error.errors },
-        { status: 400 }
-      )
+        { status: 400 },
+      );
     }
-    console.error("Error creating transaksi:", error)
+    console.error("Error creating transaksi:", error);
     return NextResponse.json(
       { error: "Failed to create transaction" },
-      { status: 500 }
-    )
+      { status: 500 },
+    );
   }
 }
-

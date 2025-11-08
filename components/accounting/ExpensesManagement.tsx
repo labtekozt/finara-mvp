@@ -1,17 +1,23 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -19,7 +25,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -27,102 +33,105 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Receipt, Plus, Search, Calendar, Edit, Trash2 } from "lucide-react";
+import { useExpenses } from "@/hooks/accounting";
 import {
-  Receipt,
-  Plus,
-  Search,
-  Calendar,
-  Edit,
-  Trash2
-} from "lucide-react"
-import { useExpenses } from "@/hooks/accounting"
-import { Pengeluaran, ExpenseCategory, PaymentMethod } from "@/types/accounting"
-import { ExpenseForm } from "./forms/ExpenseForm"
+  Pengeluaran,
+  ExpenseCategory,
+  PaymentMethod,
+} from "@/types/accounting";
+import { ExpenseForm } from "./forms/ExpenseForm";
 
 const EXPENSE_CATEGORIES: { value: ExpenseCategory; label: string }[] = [
   { value: "GAJI", label: "Gaji" },
   { value: "UTILITAS", label: "Utilitas" },
   { value: "SEWA", label: "Sewa" },
   { value: "PERLENGKAPAN", label: "Perlengkapan" },
-  { value: "LAINNYA", label: "Lainnya" }
-]
+  { value: "LAINNYA", label: "Lainnya" },
+];
 
 const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
   { value: "tunai", label: "Tunai" },
   { value: "transfer", label: "Transfer" },
   { value: "cek", label: "Cek" },
-  { value: "kartu_kredit", label: "Kartu Kredit" }
-]
+  { value: "kartu_kredit", label: "Kartu Kredit" },
+];
 
 interface ExpensesManagementProps {
-  className?: string
+  className?: string;
 }
 
 export function ExpensesManagement({ className }: ExpensesManagementProps) {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [kategoriFilter, setKategoriFilter] = useState<string>("ALL")
-  const [startDate, setStartDate] = useState("")
-  const [endDate, setEndDate] = useState("")
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [editingExpense, setEditingExpense] = useState<Pengeluaran | null>(null)
+  const [searchTerm, setSearchTerm] = useState("");
+  const [kategoriFilter, setKategoriFilter] = useState<string>("ALL");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<Pengeluaran | null>(
+    null,
+  );
 
-  const {
-    expenses,
-    loading,
-    createExpense,
-    updateExpense,
-    deleteExpense
-  } = useExpenses({
-    startDate: startDate || undefined,
-    endDate: endDate || undefined,
-    kategori: kategoriFilter === "ALL" ? undefined : kategoriFilter,
-    search: searchTerm || undefined
-  })
+  const { expenses, loading, createExpense, updateExpense, deleteExpense } =
+    useExpenses({
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+      kategori: kategoriFilter === "ALL" ? undefined : kategoriFilter,
+      search: searchTerm || undefined,
+    });
 
   const handleCreateExpense = async (data: any) => {
-    const result = await createExpense(data)
+    const result = await createExpense(data);
     if (result) {
-      setIsDialogOpen(false)
+      setIsDialogOpen(false);
     }
-  }
+  };
 
   const handleUpdateExpense = async (data: any) => {
     if (editingExpense) {
-      const result = await updateExpense(editingExpense.id, data)
+      const result = await updateExpense(editingExpense.id, data);
       if (result) {
-        setIsDialogOpen(false)
-        setEditingExpense(null)
+        setIsDialogOpen(false);
+        setEditingExpense(null);
       }
     }
-  }
+  };
 
   const handleDeleteExpense = async (expense: Pengeluaran) => {
-    if (confirm(`Apakah Anda yakin ingin menghapus pengeluaran "${expense.deskripsi}"?`)) {
-      await deleteExpense(expense.id)
+    if (
+      confirm(
+        `Apakah Anda yakin ingin menghapus pengeluaran "${expense.deskripsi}"?`,
+      )
+    ) {
+      await deleteExpense(expense.id);
     }
-  }
+  };
 
   const openEditDialog = (expense: Pengeluaran) => {
-    setEditingExpense(expense)
-    setIsDialogOpen(true)
-  }
+    setEditingExpense(expense);
+    setIsDialogOpen(true);
+  };
 
   const openCreateDialog = () => {
-    setEditingExpense(null)
-    setIsDialogOpen(true)
-  }
+    setEditingExpense(null);
+    setIsDialogOpen(true);
+  };
 
   const getCategoryLabel = (kategori: ExpenseCategory) => {
-    return EXPENSE_CATEGORIES.find(c => c.value === kategori)?.label || kategori
-  }
+    return (
+      EXPENSE_CATEGORIES.find((c) => c.value === kategori)?.label || kategori
+    );
+  };
 
   const getPaymentMethodLabel = (method: PaymentMethod) => {
-    return PAYMENT_METHODS.find(m => m.value === method)?.label || method
-  }
+    return PAYMENT_METHODS.find((m) => m.value === method)?.label || method;
+  };
 
-  const totalExpenses = expenses.reduce((sum, expense) => sum + expense.jumlah, 0)
+  const totalExpenses = expenses.reduce(
+    (sum, expense) => sum + expense.jumlah,
+    0,
+  );
 
   return (
     <div className={className}>
@@ -144,8 +153,12 @@ export function ExpensesManagement({ className }: ExpensesManagementProps) {
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Total Pengeluaran</p>
-              <p className="text-2xl font-bold">Rp {totalExpenses.toLocaleString('id-ID')}</p>
+              <p className="text-sm font-medium text-muted-foreground">
+                Total Pengeluaran
+              </p>
+              <p className="text-2xl font-bold">
+                Rp {totalExpenses.toLocaleString("id-ID")}
+              </p>
             </div>
             <Receipt className="h-8 w-8 text-muted-foreground" />
           </div>
@@ -212,7 +225,9 @@ export function ExpensesManagement({ className }: ExpensesManagementProps) {
         <CardContent className="pt-6">
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="text-sm text-muted-foreground">Memuat pengeluaran...</div>
+              <div className="text-sm text-muted-foreground">
+                Memuat pengeluaran...
+              </div>
             </div>
           ) : expenses.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8">
@@ -243,19 +258,25 @@ export function ExpensesManagement({ className }: ExpensesManagementProps) {
                 {expenses.map((expense) => (
                   <TableRow key={expense.id}>
                     <TableCell>
-                      {new Date(expense.tanggal).toLocaleDateString('id-ID')}
+                      {new Date(expense.tanggal).toLocaleDateString("id-ID")}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">
                         {getCategoryLabel(expense.kategori as ExpenseCategory)}
                       </Badge>
                     </TableCell>
-                    <TableCell className="max-w-xs truncate">{expense.deskripsi}</TableCell>
+                    <TableCell className="max-w-xs truncate">
+                      {expense.deskripsi}
+                    </TableCell>
                     <TableCell>{expense.penerima}</TableCell>
-                    <TableCell>Rp {expense.jumlah.toLocaleString('id-ID')}</TableCell>
+                    <TableCell>
+                      Rp {expense.jumlah.toLocaleString("id-ID")}
+                    </TableCell>
                     <TableCell>
                       <Badge variant="secondary">
-                        {getPaymentMethodLabel(expense.metodePembayaran as PaymentMethod)}
+                        {getPaymentMethodLabel(
+                          expense.metodePembayaran as PaymentMethod,
+                        )}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
@@ -289,19 +310,20 @@ export function ExpensesManagement({ className }: ExpensesManagementProps) {
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>
-              {editingExpense ? 'Edit Pengeluaran' : 'Tambah Pengeluaran Baru'}
+              {editingExpense ? "Edit Pengeluaran" : "Tambah Pengeluaran Baru"}
             </DialogTitle>
             <DialogDescription>
               {editingExpense
-                ? 'Perbarui informasi pengeluaran yang dipilih'
-                : 'Catat pengeluaran operasional baru'
-              }
+                ? "Perbarui informasi pengeluaran yang dipilih"
+                : "Catat pengeluaran operasional baru"}
             </DialogDescription>
           </DialogHeader>
 
           <ExpenseForm
             expense={editingExpense}
-            onSubmit={editingExpense ? handleUpdateExpense : handleCreateExpense}
+            onSubmit={
+              editingExpense ? handleUpdateExpense : handleCreateExpense
+            }
             loading={loading}
           />
 
@@ -313,5 +335,5 @@ export function ExpensesManagement({ className }: ExpensesManagementProps) {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }

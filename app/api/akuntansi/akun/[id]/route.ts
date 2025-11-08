@@ -1,25 +1,25 @@
-import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth-options"
-import { prisma } from "@/lib/prisma"
-import { hasPermission } from "@/lib/permissions"
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth-options";
+import { prisma } from "@/lib/prisma";
+import { hasPermission } from "@/lib/permissions";
 
 // GET /api/akuntansi/akun/[id] - Get account by ID
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     if (!hasPermission(session.user.role, "canAccessTransaksi")) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { id } = await params
+    const { id } = await params;
 
     const akun = await prisma.akun.findUnique({
       where: { id },
@@ -28,76 +28,82 @@ export async function GET(
         children: true,
         jurnalDetails: {
           include: {
-            jurnal: true
-          }
+            jurnal: true,
+          },
         },
         _count: {
-          select: { jurnalDetails: true }
-        }
-      }
-    })
+          select: { jurnalDetails: true },
+        },
+      },
+    });
 
     if (!akun) {
-      return NextResponse.json({ error: "Account not found" }, { status: 404 })
+      return NextResponse.json({ error: "Account not found" }, { status: 404 });
     }
 
-    return NextResponse.json(akun)
+    return NextResponse.json(akun);
   } catch (error) {
-    console.error("Error fetching account:", error)
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
+    console.error("Error fetching account:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
   }
 }
 
 // PUT /api/akuntansi/akun/[id] - Update account
 export async function PUT(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     if (!hasPermission(session.user.role, "canManageUsers")) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { id } = await params
-    const body = await request.json()
-    const { kode, nama, tipe, kategori, parentId, deskripsi, isActive } = body
+    const { id } = await params;
+    const body = await request.json();
+    const { kode, nama, tipe, kategori, parentId, deskripsi, isActive } = body;
 
     // Check if account exists
     const existingAkun = await prisma.akun.findUnique({
-      where: { id }
-    })
+      where: { id },
+    });
 
     if (!existingAkun) {
-      return NextResponse.json({ error: "Account not found" }, { status: 404 })
+      return NextResponse.json({ error: "Account not found" }, { status: 404 });
     }
 
     // Check if kode is being changed and if it conflicts
     if (kode && kode !== existingAkun.kode) {
       const kodeExists = await prisma.akun.findUnique({
-        where: { kode }
-      })
+        where: { kode },
+      });
       if (kodeExists) {
-        return NextResponse.json({ error: "Account code already exists" }, { status: 400 })
+        return NextResponse.json(
+          { error: "Account code already exists" },
+          { status: 400 },
+        );
       }
     }
 
     // Calculate level if parent changed
-    let level = existingAkun.level
+    let level = existingAkun.level;
     if (parentId !== existingAkun.parentId) {
       if (parentId) {
         const parent = await prisma.akun.findUnique({
-          where: { id: parentId }
-        })
+          where: { id: parentId },
+        });
         if (parent) {
-          level = parent.level + 1
+          level = parent.level + 1;
         }
       } else {
-        level = 1
+        level = 1;
       }
     }
 
@@ -111,13 +117,13 @@ export async function PUT(
         ...(parentId !== undefined && { parentId }),
         ...(deskripsi !== undefined && { deskripsi }),
         ...(isActive !== undefined && { isActive }),
-        level
+        level,
       },
       include: {
         parent: true,
-        children: true
-      }
-    })
+        children: true,
+      },
+    });
 
     // Log activity
     await prisma.activityLog.create({
@@ -127,49 +133,55 @@ export async function PUT(
         action: "UPDATE",
         entity: "AKUN",
         entityId: akun.id,
-        description: `Updated account: ${akun.kode} - ${akun.nama}`
-      }
-    })
+        description: `Updated account: ${akun.kode} - ${akun.nama}`,
+      },
+    });
 
-    return NextResponse.json(akun)
+    return NextResponse.json(akun);
   } catch (error) {
-    console.error("Error updating account:", error)
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
+    console.error("Error updating account:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
   }
 }
 
 // DELETE /api/akuntansi/akun/[id] - Delete account (soft delete)
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     if (!hasPermission(session.user.role, "canManageUsers")) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { id } = await params
+    const { id } = await params;
 
     // Check if account has journal entries
     const journalCount = await prisma.jurnalEntry.count({
       where: {
         details: {
           some: {
-            akunId: id
-          }
-        }
-      }
-    })
+            akunId: id,
+          },
+        },
+      },
+    });
 
     if (journalCount > 0) {
-      return NextResponse.json({
-        error: "Cannot delete account with existing journal entries"
-      }, { status: 400 })
+      return NextResponse.json(
+        {
+          error: "Cannot delete account with existing journal entries",
+        },
+        { status: 400 },
+      );
     }
 
     const akun = await prisma.akun.update({
@@ -177,9 +189,9 @@ export async function DELETE(
       data: { isActive: false },
       include: {
         parent: true,
-        children: true
-      }
-    })
+        children: true,
+      },
+    });
 
     // Log activity
     await prisma.activityLog.create({
@@ -189,13 +201,16 @@ export async function DELETE(
         action: "DELETE",
         entity: "AKUN",
         entityId: akun.id,
-        description: `Deactivated account: ${akun.kode} - ${akun.nama}`
-      }
-    })
+        description: `Deactivated account: ${akun.kode} - ${akun.nama}`,
+      },
+    });
 
-    return NextResponse.json(akun)
+    return NextResponse.json(akun);
   } catch (error) {
-    console.error("Error deleting account:", error)
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
+    console.error("Error deleting account:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
   }
 }

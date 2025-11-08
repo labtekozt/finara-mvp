@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
   TableBody,
@@ -19,16 +19,21 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { Plus, Trash2 } from "lucide-react"
-import { JurnalEntry, JurnalFormData, JurnalDetailForm, Akun } from "@/types/accounting"
-import { useAccounts } from "@/hooks/accounting"
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Trash2 } from "lucide-react";
+import {
+  JurnalEntry,
+  JurnalFormData,
+  JurnalDetailForm,
+  Akun,
+} from "@/types/accounting";
+import { useAccounts } from "@/hooks/accounting";
 
 interface JournalFormProps {
-  entry?: JurnalEntry | null
-  onSubmit: (data: JurnalFormData) => Promise<void>
-  loading?: boolean
+  entry?: JurnalEntry | null;
+  onSubmit: (data: JurnalFormData) => Promise<void>;
+  loading?: boolean;
 }
 
 const REFERENCE_TYPES = [
@@ -37,118 +42,144 @@ const REFERENCE_TYPES = [
   { value: "PAYMENT", label: "Pembayaran" },
   { value: "RECEIPT", label: "Penerimaan" },
   { value: "ADJUSTMENT", label: "Penyesuaian" },
-  { value: "OTHER", label: "Lainnya" }
-]
+  { value: "OTHER", label: "Lainnya" },
+];
 
-export function JournalForm({ entry, onSubmit, loading = false }: JournalFormProps) {
-  const { accounts } = useAccounts({ autoLoad: true })
+export function JournalForm({
+  entry,
+  onSubmit,
+  loading = false,
+}: JournalFormProps) {
+  const { accounts } = useAccounts({ autoLoad: true });
 
   const [formData, setFormData] = useState<JurnalFormData>({
     nomorJurnal: "",
-    tanggal: new Date().toISOString().split('T')[0],
+    tanggal: new Date().toISOString().split("T")[0],
     deskripsi: "",
     referensi: "",
     tipeReferensi: "OTHER",
     periodeId: "",
     details: [
       { akunId: undefined, debit: 0, kredit: 0, deskripsi: "" },
-      { akunId: undefined, debit: 0, kredit: 0, deskripsi: "" }
-    ]
-  })
+      { akunId: undefined, debit: 0, kredit: 0, deskripsi: "" },
+    ],
+  });
 
   useEffect(() => {
     if (entry) {
       setFormData({
         nomorJurnal: entry.nomorJurnal,
-        tanggal: entry.tanggal.split('T')[0],
+        tanggal:
+          typeof entry.tanggal === "string"
+            ? entry.tanggal.split("T")[0]
+            : entry.tanggal.toISOString().split("T")[0],
         deskripsi: entry.deskripsi,
         referensi: entry.referensi || "",
         tipeReferensi: entry.tipeReferensi || "OTHER",
         periodeId: entry.periodeId,
-        details: entry.details.map(detail => ({
+        details: entry.details.map((detail) => ({
           akunId: detail.akunId,
           debit: detail.debit,
           kredit: detail.kredit,
-          deskripsi: detail.deskripsi
-        }))
-      })
+          deskripsi: detail.deskripsi || "",
+        })),
+      });
     } else {
       // Reset form for new entry
       setFormData({
         nomorJurnal: "",
-        tanggal: new Date().toISOString().split('T')[0],
+        tanggal: new Date().toISOString().split("T")[0],
         deskripsi: "",
         referensi: "",
         tipeReferensi: "OTHER",
         periodeId: "",
         details: [
           { akunId: undefined, debit: 0, kredit: 0, deskripsi: "" },
-          { akunId: undefined, debit: 0, kredit: 0, deskripsi: "" }
-        ]
-      })
+          { akunId: undefined, debit: 0, kredit: 0, deskripsi: "" },
+        ],
+      });
     }
-  }, [entry])
+  }, [entry]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     // Validate that debit equals credit
-    const totalDebit = formData.details.reduce((sum, detail) => sum + detail.debit, 0)
-    const totalKredit = formData.details.reduce((sum, detail) => sum + detail.kredit, 0)
+    const totalDebit = formData.details.reduce(
+      (sum, detail) => sum + detail.debit,
+      0,
+    );
+    const totalKredit = formData.details.reduce(
+      (sum, detail) => sum + detail.kredit,
+      0,
+    );
 
     if (totalDebit !== totalKredit) {
-      alert("Total debit harus sama dengan total kredit")
-      return
+      alert("Total debit harus sama dengan total kredit");
+      return;
     }
 
     // Filter out empty details
     const validDetails = formData.details.filter(
-      detail => detail.akunId && (detail.debit > 0 || detail.kredit > 0)
-    )
+      (detail) => detail.akunId && (detail.debit > 0 || detail.kredit > 0),
+    );
 
     if (validDetails.length < 2) {
-      alert("Minimal 2 detail jurnal diperlukan")
-      return
+      alert("Minimal 2 detail jurnal diperlukan");
+      return;
     }
 
     await onSubmit({
       ...formData,
-      details: validDetails
-    })
-  }
+      details: validDetails,
+    });
+  };
 
   const handleInputChange = (field: keyof JurnalFormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-  }
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
 
-  const handleDetailChange = (index: number, field: keyof JurnalDetailForm, value: string | number) => {
-    setFormData(prev => ({
+  const handleDetailChange = (
+    index: number,
+    field: keyof JurnalDetailForm,
+    value: string | number,
+  ) => {
+    setFormData((prev) => ({
       ...prev,
       details: prev.details.map((detail, i) =>
-        i === index ? { ...detail, [field]: value } : detail
-      )
-    }))
-  }
+        i === index ? { ...detail, [field]: value } : detail,
+      ),
+    }));
+  };
 
   const addDetail = () => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      details: [...prev.details, { akunId: undefined, debit: 0, kredit: 0, deskripsi: "" }]
-    }))
-  }
+      details: [
+        ...prev.details,
+        { akunId: undefined, debit: 0, kredit: 0, deskripsi: "" },
+      ],
+    }));
+  };
 
   const removeDetail = (index: number) => {
     if (formData.details.length > 2) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        details: prev.details.filter((_, i) => i !== index)
-      }))
+        details: prev.details.filter((_, i) => i !== index),
+      }));
     }
-  }
+  };
 
-  const totalDebit = formData.details.reduce((sum, detail) => sum + detail.debit, 0)
-  const totalKredit = formData.details.reduce((sum, detail) => sum + detail.kredit, 0)
-  const isBalanced = totalDebit === totalKredit
+  const totalDebit = formData.details.reduce(
+    (sum, detail) => sum + detail.debit,
+    0,
+  );
+  const totalKredit = formData.details.reduce(
+    (sum, detail) => sum + detail.kredit,
+    0,
+  );
+  const isBalanced = totalDebit === totalKredit;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -180,7 +211,9 @@ export function JournalForm({ entry, onSubmit, loading = false }: JournalFormPro
         <Textarea
           id="deskripsi"
           value={formData.deskripsi}
-          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleInputChange("deskripsi", e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+            handleInputChange("deskripsi", e.target.value)
+          }
           placeholder="Deskripsi transaksi jurnal"
           required
         />
@@ -243,7 +276,9 @@ export function JournalForm({ entry, onSubmit, loading = false }: JournalFormPro
                   <TableCell>
                     <Select
                       value={detail.akunId || ""}
-                      onValueChange={(value) => handleDetailChange(index, "akunId", value)}
+                      onValueChange={(value) =>
+                        handleDetailChange(index, "akunId", value)
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Pilih akun" />
@@ -260,7 +295,9 @@ export function JournalForm({ entry, onSubmit, loading = false }: JournalFormPro
                   <TableCell>
                     <Input
                       value={detail.deskripsi}
-                      onChange={(e) => handleDetailChange(index, "deskripsi", e.target.value)}
+                      onChange={(e) =>
+                        handleDetailChange(index, "deskripsi", e.target.value)
+                      }
                       placeholder="Deskripsi detail"
                     />
                   </TableCell>
@@ -270,7 +307,13 @@ export function JournalForm({ entry, onSubmit, loading = false }: JournalFormPro
                       min="0"
                       step="0.01"
                       value={detail.debit || ""}
-                      onChange={(e) => handleDetailChange(index, "debit", parseFloat(e.target.value) || 0)}
+                      onChange={(e) =>
+                        handleDetailChange(
+                          index,
+                          "debit",
+                          parseFloat(e.target.value) || 0,
+                        )
+                      }
                       placeholder="0"
                       className="text-right"
                     />
@@ -281,7 +324,13 @@ export function JournalForm({ entry, onSubmit, loading = false }: JournalFormPro
                       min="0"
                       step="0.01"
                       value={detail.kredit || ""}
-                      onChange={(e) => handleDetailChange(index, "kredit", parseFloat(e.target.value) || 0)}
+                      onChange={(e) =>
+                        handleDetailChange(
+                          index,
+                          "kredit",
+                          parseFloat(e.target.value) || 0,
+                        )
+                      }
                       placeholder="0"
                       className="text-right"
                     />
@@ -307,10 +356,10 @@ export function JournalForm({ entry, onSubmit, loading = false }: JournalFormPro
                   Total
                 </TableCell>
                 <TableCell className="text-right">
-                  Rp {totalDebit.toLocaleString('id-ID')}
+                  Rp {totalDebit.toLocaleString("id-ID")}
                 </TableCell>
                 <TableCell className="text-right">
-                  Rp {totalKredit.toLocaleString('id-ID')}
+                  Rp {totalKredit.toLocaleString("id-ID")}
                 </TableCell>
                 <TableCell></TableCell>
               </TableRow>
@@ -332,9 +381,13 @@ export function JournalForm({ entry, onSubmit, loading = false }: JournalFormPro
         </div>
       </div>
 
-      <Button type="submit" disabled={loading || !isBalanced} className="w-full">
-        {loading ? "Menyimpan..." : (entry ? "Perbarui Jurnal" : "Buat Jurnal")}
+      <Button
+        type="submit"
+        disabled={loading || !isBalanced}
+        className="w-full"
+      >
+        {loading ? "Menyimpan..." : entry ? "Perbarui Jurnal" : "Buat Jurnal"}
       </Button>
     </form>
-  )
+  );
 }

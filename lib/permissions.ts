@@ -1,4 +1,4 @@
-import { UserRole } from "@prisma/client"
+import { UserRole } from "@prisma/client";
 
 export const permissions = {
   KASIR: {
@@ -33,9 +33,11 @@ export const permissions = {
     canManageUsers: false,
     canAccessAkuntansi: true,
   },
-}
+};
 
-export function hasPermission(role: UserRole, permission: keyof typeof permissions.ADMIN) {
-  return permissions[role]?.[permission] ?? false
+export function hasPermission(
+  role: UserRole,
+  permission: keyof typeof permissions.ADMIN,
+) {
+  return permissions[role]?.[permission] ?? false;
 }
-

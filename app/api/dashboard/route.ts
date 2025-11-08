@@ -1,55 +1,65 @@
-import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth-options"
-import { prisma } from "@/lib/prisma"
-import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, subDays } from "date-fns"
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth-options";
+import { prisma } from "@/lib/prisma";
+import {
+  startOfDay,
+  endOfDay,
+  startOfWeek,
+  endOfWeek,
+  startOfMonth,
+  endOfMonth,
+  startOfYear,
+  endOfYear,
+  subDays,
+} from "date-fns";
 
 export async function GET(request: Request) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url)
-    const period = searchParams.get("period") || "today"
-    const customStartDate = searchParams.get("startDate")
-    const customEndDate = searchParams.get("endDate")
+    const { searchParams } = new URL(request.url);
+    const period = searchParams.get("period") || "today";
+    const customStartDate = searchParams.get("startDate");
+    const customEndDate = searchParams.get("endDate");
 
-    let startDate: Date
-    let endDate: Date
+    let startDate: Date;
+    let endDate: Date;
 
     if (customStartDate && customEndDate) {
-      startDate = startOfDay(new Date(customStartDate))
-      endDate = endOfDay(new Date(customEndDate))
+      startDate = startOfDay(new Date(customStartDate));
+      endDate = endOfDay(new Date(customEndDate));
     } else {
-      const today = new Date()
-      
+      const today = new Date();
+
       switch (period) {
         case "today":
-          startDate = startOfDay(today)
-          endDate = endOfDay(today)
-          break
+          startDate = startOfDay(today);
+          endDate = endOfDay(today);
+          break;
         case "yesterday":
-          const yesterday = subDays(today, 1)
-          startDate = startOfDay(yesterday)
-          endDate = endOfDay(yesterday)
-          break
+          const yesterday = subDays(today, 1);
+          startDate = startOfDay(yesterday);
+          endDate = endOfDay(yesterday);
+          break;
         case "week":
-          startDate = startOfWeek(today, { weekStartsOn: 1 })
-          endDate = endOfWeek(today, { weekStartsOn: 1 })
-          break
+          startDate = startOfWeek(today, { weekStartsOn: 1 });
+          endDate = endOfWeek(today, { weekStartsOn: 1 });
+          break;
         case "month":
-          startDate = startOfMonth(today)
-          endDate = endOfMonth(today)
-          break
+          startDate = startOfMonth(today);
+          endDate = endOfMonth(today);
+          break;
         case "year":
-          startDate = startOfYear(today)
-          endDate = endOfYear(today)
-          break
+          startDate = startOfYear(today);
+          endDate = endOfYear(today);
+          break;
         default:
-          startDate = startOfDay(today)
-          endDate = endOfDay(today)
+          startDate = startOfDay(today);
+          endDate = endOfDay(today);
       }
     }
 
@@ -65,7 +75,7 @@ export async function GET(request: Request) {
         total: true,
       },
       _count: true,
-    })
+    });
 
     // Barang dengan stok rendah (tidak terpengaruh filter tanggal)
     const barangStokRendah = await prisma.barang.count({
@@ -74,7 +84,7 @@ export async function GET(request: Request) {
           lte: prisma.barang.fields.stokMinimum,
         },
       },
-    })
+    });
 
     // Transaksi barang masuk
     const barangMasuk = await prisma.transaksiMasuk.count({
@@ -84,7 +94,7 @@ export async function GET(request: Request) {
           lte: endDate,
         },
       },
-    })
+    });
 
     // Transaksi barang keluar
     const barangKeluar = await prisma.transaksiKeluar.count({
@@ -94,7 +104,7 @@ export async function GET(request: Request) {
           lte: endDate,
         },
       },
-    })
+    });
 
     // Transaksi terakhir
     const recentTransactions = await prisma.transaksiKasir.findMany({
@@ -116,7 +126,7 @@ export async function GET(request: Request) {
           },
         },
       },
-    })
+    });
 
     // Barang stok rendah
     const lowStockItems = await prisma.barang.findMany({
@@ -132,11 +142,11 @@ export async function GET(request: Request) {
       orderBy: {
         stok: "asc",
       },
-    })
+    });
 
     // Barang terlaris
     const items = await prisma.itemTransaksi.groupBy({
-      by: ['barangId'],
+      by: ["barangId"],
       where: {
         transaksiKasir: {
           tanggal: {
@@ -150,28 +160,28 @@ export async function GET(request: Request) {
       },
       orderBy: {
         _sum: {
-          qty: 'desc',
+          qty: "desc",
         },
       },
       take: 5,
-    })
+    });
 
-    const barangIds = items.map((item: any) => item.barangId)
+    const barangIds = items.map((item: any) => item.barangId);
     const barangDetails = await prisma.barang.findMany({
       where: {
         id: {
           in: barangIds,
         },
       },
-    })
+    });
 
     const topSellingItems = items.map((item: any) => {
-      const barang = barangDetails.find((b: any) => b.id === item.barangId)
+      const barang = barangDetails.find((b: any) => b.id === item.barangId);
       return {
-        nama: barang?.nama || 'Unknown',
+        nama: barang?.nama || "Unknown",
         jumlah: item._sum.qty || 0,
-      }
-    })
+      };
+    });
 
     return NextResponse.json({
       stats: {
@@ -184,9 +194,12 @@ export async function GET(request: Request) {
       recentTransactions,
       lowStockItems,
       topSellingItems,
-    })
+    });
   } catch (error) {
-    console.error("Dashboard API error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error("Dashboard API error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

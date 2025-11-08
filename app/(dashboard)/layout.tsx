@@ -1,10 +1,10 @@
-import { SidebarProvider } from "@/components/ui/sidebar"
-import { AppSidebar } from "@/components/app-sidebar"
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
 
 export default function DashboardLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <SidebarProvider>
@@ -13,7 +13,5 @@ export default function DashboardLayout({
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
     </SidebarProvider>
-  )
+  );
 }
-
-

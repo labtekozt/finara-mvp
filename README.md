@@ -5,6 +5,7 @@ Sistem manajemen terpadu untuk operasional retail dan gudang yang mencakup Point
 ## 🚀 Fitur Utama
 
 ### 1. **Modul Kasir (POS)**
+
 - Transaksi penjualan real-time
 - Keranjang belanja interaktif
 - Multiple metode pembayaran (Tunai, Kartu)
@@ -13,6 +14,7 @@ Sistem manajemen terpadu untuk operasional retail dan gudang yang mencakup Point
 - Update stok otomatis
 
 ### 2. **Modul Inventaris**
+
 - CRUD barang lengkap
 - Filter berdasarkan kategori dan lokasi
 - Notifikasi stok rendah
@@ -21,6 +23,7 @@ Sistem manajemen terpadu untuk operasional retail dan gudang yang mencakup Point
 - SKU management
 
 ### 3. **Modul Transaksi Barang**
+
 - Pencatatan barang masuk
 - Pencatatan barang keluar
 - Histori transaksi lengkap
@@ -28,6 +31,7 @@ Sistem manajemen terpadu untuk operasional retail dan gudang yang mencakup Point
 - Filter berdasarkan tanggal dan lokasi
 
 ### 4. **Dashboard & Reporting**
+
 - Statistik penjualan harian
 - Monitoring stok rendah
 - Transaksi barang masuk/keluar
@@ -35,6 +39,7 @@ Sistem manajemen terpadu untuk operasional retail dan gudang yang mencakup Point
 - Visualisasi data
 
 ### 5. **Manajemen User & Role**
+
 - Role-based access control (RBAC)
 - 4 role: Admin, Kasir, Gudang, Manajer
 - Audit trail lengkap
@@ -52,29 +57,33 @@ Sistem manajemen terpadu untuk operasional retail dan gudang yang mencakup Point
 
 ## 📋 Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - PostgreSQL 14+
 - npm atau yarn
 
 ## 🔧 Installation
 
 1. **Clone repository**
+
 ```bash
 git clone <repository-url>
 cd finara
 ```
 
 2. **Install dependencies**
+
 ```bash
 npm install
 ```
 
 3. **Setup environment variables**
+
 ```bash
 cp .env.example .env
 ```
 
 Edit `.env` file:
+
 ```env
 DATABASE_URL="postgresql://user:password@localhost:5432/finara_db?schema=public"
 NEXTAUTH_URL="http://localhost:3000"
@@ -82,6 +91,7 @@ NEXTAUTH_SECRET="your-super-secret-key-change-this-in-production"
 ```
 
 4. **Setup database**
+
 ```bash
 # Generate Prisma Client
 npm run db:generate
@@ -94,6 +104,7 @@ npm run db:seed
 ```
 
 5. **Run development server**
+
 ```bash
 npm run dev
 ```
@@ -105,7 +116,7 @@ Buka [http://localhost:3000](http://localhost:3000) di browser.
 Setelah seeding, gunakan credentials berikut untuk login:
 
 | Role    | Username | Password   | Akses                                      |
-|---------|----------|------------|--------------------------------------------|
+| ------- | -------- | ---------- | ------------------------------------------ |
 | Admin   | admin    | admin123   | Full access (semua modul + manajemen user) |
 | Kasir   | kasir    | kasir123   | Kasir + Dashboard                          |
 | Gudang  | gudang   | gudang123  | Inventaris + Transaksi Barang + Dashboard  |
@@ -152,6 +163,7 @@ finara/
 ## 🔐 Role-Based Access Control
 
 ### Admin (ADMIN)
+
 - ✅ Dashboard
 - ✅ Kasir
 - ✅ Inventaris (CRUD)
@@ -159,6 +171,7 @@ finara/
 - ✅ Manajemen User
 
 ### Kasir (KASIR)
+
 - ✅ Dashboard
 - ✅ Kasir (POS)
 - ❌ Inventaris
@@ -166,6 +179,7 @@ finara/
 - ❌ Manajemen User
 
 ### Petugas Gudang (GUDANG)
+
 - ✅ Dashboard
 - ❌ Kasir
 - ✅ Inventaris
@@ -173,6 +187,7 @@ finara/
 - ❌ Manajemen User
 
 ### Manajer (MANAJER)
+
 - ✅ Dashboard (View-only)
 - ✅ Kasir (View-only)
 - ✅ Inventaris (View-only)
@@ -182,6 +197,7 @@ finara/
 ## 🗄️ Database Schema
 
 ### Entities
+
 - **User** - User management with roles
 - **Lokasi** - Warehouse locations
 - **Barang** - Product/inventory items
@@ -196,10 +212,12 @@ Lihat `prisma/schema.prisma` untuk detail lengkap.
 ## 📊 API Endpoints
 
 ### Authentication
+
 - `POST /api/auth/signin` - Login
 - `POST /api/auth/signout` - Logout
 
 ### Inventory (Barang)
+
 - `GET /api/barang` - List all items
 - `POST /api/barang` - Create item
 - `GET /api/barang/[id]` - Get item detail
@@ -207,18 +225,22 @@ Lihat `prisma/schema.prisma` untuk detail lengkap.
 - `DELETE /api/barang/[id]` - Delete item
 
 ### Locations (Lokasi)
+
 - `GET /api/lokasi` - List all locations
 - `POST /api/lokasi` - Create location
 
 ### Cashier Transactions
+
 - `GET /api/transaksi-kasir` - List transactions
 - `POST /api/transaksi-kasir` - Create transaction
 
 ### Incoming Goods
+
 - `GET /api/transaksi-masuk` - List incoming transactions
 - `POST /api/transaksi-masuk` - Create incoming transaction
 
 ### Outgoing Goods
+
 - `GET /api/transaksi-keluar` - List outgoing transactions
 - `POST /api/transaksi-keluar` - Create outgoing transaction
 

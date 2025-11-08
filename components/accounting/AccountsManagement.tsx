@@ -1,17 +1,23 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -20,7 +26,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -28,27 +34,20 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import {
-  Calculator,
-  Plus,
-  Search,
-  Edit,
-  Trash2,
-  Eye
-} from "lucide-react"
-import { useAccounts } from "@/hooks/accounting"
-import { Akun, AkunFormData, AccountType } from "@/types/accounting"
-import { AccountForm } from "./forms/AccountForm"
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Calculator, Plus, Search, Edit, Trash2, Eye } from "lucide-react";
+import { useAccounts } from "@/hooks/accounting";
+import { Akun, AkunFormData, AccountType } from "@/types/accounting";
+import { AccountForm } from "./forms/AccountForm";
 
 const ACCOUNT_TYPES: { value: AccountType; label: string }[] = [
   { value: "ASSET", label: "Aset" },
   { value: "LIABILITY", label: "Liabilitas" },
   { value: "EQUITY", label: "Ekuitas" },
   { value: "REVENUE", label: "Pendapatan" },
-  { value: "EXPENSE", label: "Beban" }
-]
+  { value: "EXPENSE", label: "Beban" },
+];
 
 const ACCOUNT_CATEGORIES = [
   "Kas & Bank",
@@ -59,68 +58,63 @@ const ACCOUNT_CATEGORIES = [
   "Ekuitas",
   "Pendapatan",
   "Beban Operasional",
-  "Beban Lainnya"
-]
+  "Beban Lainnya",
+];
 
 interface AccountsManagementProps {
-  className?: string
+  className?: string;
 }
 
 export function AccountsManagement({ className }: AccountsManagementProps) {
-  const [filterTipe, setFilterTipe] = useState<string>("ALL")
-  const [filterKategori, setFilterKategori] = useState<string>("ALL")
-  const [searchTerm, setSearchTerm] = useState("")
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [editingAccount, setEditingAccount] = useState<Akun | null>(null)
+  const [filterTipe, setFilterTipe] = useState<string>("ALL");
+  const [filterKategori, setFilterKategori] = useState<string>("ALL");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingAccount, setEditingAccount] = useState<Akun | null>(null);
 
-  const {
-    accounts,
-    loading,
-    createAccount,
-    updateAccount,
-    deleteAccount
-  } = useAccounts({
-    tipe: filterTipe === "ALL" ? undefined : filterTipe,
-    kategori: filterKategori === "ALL" ? undefined : filterKategori,
-    search: searchTerm || undefined
-  })
+  const { accounts, loading, createAccount, updateAccount, deleteAccount } =
+    useAccounts({
+      tipe: filterTipe === "ALL" ? undefined : filterTipe,
+      kategori: filterKategori === "ALL" ? undefined : filterKategori,
+      search: searchTerm || undefined,
+    });
 
   const handleCreateAccount = async (data: AkunFormData) => {
-    const result = await createAccount(data)
+    const result = await createAccount(data);
     if (result) {
-      setIsDialogOpen(false)
+      setIsDialogOpen(false);
     }
-  }
+  };
 
   const handleUpdateAccount = async (data: AkunFormData) => {
     if (editingAccount) {
-      const result = await updateAccount(editingAccount.id, data)
+      const result = await updateAccount(editingAccount.id, data);
       if (result) {
-        setIsDialogOpen(false)
-        setEditingAccount(null)
+        setIsDialogOpen(false);
+        setEditingAccount(null);
       }
     }
-  }
+  };
 
   const handleDeleteAccount = async (account: Akun) => {
     if (confirm(`Apakah Anda yakin ingin menghapus akun "${account.nama}"?`)) {
-      await deleteAccount(account.id)
+      await deleteAccount(account.id);
     }
-  }
+  };
 
   const openEditDialog = (account: Akun) => {
-    setEditingAccount(account)
-    setIsDialogOpen(true)
-  }
+    setEditingAccount(account);
+    setIsDialogOpen(true);
+  };
 
   const openCreateDialog = () => {
-    setEditingAccount(null)
-    setIsDialogOpen(true)
-  }
+    setEditingAccount(null);
+    setIsDialogOpen(true);
+  };
 
   const getAccountTypeLabel = (tipe: AccountType) => {
-    return ACCOUNT_TYPES.find(t => t.value === tipe)?.label || tipe
-  }
+    return ACCOUNT_TYPES.find((t) => t.value === tipe)?.label || tipe;
+  };
 
   return (
     <div className={className}>
@@ -195,7 +189,9 @@ export function AccountsManagement({ className }: AccountsManagementProps) {
         <CardContent className="pt-6">
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="text-sm text-muted-foreground">Memuat akun...</div>
+              <div className="text-sm text-muted-foreground">
+                Memuat akun...
+              </div>
             </div>
           ) : accounts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8">
@@ -224,7 +220,9 @@ export function AccountsManagement({ className }: AccountsManagementProps) {
               <TableBody>
                 {accounts.map((account) => (
                   <TableRow key={account.id}>
-                    <TableCell className="font-medium">{account.kode}</TableCell>
+                    <TableCell className="font-medium">
+                      {account.kode}
+                    </TableCell>
                     <TableCell>{account.nama}</TableCell>
                     <TableCell>
                       <Badge variant="outline">
@@ -233,7 +231,9 @@ export function AccountsManagement({ className }: AccountsManagementProps) {
                     </TableCell>
                     <TableCell>{account.kategori}</TableCell>
                     <TableCell>
-                      <Badge variant={account.isActive ? "default" : "secondary"}>
+                      <Badge
+                        variant={account.isActive ? "default" : "secondary"}
+                      >
                         {account.isActive ? "Aktif" : "Tidak Aktif"}
                       </Badge>
                     </TableCell>
@@ -268,19 +268,20 @@ export function AccountsManagement({ className }: AccountsManagementProps) {
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>
-              {editingAccount ? 'Edit Akun' : 'Tambah Akun Baru'}
+              {editingAccount ? "Edit Akun" : "Tambah Akun Baru"}
             </DialogTitle>
             <DialogDescription>
               {editingAccount
-                ? 'Perbarui informasi akun yang dipilih'
-                : 'Buat akun baru untuk chart of accounts'
-              }
+                ? "Perbarui informasi akun yang dipilih"
+                : "Buat akun baru untuk chart of accounts"}
             </DialogDescription>
           </DialogHeader>
 
           <AccountForm
             account={editingAccount}
-            onSubmit={editingAccount ? handleUpdateAccount : handleCreateAccount}
+            onSubmit={
+              editingAccount ? handleUpdateAccount : handleCreateAccount
+            }
             loading={loading}
           />
 
@@ -292,5 +293,5 @@ export function AccountsManagement({ className }: AccountsManagementProps) {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }

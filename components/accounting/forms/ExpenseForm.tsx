@@ -1,83 +1,95 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Pengeluaran, PengeluaranFormData, ExpenseCategory, PaymentMethod } from "@/types/accounting"
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Pengeluaran,
+  PengeluaranFormData,
+  ExpenseCategory,
+  PaymentMethod,
+} from "@/types/accounting";
 
 const EXPENSE_CATEGORIES: { value: ExpenseCategory; label: string }[] = [
   { value: "GAJI", label: "Gaji" },
   { value: "UTILITAS", label: "Utilitas" },
   { value: "SEWA", label: "Sewa" },
   { value: "PERLENGKAPAN", label: "Perlengkapan" },
-  { value: "LAINNYA", label: "Lainnya" }
-]
+  { value: "LAINNYA", label: "Lainnya" },
+];
 
 const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
   { value: "tunai", label: "Tunai" },
   { value: "transfer", label: "Transfer" },
   { value: "cek", label: "Cek" },
-  { value: "kartu_kredit", label: "Kartu Kredit" }
-]
+  { value: "kartu_kredit", label: "Kartu Kredit" },
+];
 
 interface ExpenseFormProps {
-  expense?: Pengeluaran | null
-  onSubmit: (data: PengeluaranFormData) => Promise<void>
-  loading?: boolean
+  expense?: Pengeluaran | null;
+  onSubmit: (data: PengeluaranFormData) => Promise<void>;
+  loading?: boolean;
 }
 
-export function ExpenseForm({ expense, onSubmit, loading = false }: ExpenseFormProps) {
+export function ExpenseForm({
+  expense,
+  onSubmit,
+  loading = false,
+}: ExpenseFormProps) {
   const [formData, setFormData] = useState<PengeluaranFormData>({
-    tanggal: new Date().toISOString().split('T')[0],
+    tanggal: new Date().toISOString().split("T")[0],
     kategori: "LAINNYA",
     deskripsi: "",
     jumlah: 0,
     penerima: "",
     metodePembayaran: "tunai",
-    catatan: ""
-  })
+    catatan: "",
+  });
 
   useEffect(() => {
     if (expense) {
       setFormData({
-        tanggal: expense.tanggal.split('T')[0],
+        tanggal: expense.tanggal.split("T")[0],
         kategori: expense.kategori as ExpenseCategory,
         deskripsi: expense.deskripsi,
         jumlah: expense.jumlah,
         penerima: expense.penerima,
         metodePembayaran: expense.metodePembayaran as PaymentMethod,
-        catatan: expense.catatan || ""
-      })
+        catatan: expense.catatan || "",
+      });
     } else {
       setFormData({
-        tanggal: new Date().toISOString().split('T')[0],
+        tanggal: new Date().toISOString().split("T")[0],
         kategori: "LAINNYA",
         deskripsi: "",
         jumlah: 0,
         penerima: "",
         metodePembayaran: "tunai",
-        catatan: ""
-      })
+        catatan: "",
+      });
     }
-  }, [expense])
+  }, [expense]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    await onSubmit(formData)
-  }
+    e.preventDefault();
+    await onSubmit(formData);
+  };
 
-  const handleInputChange = (field: keyof PengeluaranFormData, value: string | number) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-  }
+  const handleInputChange = (
+    field: keyof PengeluaranFormData,
+    value: string | number,
+  ) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -117,7 +129,9 @@ export function ExpenseForm({ expense, onSubmit, loading = false }: ExpenseFormP
         <Textarea
           id="deskripsi"
           value={formData.deskripsi}
-          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleInputChange("deskripsi", e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+            handleInputChange("deskripsi", e.target.value)
+          }
           placeholder="Deskripsi pengeluaran"
           required
         />
@@ -142,7 +156,9 @@ export function ExpenseForm({ expense, onSubmit, loading = false }: ExpenseFormP
             min="0"
             step="0.01"
             value={formData.jumlah || ""}
-            onChange={(e) => handleInputChange("jumlah", parseFloat(e.target.value) || 0)}
+            onChange={(e) =>
+              handleInputChange("jumlah", parseFloat(e.target.value) || 0)
+            }
             placeholder="0"
             required
           />
@@ -153,7 +169,9 @@ export function ExpenseForm({ expense, onSubmit, loading = false }: ExpenseFormP
         <Label htmlFor="metodePembayaran">Metode Pembayaran *</Label>
         <Select
           value={formData.metodePembayaran}
-          onValueChange={(value) => handleInputChange("metodePembayaran", value)}
+          onValueChange={(value) =>
+            handleInputChange("metodePembayaran", value)
+          }
         >
           <SelectTrigger>
             <SelectValue placeholder="Pilih metode pembayaran" />
@@ -173,15 +191,21 @@ export function ExpenseForm({ expense, onSubmit, loading = false }: ExpenseFormP
         <Textarea
           id="catatan"
           value={formData.catatan}
-          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleInputChange("catatan", e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+            handleInputChange("catatan", e.target.value)
+          }
           placeholder="Catatan tambahan (opsional)"
           rows={3}
         />
       </div>
 
       <Button type="submit" disabled={loading} className="w-full">
-        {loading ? "Menyimpan..." : (expense ? "Perbarui Pengeluaran" : "Buat Pengeluaran")}
+        {loading
+          ? "Menyimpan..."
+          : expense
+            ? "Perbarui Pengeluaran"
+            : "Buat Pengeluaran"}
       </Button>
     </form>
-  )
+  );
 }

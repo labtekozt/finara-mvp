@@ -27,10 +27,11 @@ Sebelum memulai, pastikan Anda telah menginstal:
    - Catat password untuk user `postgres` yang Anda buat
 
 2. **Buat Database**
+
    ```cmd
    # Buka Command Prompt atau PowerShell
    psql -U postgres
-   
+
    # Di dalam psql prompt
    CREATE DATABASE finara_db;
    \q
@@ -39,21 +40,23 @@ Sebelum memulai, pastikan Anda telah menginstal:
 ### Linux/Mac
 
 1. **Install PostgreSQL**
+
    ```bash
    # Ubuntu/Debian
    sudo apt update
    sudo apt install postgresql postgresql-contrib
-   
+
    # Mac (menggunakan Homebrew)
    brew install postgresql
    brew services start postgresql
    ```
 
 2. **Buat Database**
+
    ```bash
    # Login sebagai postgres user
    sudo -u postgres psql
-   
+
    # Di dalam psql prompt
    CREATE DATABASE finara_db;
    \q
@@ -90,11 +93,13 @@ NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="ganti-dengan-random-string-yang-panjang-dan-aman"
 ```
 
-**Penting:** 
+**Penting:**
+
 - Ganti `password123` dengan password PostgreSQL Anda
 - Ganti `NEXTAUTH_SECRET` dengan string random yang aman
 
 Untuk generate `NEXTAUTH_SECRET`, gunakan:
+
 ```bash
 # Linux/Mac
 openssl rand -base64 32
@@ -120,6 +125,7 @@ npm run db:seed
 ```
 
 Ini akan membuat:
+
 - 4 user dengan role berbeda
 - 2 lokasi gudang
 - 10 produk sample
@@ -137,7 +143,7 @@ Aplikasi akan berjalan di: **http://localhost:3000**
 Gunakan salah satu credentials berikut untuk login:
 
 | Username | Password   | Role    |
-|----------|------------|---------|
+| -------- | ---------- | ------- |
 | admin    | admin123   | Admin   |
 | kasir    | kasir123   | Kasir   |
 | gudang   | gudang123  | Gudang  |
@@ -148,15 +154,17 @@ Gunakan salah satu credentials berikut untuk login:
 ### Error: "Cannot connect to database"
 
 **Solusi:**
+
 1. Pastikan PostgreSQL service berjalan:
+
    ```bash
    # Windows
    # Cek Services atau Task Manager
-   
+
    # Linux
    sudo systemctl status postgresql
    sudo systemctl start postgresql
-   
+
    # Mac
    brew services list
    brew services start postgresql
@@ -171,6 +179,7 @@ Gunakan salah satu credentials berikut untuk login:
 ### Error: "Prisma Client did not initialize yet"
 
 **Solusi:**
+
 ```bash
 npm run db:generate
 ```
@@ -178,6 +187,7 @@ npm run db:generate
 ### Error: "Port 3000 already in use"
 
 **Solusi:**
+
 ```bash
 # Gunakan port lain
 PORT=3001 npm run dev
@@ -194,6 +204,7 @@ lsof -ti:3000 | xargs kill -9
 ### Error saat seed: "User already exists"
 
 **Solusi:**
+
 ```bash
 # Drop dan buat ulang database
 psql -U postgres
@@ -209,6 +220,7 @@ npm run db:seed
 ### Error: "Module not found"
 
 **Solusi:**
+
 ```bash
 # Hapus node_modules dan install ulang
 rm -rf node_modules package-lock.json
@@ -286,13 +298,17 @@ Setelah aplikasi berjalan:
 ## 🐛 Masalah Umum
 
 ### CORS Error
+
 Jika mengalami CORS error, pastikan API dan frontend berjalan di origin yang sama (localhost:3000).
 
 ### Session Error
+
 Jika logout otomatis, pastikan `NEXTAUTH_SECRET` sudah diset dengan benar di `.env`.
 
 ### Slow Performance
+
 Development mode lebih lambat dari production. Untuk testing performa, gunakan:
+
 ```bash
 npm run build
 npm start
@@ -310,5 +326,3 @@ Jika mengalami masalah yang tidak ada di troubleshooting guide:
 ---
 
 Selamat coding! 🚀
-
-

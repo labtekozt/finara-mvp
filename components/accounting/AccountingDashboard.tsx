@@ -1,14 +1,23 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Calculator, FileText, BookOpen, TrendingUp } from "lucide-react"
-import { DashboardStats } from "@/types/accounting"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Calculator, FileText, BookOpen, TrendingUp } from "lucide-react";
+import { DashboardStats } from "@/types/accounting";
 
 interface AccountingDashboardProps {
-  stats: DashboardStats | null
-  loading: boolean
+  stats: DashboardStats | null;
+  loading: boolean;
 }
 
-export function AccountingDashboard({ stats, loading }: AccountingDashboardProps) {
+export function AccountingDashboard({
+  stats,
+  loading,
+}: AccountingDashboardProps) {
   if (loading) {
     return (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -23,15 +32,17 @@ export function AccountingDashboard({ stats, loading }: AccountingDashboardProps
           </Card>
         ))}
       </div>
-    )
+    );
   }
 
   if (!stats) {
     return (
       <div className="text-center py-8">
-        <p className="text-muted-foreground">Tidak dapat memuat data dashboard</p>
+        <p className="text-muted-foreground">
+          Tidak dapat memuat data dashboard
+        </p>
       </div>
-    )
+    );
   }
 
   return (
@@ -56,9 +67,7 @@ export function AccountingDashboard({ stats, loading }: AccountingDashboardProps
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{stats.totalJurnal}</div>
-          <p className="text-xs text-muted-foreground">
-            Entri jurnal tercatat
-          </p>
+          <p className="text-xs text-muted-foreground">Entri jurnal tercatat</p>
         </CardContent>
       </Card>
 
@@ -92,5 +101,5 @@ export function AccountingDashboard({ stats, loading }: AccountingDashboardProps
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

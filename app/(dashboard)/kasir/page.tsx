@@ -1,84 +1,97 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Header } from "@/components/header"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
+import { useState, useEffect } from "react";
+import { Header } from "@/components/header";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Separator } from "@/components/ui/separator"
-import { Badge } from "@/components/ui/badge"
-import { Plus, Minus, Trash2, ShoppingCart, Search, Receipt } from "lucide-react"
-import { toast } from "sonner"
-import { CartItem } from "@/types"
+} from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import {
+  Plus,
+  Minus,
+  Trash2,
+  ShoppingCart,
+  Search,
+  Receipt,
+} from "lucide-react";
+import { toast } from "sonner";
+import { CartItem } from "@/types";
 
 interface Barang {
-  id: string
-  nama: string
-  kategori: string
-  stok: number
-  hargaJual: number
-  satuan: string
+  id: string;
+  nama: string;
+  kategori: string;
+  stok: number;
+  hargaJual: number;
+  satuan: string;
 }
 
 export default function KasirPage() {
-  const [barang, setBarang] = useState<Barang[]>([])
-  const [cart, setCart] = useState<CartItem[]>([])
-  const [search, setSearch] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [metodePembayaran, setMetodePembayaran] = useState("tunai")
-  const [jumlahBayar, setJumlahBayar] = useState(0)
-  const [receiptDialog, setReceiptDialog] = useState(false)
-  const [lastTransaction, setLastTransaction] = useState<any>(null)
+  const [barang, setBarang] = useState<Barang[]>([]);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [metodePembayaran, setMetodePembayaran] = useState("tunai");
+  const [jumlahBayar, setJumlahBayar] = useState(0);
+  const [receiptDialog, setReceiptDialog] = useState(false);
+  const [lastTransaction, setLastTransaction] = useState<any>(null);
 
   // Calculations
-  const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0)
-  const pajak = subtotal * 0.1 // 10% tax
-  const diskon = 0
-  const total = subtotal + pajak - diskon
-  const kembalian = jumlahBayar - total
+  const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
+  const pajak = subtotal * 0.1; // 10% tax
+  const diskon = 0;
+  const total = subtotal + pajak - diskon;
+  const kembalian = jumlahBayar - total;
 
   useEffect(() => {
-    fetchBarang()
-  }, [])
+    fetchBarang();
+  }, []);
 
   async function fetchBarang() {
     try {
-      const response = await fetch("/api/barang")
-      const data = await response.json()
-      setBarang(data)
+      const response = await fetch("/api/barang");
+      const data = await response.json();
+      setBarang(data);
     } catch (error) {
-      toast.error("Gagal memuat data barang")
+      toast.error("Gagal memuat data barang");
     }
   }
 
   function addToCart(item: Barang) {
-    const existing = cart.find((c) => c.barangId === item.id)
+    const existing = cart.find((c) => c.barangId === item.id);
 
     if (existing) {
       if (existing.qty >= item.stok) {
-        toast.error(`Stok ${item.nama} tidak cukup`)
-        return
+        toast.error(`Stok ${item.nama} tidak cukup`);
+        return;
       }
-      updateQuantity(item.id, existing.qty + 1)
+      updateQuantity(item.id, existing.qty + 1);
     } else {
       if (item.stok < 1) {
-        toast.error(`Stok ${item.nama} habis`)
-        return
+        toast.error(`Stok ${item.nama} habis`);
+        return;
       }
       setCart([
         ...cart,
@@ -91,50 +104,50 @@ export default function KasirPage() {
           stok: item.stok,
           subtotal: item.hargaJual,
         },
-      ])
-      toast.success(`${item.nama} ditambahkan ke keranjang`)
+      ]);
+      toast.success(`${item.nama} ditambahkan ke keranjang`);
     }
   }
 
   function updateQuantity(barangId: string, newQty: number) {
-    const item = cart.find((c) => c.barangId === barangId)
-    if (!item) return
+    const item = cart.find((c) => c.barangId === barangId);
+    if (!item) return;
 
     if (newQty <= 0) {
-      removeFromCart(barangId)
-      return
+      removeFromCart(barangId);
+      return;
     }
 
     if (newQty > item.stok) {
-      toast.error("Jumlah melebihi stok tersedia")
-      return
+      toast.error("Jumlah melebihi stok tersedia");
+      return;
     }
 
     setCart(
       cart.map((c) =>
         c.barangId === barangId
           ? { ...c, qty: newQty, subtotal: c.hargaJual * newQty }
-          : c
-      )
-    )
+          : c,
+      ),
+    );
   }
 
   function removeFromCart(barangId: string) {
-    setCart(cart.filter((c) => c.barangId !== barangId))
+    setCart(cart.filter((c) => c.barangId !== barangId));
   }
 
   async function handleCheckout() {
     if (cart.length === 0) {
-      toast.error("Keranjang masih kosong")
-      return
+      toast.error("Keranjang masih kosong");
+      return;
     }
 
     if (jumlahBayar < total) {
-      toast.error("Jumlah bayar kurang dari total")
-      return
+      toast.error("Jumlah bayar kurang dari total");
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
     try {
       const response = await fetch("/api/transaksi-kasir", {
         method: "POST",
@@ -155,34 +168,34 @@ export default function KasirPage() {
           jumlahBayar,
           kembalian,
         }),
-      })
+      });
 
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || "Gagal memproses transaksi")
+        const error = await response.json();
+        throw new Error(error.error || "Gagal memproses transaksi");
       }
 
-      const transaction = await response.json()
-      setLastTransaction(transaction)
-      setReceiptDialog(true)
+      const transaction = await response.json();
+      setLastTransaction(transaction);
+      setReceiptDialog(true);
 
       // Reset
-      setCart([])
-      setJumlahBayar(0)
-      fetchBarang() // Refresh stock
-      toast.success("Transaksi berhasil!")
+      setCart([]);
+      setJumlahBayar(0);
+      fetchBarang(); // Refresh stock
+      toast.success("Transaksi berhasil!");
     } catch (error: any) {
-      toast.error(error.message)
+      toast.error(error.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   function printReceipt() {
-    if (!lastTransaction) return
+    if (!lastTransaction) return;
 
-    const printWindow = window.open("", "_blank")
-    if (!printWindow) return
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
 
     const receiptHTML = `
       <!DOCTYPE html>
@@ -242,12 +255,16 @@ export default function KasirPage() {
         </div>
         <div class="separator"></div>
         <div class="items">
-          ${lastTransaction.itemTransaksi.map((item: any) => `
+          ${lastTransaction.itemTransaksi
+            .map(
+              (item: any) => `
             <div class="item">
               <span>${item.namaBarang} (${item.qty}x)</span>
               <span>Rp ${item.subtotal.toLocaleString("id-ID")}</span>
             </div>
-          `).join("")}
+          `,
+            )
+            .join("")}
         </div>
         <div class="separator"></div>
         <div class="item">
@@ -287,15 +304,15 @@ export default function KasirPage() {
         </script>
       </body>
       </html>
-    `
+    `;
 
-    printWindow.document.write(receiptHTML)
-    printWindow.document.close()
+    printWindow.document.write(receiptHTML);
+    printWindow.document.close();
   }
 
   const filteredBarang = barang.filter((item) =>
-    item.nama.toLowerCase().includes(search.toLowerCase())
-  )
+    item.nama.toLowerCase().includes(search.toLowerCase()),
+  );
 
   return (
     <div className="flex flex-col h-full">
@@ -327,7 +344,9 @@ export default function KasirPage() {
                       onClick={() => addToCart(item)}
                     >
                       <CardContent className="p-4">
-                        <div className="font-medium text-sm mb-1">{item.nama}</div>
+                        <div className="font-medium text-sm mb-1">
+                          {item.nama}
+                        </div>
                         <div className="text-lg font-bold text-primary mb-1">
                           Rp {item.hargaJual.toLocaleString("id-ID")}
                         </div>
@@ -371,7 +390,8 @@ export default function KasirPage() {
                         <div className="flex-1">
                           <div className="font-medium text-sm">{item.nama}</div>
                           <div className="text-xs text-muted-foreground">
-                            Rp {item.hargaJual.toLocaleString("id-ID")} / {item.qty}x
+                            Rp {item.hargaJual.toLocaleString("id-ID")} /{" "}
+                            {item.qty}x
                           </div>
                           <div className="text-sm font-bold">
                             Rp {item.subtotal.toLocaleString("id-ID")}
@@ -382,7 +402,9 @@ export default function KasirPage() {
                             size="icon"
                             variant="outline"
                             className="h-6 w-6"
-                            onClick={() => updateQuantity(item.barangId, item.qty - 1)}
+                            onClick={() =>
+                              updateQuantity(item.barangId, item.qty - 1)
+                            }
                           >
                             <Minus className="h-3 w-3" />
                           </Button>
@@ -393,7 +415,9 @@ export default function KasirPage() {
                             size="icon"
                             variant="outline"
                             className="h-6 w-6"
-                            onClick={() => updateQuantity(item.barangId, item.qty + 1)}
+                            onClick={() =>
+                              updateQuantity(item.barangId, item.qty + 1)
+                            }
                           >
                             <Plus className="h-3 w-3" />
                           </Button>
@@ -436,13 +460,18 @@ export default function KasirPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="metode">Metode Pembayaran</Label>
-                    <Select value={metodePembayaran} onValueChange={setMetodePembayaran}>
+                    <Select
+                      value={metodePembayaran}
+                      onValueChange={setMetodePembayaran}
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="tunai">Tunai</SelectItem>
-                        <SelectItem value="kartu">Kartu Debit/Kredit</SelectItem>
+                        <SelectItem value="kartu">
+                          Kartu Debit/Kredit
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -453,7 +482,9 @@ export default function KasirPage() {
                       id="bayar"
                       type="number"
                       value={jumlahBayar || ""}
-                      onChange={(e) => setJumlahBayar(parseFloat(e.target.value) || 0)}
+                      onChange={(e) =>
+                        setJumlahBayar(parseFloat(e.target.value) || 0)
+                      }
                       placeholder="0"
                     />
                   </div>
@@ -461,7 +492,11 @@ export default function KasirPage() {
                   {jumlahBayar > 0 && (
                     <div className="flex justify-between text-sm">
                       <span>Kembalian:</span>
-                      <span className={kembalian < 0 ? "text-red-600" : "text-green-600"}>
+                      <span
+                        className={
+                          kembalian < 0 ? "text-red-600" : "text-green-600"
+                        }
+                      >
                         Rp {kembalian.toLocaleString("id-ID")}
                       </span>
                     </div>
@@ -511,7 +546,9 @@ export default function KasirPage() {
                 </div>
                 <div className="flex justify-between">
                   <span>Bayar:</span>
-                  <span>Rp {lastTransaction.jumlahBayar.toLocaleString("id-ID")}</span>
+                  <span>
+                    Rp {lastTransaction.jumlahBayar.toLocaleString("id-ID")}
+                  </span>
                 </div>
                 <div className="flex justify-between text-green-600">
                   <span>Kembalian:</span>
@@ -529,7 +566,5 @@ export default function KasirPage() {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }
-
-

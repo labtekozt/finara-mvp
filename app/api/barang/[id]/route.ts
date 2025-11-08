@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth-options"
-import { prisma } from "@/lib/prisma"
-import { z } from "zod"
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth-options";
+import { prisma } from "@/lib/prisma";
+import { z } from "zod";
 
 const barangSchema = z.object({
   nama: z.string().min(1, "Nama barang harus diisi"),
@@ -15,55 +15,55 @@ const barangSchema = z.object({
   satuan: z.string().min(1, "Satuan harus diisi"),
   deskripsi: z.string().optional(),
   lokasiId: z.string().min(1, "Lokasi harus dipilih"),
-})
+});
 
 // GET - Get single item
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params
+    const { id } = await params;
     const barang = await prisma.barang.findUnique({
       where: { id },
       include: {
         lokasi: true,
       },
-    })
+    });
 
     if (!barang) {
-      return NextResponse.json({ error: "Item not found" }, { status: 404 })
+      return NextResponse.json({ error: "Item not found" }, { status: 404 });
     }
 
-    return NextResponse.json(barang)
+    return NextResponse.json(barang);
   } catch (error) {
-    console.error("Error fetching barang:", error)
+    console.error("Error fetching barang:", error);
     return NextResponse.json(
       { error: "Failed to fetch item" },
-      { status: 500 }
-    )
+      { status: 500 },
+    );
   }
 }
 
 // PUT - Update item
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params
-    const body = await request.json()
-    const validatedData = barangSchema.parse(body)
+    const { id } = await params;
+    const body = await request.json();
+    const validatedData = barangSchema.parse(body);
 
     const barang = await prisma.barang.update({
       where: { id },
@@ -71,7 +71,7 @@ export async function PUT(
       include: {
         lokasi: true,
       },
-    })
+    });
 
     // Log activity
     await prisma.activityLog.create({
@@ -83,47 +83,47 @@ export async function PUT(
         entityId: barang.id,
         description: `Mengupdate barang: ${barang.nama}`,
       },
-    })
+    });
 
-    return NextResponse.json(barang)
+    return NextResponse.json(barang);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Validation error", details: error.errors },
-        { status: 400 }
-      )
+        { status: 400 },
+      );
     }
-    console.error("Error updating barang:", error)
+    console.error("Error updating barang:", error);
     return NextResponse.json(
       { error: "Failed to update item" },
-      { status: 500 }
-    )
+      { status: 500 },
+    );
   }
 }
 
 // DELETE - Delete item
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params
+    const { id } = await params;
     const barang = await prisma.barang.findUnique({
       where: { id },
-    })
+    });
 
     if (!barang) {
-      return NextResponse.json({ error: "Item not found" }, { status: 404 })
+      return NextResponse.json({ error: "Item not found" }, { status: 404 });
     }
 
     await prisma.barang.delete({
       where: { id },
-    })
+    });
 
     // Log activity
     await prisma.activityLog.create({
@@ -135,16 +135,14 @@ export async function DELETE(
         entityId: id,
         description: `Menghapus barang: ${barang.nama}`,
       },
-    })
+    });
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting barang:", error)
+    console.error("Error deleting barang:", error);
     return NextResponse.json(
       { error: "Failed to delete item" },
-      { status: 500 }
-    )
+      { status: 500 },
+    );
   }
 }
-
-

@@ -1,10 +1,10 @@
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth-options"
-import { Header } from "@/components/header"
-import { DashboardClient } from "./dashboard-client"
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth-options";
+import { Header } from "@/components/header";
+import { DashboardClient } from "./dashboard-client";
 
 export default async function DashboardPage() {
-  const session = await getServerSession(authOptions)
+  const session = await getServerSession(authOptions);
 
   return (
     <div className="flex flex-col h-full">
@@ -12,9 +12,8 @@ export default async function DashboardPage() {
         title={`Selamat Datang, ${session?.user?.name}`}
         description="Dashboard - Ringkasan Sistem"
       />
-      
+
       <DashboardClient />
     </div>
-  )
+  );
 }
-

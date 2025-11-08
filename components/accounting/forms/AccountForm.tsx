@@ -1,26 +1,26 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Akun, AkunFormData, AccountType } from "@/types/accounting"
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Akun, AkunFormData, AccountType } from "@/types/accounting";
 
 const ACCOUNT_TYPES: { value: AccountType; label: string }[] = [
   { value: "ASSET", label: "Aset" },
   { value: "LIABILITY", label: "Liabilitas" },
   { value: "EQUITY", label: "Ekuitas" },
   { value: "REVENUE", label: "Pendapatan" },
-  { value: "EXPENSE", label: "Beban" }
-]
+  { value: "EXPENSE", label: "Beban" },
+];
 
 const ACCOUNT_CATEGORIES = [
   "Kas & Bank",
@@ -31,23 +31,27 @@ const ACCOUNT_CATEGORIES = [
   "Ekuitas",
   "Pendapatan",
   "Beban Operasional",
-  "Beban Lainnya"
-]
+  "Beban Lainnya",
+];
 
 interface AccountFormProps {
-  account?: Akun | null
-  onSubmit: (data: AkunFormData) => Promise<void>
-  loading?: boolean
+  account?: Akun | null;
+  onSubmit: (data: AkunFormData) => Promise<void>;
+  loading?: boolean;
 }
 
-export function AccountForm({ account, onSubmit, loading = false }: AccountFormProps) {
+export function AccountForm({
+  account,
+  onSubmit,
+  loading = false,
+}: AccountFormProps) {
   const [formData, setFormData] = useState<AkunFormData>({
     kode: "",
     nama: "",
     tipe: "ASSET",
     kategori: "",
-    deskripsi: ""
-  })
+    deskripsi: "",
+  });
 
   useEffect(() => {
     if (account) {
@@ -57,27 +61,27 @@ export function AccountForm({ account, onSubmit, loading = false }: AccountFormP
         tipe: account.tipe,
         kategori: account.kategori,
         parentId: account.parentId || undefined,
-        deskripsi: account.deskripsi || ""
-      })
+        deskripsi: account.deskripsi || "",
+      });
     } else {
       setFormData({
         kode: "",
         nama: "",
         tipe: "ASSET",
         kategori: "",
-        deskripsi: ""
-      })
+        deskripsi: "",
+      });
     }
-  }, [account])
+  }, [account]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    await onSubmit(formData)
-  }
+    e.preventDefault();
+    await onSubmit(formData);
+  };
 
   const handleInputChange = (field: keyof AkunFormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-  }
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -148,15 +152,17 @@ export function AccountForm({ account, onSubmit, loading = false }: AccountFormP
         <Textarea
           id="deskripsi"
           value={formData.deskripsi}
-          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleInputChange("deskripsi", e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+            handleInputChange("deskripsi", e.target.value)
+          }
           placeholder="Deskripsi akun (opsional)"
           rows={3}
         />
       </div>
 
       <Button type="submit" disabled={loading} className="w-full">
-        {loading ? "Menyimpan..." : (account ? "Perbarui Akun" : "Buat Akun")}
+        {loading ? "Menyimpan..." : account ? "Perbarui Akun" : "Buat Akun"}
       </Button>
     </form>
-  )
+  );
 }

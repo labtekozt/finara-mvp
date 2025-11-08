@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { usePathname } from "next/navigation"
-import Link from "next/link"
-import { useSession } from "next-auth/react"
+import * as React from "react";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
+import { useSession } from "next-auth/react";
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -15,7 +15,7 @@ import {
   FileText,
   TrendingUp,
   Calendar,
-} from "lucide-react"
+} from "lucide-react";
 
 import {
   Sidebar,
@@ -25,9 +25,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { hasPermission } from "@/lib/permissions"
+} from "@/components/ui/sidebar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { hasPermission } from "@/lib/permissions";
 
 const menuItems = [
   {
@@ -66,15 +66,17 @@ const menuItems = [
     icon: Settings,
     permission: "canManageUsers" as const,
   },
-]
+];
 
 export function AppSidebar() {
-  const pathname = usePathname()
-  const { data: session } = useSession()
+  const pathname = usePathname();
+  const { data: session } = useSession();
 
-  const filteredMenuItems = menuItems.filter(item => 
-    session?.user?.role ? hasPermission(session.user.role, item.permission) : false
-  )
+  const filteredMenuItems = menuItems.filter((item) =>
+    session?.user?.role
+      ? hasPermission(session.user.role, item.permission)
+      : false,
+  );
 
   return (
     <Sidebar>
@@ -86,10 +88,7 @@ export function AppSidebar() {
         <SidebarMenu>
           {filteredMenuItems.map((item) => (
             <SidebarMenuItem key={item.href}>
-              <SidebarMenuButton
-                asChild
-                isActive={pathname === item.href}
-              >
+              <SidebarMenuButton asChild isActive={pathname === item.href}>
                 <Link href={item.href}>
                   <item.icon className="h-4 w-4" />
                   <div className="flex flex-col">
@@ -114,13 +113,15 @@ export function AppSidebar() {
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 overflow-hidden">
-            <p className="text-sm font-medium truncate">{session?.user?.name}</p>
-            <p className="text-xs text-muted-foreground">{session?.user?.role}</p>
+            <p className="text-sm font-medium truncate">
+              {session?.user?.name}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {session?.user?.role}
+            </p>
           </div>
         </div>
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }
-
-
