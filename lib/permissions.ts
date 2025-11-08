@@ -7,6 +7,7 @@ export const permissions = {
     canAccessTransaksi: false,
     canAccessDashboard: true,
     canManageUsers: false,
+    canAccessAkuntansi: false,
   },
   ADMIN: {
     canAccessKasir: true,
@@ -14,6 +15,7 @@ export const permissions = {
     canAccessTransaksi: true,
     canAccessDashboard: true,
     canManageUsers: true,
+    canAccessAkuntansi: true,
   },
   GUDANG: {
     canAccessKasir: false,
@@ -21,6 +23,7 @@ export const permissions = {
     canAccessTransaksi: true,
     canAccessDashboard: true,
     canManageUsers: false,
+    canAccessAkuntansi: false,
   },
   MANAJER: {
     canAccessKasir: true,
@@ -28,6 +31,7 @@ export const permissions = {
     canAccessTransaksi: true,
     canAccessDashboard: true,
     canManageUsers: false,
+    canAccessAkuntansi: true,
   },
 }
 

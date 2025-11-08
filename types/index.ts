@@ -62,4 +62,6 @@ export interface TransaksiKeluarForm {
   keterangan?: string
 }
 
+// Re-export accounting types
+export * from './accounting'
 

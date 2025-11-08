@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
 import { prisma } from "@/lib/prisma"
 import { generateKeluarNumber } from "@/lib/transaction-number"
+import { createJournalEntryForInventoryAdjustment } from "@/lib/accounting-utils"
 import { z } from "zod"
 
 const transaksiKeluarSchema = z.object({
@@ -118,6 +119,14 @@ export async function POST(request: NextRequest) {
           },
         },
       })
+
+      // Create journal entry for inventory adjustment
+      try {
+        await createJournalEntryForInventoryAdjustment(newTransaksi.id, totalNilai, session.user.id)
+      } catch (journalError) {
+        console.error("Failed to create journal entry for outgoing transaction:", journalError)
+        // Don't fail the transaction if journal creation fails
+      }
 
       // Log activity
       await tx.activityLog.create({

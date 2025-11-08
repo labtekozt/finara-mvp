@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
 import { prisma } from "@/lib/prisma"
 import { generateMasukNumber } from "@/lib/transaction-number"
+import { createJournalEntryForPurchase } from "@/lib/accounting-utils"
 import { z } from "zod"
 
 const transaksiMasukSchema = z.object({
@@ -114,6 +115,18 @@ export async function POST(request: NextRequest) {
 
       return newTransaksi
     })
+
+    // Create accounting journal entry
+    try {
+      await createJournalEntryForPurchase(
+        transaksi.nomorTransaksi,
+        totalNilai,
+        session.user.id
+      )
+    } catch (accountingError) {
+      console.error("Error creating accounting entries:", accountingError)
+      // Don't fail the transaction if accounting fails, just log it
+    }
 
     return NextResponse.json(transaksi, { status: 201 })
   } catch (error) {

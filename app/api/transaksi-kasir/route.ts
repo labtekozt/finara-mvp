@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
 import { prisma } from "@/lib/prisma"
 import { generateKasirNumber } from "@/lib/transaction-number"
+import { createJournalEntryForSale, createJournalEntryForCOGS } from "@/lib/accounting-utils"
 import { z } from "zod"
 
 const itemSchema = z.object({
@@ -166,6 +167,34 @@ export async function POST(request: NextRequest) {
 
       return newTransaksi
     })
+
+    // Create accounting journal entries
+    try {
+      // Journal entry for sales revenue
+      await createJournalEntryForSale(
+        transaksi.nomorTransaksi,
+        validatedData.total,
+        session.user.id
+      )
+
+      // Journal entries for cost of goods sold (COGS)
+      for (const item of validatedData.items) {
+        const barang = await prisma.barang.findUnique({
+          where: { id: item.barangId }
+        })
+        if (barang) {
+          await createJournalEntryForCOGS(
+            item.barangId,
+            item.qty,
+            barang.hargaBeli,
+            session.user.id
+          )
+        }
+      }
+    } catch (accountingError) {
+      console.error("Error creating accounting entries:", accountingError)
+      // Don't fail the transaction if accounting fails, just log it
+    }
 
     // Fetch complete transaction data
     const completeTransaksi = await prisma.transaksiKasir.findUnique({

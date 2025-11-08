@@ -11,6 +11,10 @@ import {
   ArrowLeftRight,
   Settings,
   LogOut,
+  Calculator,
+  FileText,
+  TrendingUp,
+  Calendar,
 } from "lucide-react"
 
 import {
@@ -51,6 +55,12 @@ const menuItems = [
     permission: "canAccessTransaksi" as const,
   },
   {
+    title: "Akuntansi",
+    href: "/akuntansi",
+    icon: Calculator,
+    permission: "canAccessAkuntansi" as const,
+  },
+  {
     title: "Pengaturan",
     href: "/settings",
     icon: Settings,
@@ -82,7 +92,14 @@ export function AppSidebar() {
               >
                 <Link href={item.href}>
                   <item.icon className="h-4 w-4" />
-                  <span>{item.title}</span>
+                  <div className="flex flex-col">
+                    <span>{item.title}</span>
+                    {(item as any).subtitle && (
+                      <span className="text-xs text-muted-foreground opacity-70">
+                        {(item as any).subtitle}
+                      </span>
+                    )}
+                  </div>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
