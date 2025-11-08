@@ -84,6 +84,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    // Verify user exists in database
+    const userExists = await prisma.user.findUnique({
+      where: { id: session.user.id },
+    })
+
+    if (!userExists) {
+      return NextResponse.json(
+        { 
+          error: "Session tidak valid. Silakan logout dan login kembali.",
+          requireRelogin: true,
+        },
+        { status: 401 }
+      )
+    }
+
     const body = await request.json()
     const validatedData = transaksiSchema.parse(body)
 
