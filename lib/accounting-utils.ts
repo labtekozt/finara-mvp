@@ -448,6 +448,46 @@ export async function createJournalEntryForInventoryAdjustment(
   return jurnalEntry;
 }
 
+// Reverse a journal entry (create opposite entries)
+export async function reverseJournalEntry(
+  tx: any,
+  journalEntryId: string,
+  userId: string,
+) {
+  const originalEntry = await tx.jurnalEntry.findUnique({
+    where: { id: journalEntryId },
+    include: { details: true },
+  });
+
+  if (!originalEntry) {
+    throw new Error("Journal entry not found");
+  }
+
+  const nomorJurnal = generateTransactionNumber("JR");
+
+  // Create reversing entry with opposite debits/credits
+  await tx.jurnalEntry.create({
+    data: {
+      nomorJurnal,
+      tanggal: new Date(),
+      deskripsi: `Pembalikan: ${originalEntry.deskripsi}`,
+      referensi: `REV-${originalEntry.id}`,
+      tipeReferensi: "REVERSAL",
+      periodeId: originalEntry.periodeId,
+      userId,
+      isPosted: true,
+      details: {
+        create: originalEntry.details.map((detail: any) => ({
+          akunId: detail.akunId,
+          debit: detail.kredit, // Swap debit and credit
+          kredit: detail.debit,
+          deskripsi: `Pembalikan: ${detail.deskripsi}`,
+        })),
+      },
+    },
+  });
+}
+
 // Create journal entry for expense
 export async function createJournalEntryForExpense(
   tx: any,
@@ -466,13 +506,13 @@ export async function createJournalEntryForExpense(
   const expenseAccountMap: { [key: string]: string } = {
     GAJI_KARYAWAN: ACCOUNT_CODES.SALARY_EXPENSE,
     UTILITAS: ACCOUNT_CODES.UTILITY_EXPENSE,
-    SEWA: "5004", // Other expense
-    PERLENGKAPAN_KANTOR: "5005", // ATK
-    TRANSPORTASI: "5006", // Transport
-    PERBAIKAN: "5007", // Repairs
-    IKLAN_PROMOSI: "5008", // Advertising
-    PAJAK: "5009", // Taxes
-    ASURANSI: "5010", // Insurance
+    SEWA: "5005", // Rent expense
+    PERLENGKAPAN_KANTOR: "5006", // Office supplies
+    TRANSPORTASI: "5007", // Transportation
+    PERBAIKAN: "5008", // Repairs and maintenance
+    IKLAN_PROMOSI: "5009", // Advertising and promotion
+    PAJAK: "5010", // Taxes
+    ASURANSI: "5011", // Insurance
     LAINNYA: ACCOUNT_CODES.OTHER_EXPENSE,
   };
 

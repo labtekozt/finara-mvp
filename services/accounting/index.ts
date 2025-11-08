@@ -252,7 +252,7 @@ export class AccountingService {
     if (params?.search) searchParams.set("search", params.search);
 
     const response = await fetch(
-      `${this.BASE_URL}/pengeluaran?${searchParams}`,
+      `/api/pengeluaran?${searchParams}`,
     );
     if (!response.ok) {
       throw new Error("Failed to fetch expenses");
@@ -261,7 +261,7 @@ export class AccountingService {
   }
 
   static async createExpense(data: PengeluaranFormData): Promise<Pengeluaran> {
-    const response = await fetch(`${this.BASE_URL}/pengeluaran`, {
+    const response = await fetch(`/api/pengeluaran`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -276,7 +276,7 @@ export class AccountingService {
     id: string,
     data: Partial<PengeluaranFormData>,
   ): Promise<Pengeluaran> {
-    const response = await fetch(`${this.BASE_URL}/pengeluaran/${id}`, {
+    const response = await fetch(`/api/pengeluaran/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -288,7 +288,7 @@ export class AccountingService {
   }
 
   static async deleteExpense(id: string): Promise<void> {
-    const response = await fetch(`${this.BASE_URL}/pengeluaran/${id}`, {
+    const response = await fetch(`/api/pengeluaran/${id}`, {
       method: "DELETE",
     });
     if (!response.ok) {

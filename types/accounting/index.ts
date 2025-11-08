@@ -236,9 +236,14 @@ export type AccountType =
   | "REVENUE"
   | "EXPENSE";
 export type ExpenseCategory =
-  | "GAJI"
+  | "GAJI_KARYAWAN"
   | "UTILITAS"
   | "SEWA"
-  | "PERLENGKAPAN"
+  | "PERLENGKAPAN_KANTOR"
+  | "TRANSPORTASI"
+  | "PERBAIKAN"
+  | "IKLAN_PROMOSI"
+  | "PAJAK"
+  | "ASURANSI"
   | "LAINNYA";
 export type PaymentMethod = "tunai" | "transfer" | "cek" | "kartu_kredit";

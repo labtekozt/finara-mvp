@@ -20,11 +20,16 @@ import {
 } from "@/types/accounting";
 
 const EXPENSE_CATEGORIES: { value: ExpenseCategory; label: string }[] = [
-  { value: "GAJI", label: "Gaji" },
-  { value: "UTILITAS", label: "Utilitas" },
-  { value: "SEWA", label: "Sewa" },
-  { value: "PERLENGKAPAN", label: "Perlengkapan" },
-  { value: "LAINNYA", label: "Lainnya" },
+  { value: "GAJI_KARYAWAN", label: "Gaji dan Tunjangan Karyawan" },
+  { value: "UTILITAS", label: "Listrik, Air, Telepon" },
+  { value: "SEWA", label: "Sewa Tempat Usaha" },
+  { value: "PERLENGKAPAN_KANTOR", label: "ATK, Alat Tulis" },
+  { value: "TRANSPORTASI", label: "Transportasi dan Perjalanan" },
+  { value: "PERBAIKAN", label: "Perbaikan dan Pemeliharaan" },
+  { value: "IKLAN_PROMOSI", label: "Iklan dan Promosi" },
+  { value: "PAJAK", label: "Pajak dan Retribusi" },
+  { value: "ASURANSI", label: "Asuransi" },
+  { value: "LAINNYA", label: "Pengeluaran Lain" },
 ];
 
 const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
