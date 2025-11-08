@@ -755,20 +755,22 @@ export default function InventarisPage() {
           </div>
           {/* Tab Daftar Barang */}
           <TabsContent value="barang">
-            <Card>
+            <Card className="bg-linear-to-b from-blue-50 to-white">
               <CardHeader>
                 <CardTitle>Daftar Barang</CardTitle>
                 <CardDescription>
-                  {stokRendahFilter
-                    ? `Menampilkan ${sortedBarang.length} barang dengan stok rendah dari total ${barang.length} barang`
-                    : `Total: ${sortedBarang.length} barang`}
+                  <div className="flex justify-between items-center">
+                    {stokRendahFilter
+                      ? `Menampilkan ${sortedBarang.length} barang dengan stok rendah dari total ${barang.length} barang`
+                      : `Total: ${sortedBarang.length} barang`}
+                    <Button onClick={openTambahDialog} className="my-3">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Tambah Barang
+                    </Button>
+                  </div>
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button onClick={openTambahDialog} className="my-3">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Tambah Barang
-                </Button>
                 {/* Statistics */}
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                   <Card>
@@ -831,24 +833,12 @@ export default function InventarisPage() {
                       </Button>
                     </CardContent>
                   </Card>
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Kategori</CardTitle>
-                      <Package className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">
-                        {new Set(barang.map(item => item.kategori)).size}
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Kategori berbeda
-                      </p>
-                    </CardContent>
-                  </Card>
                 </div>
 
                 {/* Filters */}
                 <div className="flex flex-wrap gap-4 my-5">
+                  <h1 className="text-lg font-bold">Cari Barang</h1>
+
                   <div className="flex-1 min-w-[200px]">
                     <div className="relative">
                       <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -856,12 +846,12 @@ export default function InventarisPage() {
                         placeholder="Cari nama atau SKU..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="pl-9"
+                        className="pl-9 bg-white"
                       />
                     </div>
                   </div>
                   <Select value={kategoriFilter} onValueChange={setKategoriFilter}>
-                    <SelectTrigger className="w-[200px]">
+                    <SelectTrigger className="w-[200px] bg-white">
                       <SelectValue placeholder="Semua Kategori" />
                     </SelectTrigger>
                     <SelectContent>
@@ -874,7 +864,7 @@ export default function InventarisPage() {
                     </SelectContent>
                   </Select>
                   <Select value={lokasiFilter} onValueChange={setLokasiFilter}>
-                    <SelectTrigger className="w-[200px]">
+                    <SelectTrigger className="w-[200px] bg-white">
                       <SelectValue placeholder="Semua Lokasi" />
                     </SelectTrigger>
                     <SelectContent>
@@ -888,7 +878,7 @@ export default function InventarisPage() {
                   </Select>
                 </div>
                 {/* Table */}
-                <div className="rounded-md border">
+                <div className="rounded-md border bg-white">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -1022,131 +1012,124 @@ export default function InventarisPage() {
           <TabsContent value="history">
             <div className="space-y-4">
               {/* Filter Tanggal Range */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Filter Transaksi</CardTitle>
+              <Card className="bg-gradient-to-b from-blue-50 to-white">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                  <CardTitle>History Barang Keluar</CardTitle>
                   <CardDescription>
                     <Button onClick={() => setDialogKeluarOpen(true)} variant="default">
                       <Minus className="mr-2 h-4 w-4" />
-                      Barang Keluar
+                      Catat Barang Keluar
                     </Button>
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-
-                  <div className="flex gap-4 items-end">
-                    <div className="flex-1">
-                      <Label>Dari Tanggal</Label>
-                      <Input
-                        type="date"
-                        className="mt-2"
-                        value={startDateKeluar}
-                        onChange={(e) => setStartDateKeluar(e.target.value)}
-                        max={endDateKeluar || format(new Date(), "yyyy-MM-dd")}
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <Label>Sampai Tanggal</Label>
-                      <Input
-                        type="date"
-                        className="mt-2"
-                        value={endDateKeluar}
-                        onChange={(e) => setEndDateKeluar(e.target.value)}
-                        min={startDateKeluar}
-                        max={format(new Date(), "yyyy-MM-dd")}
-                      />
-                    </div>
-                    {(startDateKeluar || endDateKeluar) && (
-                      <div>
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setStartDateKeluar("")
-                            setEndDateKeluar("")
-                          }}
-                        >
-                          Reset Filter
-                        </Button>
-                      </div>
-                    )}
+                  {/* Statistics Cards */}
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <Card>
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Total Jenis Barang Keluar</CardTitle>
+                        <TrendingDown className="h-4 w-4 text-muted-foreground" />
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">
+                          {(() => {
+                            const uniqueBarangIds = new Set(sortedTransaksiKeluar.map(tr => tr.barang.id))
+                            return uniqueBarangIds.size
+                          })()}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {startDateKeluar || endDateKeluar
+                            ? `${startDateKeluar ? format(new Date(startDateKeluar), "dd/MM/yyyy") : "..."} - ${endDateKeluar ? format(new Date(endDateKeluar), "dd/MM/yyyy") : "..."}`
+                            : "Total keseluruhan"}
+                        </p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Total Jumlah Barang</CardTitle>
+                        <TrendingDown className="h-4 w-4 text-muted-foreground" />
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">
+                          {sortedTransaksiKeluar.reduce((sum, tr) => sum + tr.qty, 0)}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Unit keluar
+                        </p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Total Nilai</CardTitle>
+                        <TrendingDown className="h-4 w-4 text-muted-foreground" />
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">
+                          Rp {sortedTransaksiKeluar.reduce((sum, tr) => sum + tr.totalNilai, 0).toLocaleString("id-ID")}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Nilai barang keluar
+                        </p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Rata-rata</CardTitle>
+                        <TrendingDown className="h-4 w-4 text-muted-foreground" />
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">
+                          Rp {sortedTransaksiKeluar.length > 0 ? (sortedTransaksiKeluar.reduce((sum, tr) => sum + tr.totalNilai, 0) / sortedTransaksiKeluar.length).toLocaleString("id-ID") : "0"}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Per transaksi
+                        </p>
+                      </CardContent>
+                    </Card>
                   </div>
-                </CardContent>
-              </Card>
+                  {/* History Barang Keluar */}
+                  {/* Filters */}
+                  <div className="flex flex-wrap gap-4 my-5">
+                    <h1 className="text-lg font-bold">Cari Barang</h1>
 
-              {/* Statistics Cards */}
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Jenis Barang Keluar</CardTitle>
-                    <TrendingDown className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      {(() => {
-                        const uniqueBarangIds = new Set(sortedTransaksiKeluar.map(tr => tr.barang.id))
-                        return uniqueBarangIds.size
-                      })()}
+                    <div className="flex-1 min-w-[200px]">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Cari nama atau SKU..."
+                          value={search}
+                          onChange={(e) => setSearch(e.target.value)}
+                          className="pl-9 bg-white"
+                        />
+                      </div>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      {startDateKeluar || endDateKeluar
-                        ? `${startDateKeluar ? format(new Date(startDateKeluar), "dd/MM/yyyy") : "..."} - ${endDateKeluar ? format(new Date(endDateKeluar), "dd/MM/yyyy") : "..."}`
-                        : "Total keseluruhan"}
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Jumlah Barang</CardTitle>
-                    <TrendingDown className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      {sortedTransaksiKeluar.reduce((sum, tr) => sum + tr.qty, 0)}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Unit keluar
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Nilai</CardTitle>
-                    <TrendingDown className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      Rp {sortedTransaksiKeluar.reduce((sum, tr) => sum + tr.totalNilai, 0).toLocaleString("id-ID")}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Nilai barang keluar
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Rata-rata</CardTitle>
-                    <TrendingDown className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      Rp {sortedTransaksiKeluar.length > 0 ? (sortedTransaksiKeluar.reduce((sum, tr) => sum + tr.totalNilai, 0) / sortedTransaksiKeluar.length).toLocaleString("id-ID") : "0"}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Per transaksi
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Table History */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>History Barang Keluar</CardTitle>
-                  <CardDescription>
-                    Riwayat transaksi barang keluar gudang
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
+                    <Select value={kategoriFilter} onValueChange={setKategoriFilter}>
+                      <SelectTrigger className="w-[200px] bg-white">
+                        <SelectValue placeholder="Semua Kategori" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ALL">Semua Kategori</SelectItem>
+                        {kategoriList.map((kat) => (
+                          <SelectItem key={kat} value={kat}>
+                            {kat}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={lokasiFilter} onValueChange={setLokasiFilter}>
+                      <SelectTrigger className="w-[200px] bg-white">
+                        <SelectValue placeholder="Semua Lokasi" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ALL">Semua Lokasi</SelectItem>
+                        {lokasi.map((lok) => (
+                          <SelectItem key={lok.id} value={lok.id}>
+                            {lok.namaLokasi}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div className="rounded-md border">
                     <Table>
                       <TableHeader>
