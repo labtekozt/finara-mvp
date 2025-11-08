@@ -506,12 +506,24 @@ export default function InventarisPage() {
         method: "DELETE",
       })
 
-      if (!response.ok) throw new Error("Gagal menghapus barang")
+      const data = await response.json()
+
+      if (!response.ok) {
+        // Jika barang sudah digunakan dalam transaksi
+        if (response.status === 400 && data.message) {
+          toast.error(data.message, {
+            duration: 5000, // Tampil lebih lama karena pesan panjang
+          })
+        } else {
+          toast.error(data.error || "Gagal menghapus barang")
+        }
+        return
+      }
 
       toast.success("Barang berhasil dihapus")
       fetchData()
     } catch (error: any) {
-      toast.error(error.message)
+      toast.error(error.message || "Terjadi kesalahan")
     }
   }
 
@@ -1064,7 +1076,12 @@ export default function InventarisPage() {
                     <TrendingDown className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{sortedTransaksiKeluar.length}</div>
+                    <div className="text-2xl font-bold">
+                      {(() => {
+                        const uniqueBarangIds = new Set(sortedTransaksiKeluar.map(tr => tr.barang.id))
+                        return uniqueBarangIds.size
+                      })()}
+                    </div>
                     <p className="text-xs text-muted-foreground">
                       {startDateKeluar || endDateKeluar 
                         ? `${startDateKeluar ? format(new Date(startDateKeluar), "dd/MM/yyyy") : "..."} - ${endDateKeluar ? format(new Date(endDateKeluar), "dd/MM/yyyy") : "..."}`
@@ -1287,7 +1304,15 @@ export default function InventarisPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {sortedTransaksiKasir.reduce((sum, tr) => sum + tr.itemTransaksi.length, 0)}
+                      {(() => {
+                        const uniqueBarangIds = new Set<string>()
+                        sortedTransaksiKasir.forEach(tr => {
+                          tr.itemTransaksi.forEach(item => {
+                            uniqueBarangIds.add(item.barang.id)
+                          })
+                        })
+                        return uniqueBarangIds.size
+                      })()}
                     </div>
                     <p className="text-xs text-muted-foreground">
                       {startDateKasir || endDateKasir 
