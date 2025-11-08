@@ -36,35 +36,21 @@ export async function GET(request: Request) {
     // Calculate trial balance for each account
     const entries = await Promise.all(
       accounts.map(async (akun) => {
-        // Calculate opening balance (saldo awal) - all transactions before period start
+        // Get opening balance from SaldoAwal table for the period
         let saldoAwal = 0;
-        const openingWhere: any = {
-          akunId: akun.id,
-        };
-
         if (periode) {
-          openingWhere.jurnal = {
-            tanggal: {
-              lt: periode.tanggalMulai,
+          const openingBalance = await prisma.saldoAwal.findUnique({
+            where: {
+              akunId_periodeId: {
+                akunId: akun.id,
+                periodeId: periode.id,
+              },
             },
-          };
-        }
-
-        const openingDetails = await prisma.jurnalDetail.findMany({
-          where: openingWhere,
-          select: {
-            debit: true,
-            kredit: true,
-          },
-        });
-
-        // Calculate opening balance based on account type
-        for (const detail of openingDetails) {
-          if (akun.tipe === "ASSET" || akun.tipe === "EXPENSE") {
-            saldoAwal += detail.debit - detail.kredit;
-          } else {
-            saldoAwal += detail.kredit - detail.debit;
-          }
+          });
+          saldoAwal = openingBalance?.saldo || 0;
+        } else {
+          // For all periods, opening balance is 0 (or we could calculate from all historical transactions)
+          saldoAwal = 0;
         }
 
         // Calculate mutations within the period
@@ -94,12 +80,27 @@ export async function GET(request: Request) {
           mutasiKredit += detail.kredit;
         }
 
-        // Calculate ending balance
+        // Calculate ending balance based on account type and normal balance
         let saldoAkhir = saldoAwal;
-        if (akun.tipe === "ASSET" || akun.tipe === "EXPENSE") {
-          saldoAkhir += mutasiDebit - mutasiKredit;
-        } else {
-          saldoAkhir += mutasiKredit - mutasiDebit;
+
+        // For balance sheet accounts (Asset, Liability, Equity):
+        // Normal balance is carried forward, then mutations are added/subtracted
+        // For income statement accounts (Revenue, Expense):
+        // They start at 0 each period, mutations create the balance
+        if (akun.tipe === "ASSET") {
+          // Assets: Debit normal, increase with debit, decrease with credit
+          saldoAkhir = saldoAkhir + mutasiDebit - mutasiKredit;
+        } else if (akun.tipe === "LIABILITY" || akun.tipe === "EQUITY") {
+          // Liabilities & Equity: Credit normal, increase with credit, decrease with debit
+          saldoAkhir = saldoAkhir + mutasiKredit - mutasiDebit;
+        } else if (akun.tipe === "REVENUE") {
+          // Revenue: Credit normal, increases with credit, decreases with debit
+          // Revenue accounts typically start at 0 each period
+          saldoAkhir = mutasiKredit - mutasiDebit;
+        } else if (akun.tipe === "EXPENSE") {
+          // Expense: Debit normal, increases with debit, decreases with credit
+          // Expense accounts typically start at 0 each period
+          saldoAkhir = mutasiDebit - mutasiKredit;
         }
 
         return {

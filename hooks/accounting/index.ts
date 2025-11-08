@@ -6,3 +6,4 @@ export { useGeneralLedger } from "./useGeneralLedger";
 export { useTrialBalance } from "./useTrialBalance";
 export { useBalanceSheet } from "./useBalanceSheet";
 export { useIncomeStatement } from "./useIncomeStatement";
+export { useOpeningBalances } from "./useOpeningBalances";

@@ -36,7 +36,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Calculator, Plus, Search, Edit, Trash2, Eye } from "lucide-react";
+import {
+  Calculator,
+  Plus,
+  Search,
+  Edit,
+  Trash2,
+  Eye,
+  ChevronRight,
+  ChevronDown,
+} from "lucide-react";
 import { useAccounts } from "@/hooks/accounting";
 import { Akun, AkunFormData, AccountType } from "@/types/accounting";
 import { AccountForm } from "./forms/AccountForm";
@@ -71,6 +80,9 @@ export function AccountsManagement({ className }: AccountsManagementProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Akun | null>(null);
+  const [expandedAccounts, setExpandedAccounts] = useState<Set<string>>(
+    new Set(),
+  );
 
   const { accounts, loading, createAccount, updateAccount, deleteAccount } =
     useAccounts({
@@ -101,6 +113,66 @@ export function AccountsManagement({ className }: AccountsManagementProps) {
       await deleteAccount(account.id);
     }
   };
+
+  const toggleExpanded = (accountId: string) => {
+    setExpandedAccounts((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(accountId)) {
+        newSet.delete(accountId);
+      } else {
+        newSet.add(accountId);
+      }
+      return newSet;
+    });
+  };
+
+  // Build hierarchical account list
+  const buildAccountHierarchy = (accounts: Akun[]): Akun[] => {
+    const accountMap = new Map<string, Akun>();
+    const rootAccounts: Akun[] = [];
+
+    // Create map of all accounts
+    accounts.forEach((account) => {
+      accountMap.set(account.id, { ...account, children: [] });
+    });
+
+    // Build hierarchy
+    accounts.forEach((account) => {
+      const accountWithChildren = accountMap.get(account.id)!;
+      if (account.parentId) {
+        const parent = accountMap.get(account.parentId);
+        if (parent) {
+          parent.children = parent.children || [];
+          parent.children.push(accountWithChildren);
+        }
+      } else {
+        rootAccounts.push(accountWithChildren);
+      }
+    });
+
+    return rootAccounts;
+  };
+
+  // Flatten hierarchy for display with indentation
+  const flattenAccountsForDisplay = (
+    accounts: Akun[],
+    level = 0,
+  ): Array<Akun & { displayLevel: number }> => {
+    const result: Array<Akun & { displayLevel: number }> = [];
+
+    accounts.forEach((account) => {
+      result.push({ ...account, displayLevel: level });
+
+      if (expandedAccounts.has(account.id) && account.children) {
+        result.push(...flattenAccountsForDisplay(account.children, level + 1));
+      }
+    });
+
+    return result;
+  };
+
+  const hierarchicalAccounts = buildAccountHierarchy(accounts || []);
+  const displayAccounts = flattenAccountsForDisplay(hierarchicalAccounts);
 
   const openEditDialog = (account: Akun) => {
     setEditingAccount(account);
@@ -218,12 +290,41 @@ export function AccountsManagement({ className }: AccountsManagementProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {accounts.map((account) => (
+                {displayAccounts.map((account) => (
                   <TableRow key={account.id}>
                     <TableCell className="font-medium">
-                      {account.kode}
+                      <div
+                        className="flex items-center gap-2"
+                        style={{
+                          paddingLeft: `${account.displayLevel * 20}px`,
+                        }}
+                      >
+                        {account.children && account.children.length > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-4 w-4 p-0"
+                            onClick={() => toggleExpanded(account.id)}
+                          >
+                            {expandedAccounts.has(account.id) ? (
+                              <ChevronDown className="h-3 w-3" />
+                            ) : (
+                              <ChevronRight className="h-3 w-3" />
+                            )}
+                          </Button>
+                        )}
+                        {account.kode}
+                      </div>
                     </TableCell>
-                    <TableCell>{account.nama}</TableCell>
+                    <TableCell>
+                      <div
+                        style={{
+                          paddingLeft: `${account.displayLevel * 20}px`,
+                        }}
+                      >
+                        {account.nama}
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <Badge variant="outline">
                         {getAccountTypeLabel(account.tipe)}

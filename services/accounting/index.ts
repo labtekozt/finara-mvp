@@ -120,6 +120,67 @@ export class AccountingService {
     }
   }
 
+  // Opening Balances
+  static async getOpeningBalances(periodeId: string): Promise<any[]> {
+    const response = await fetch(
+      `${this.BASE_URL}/saldo-awal?periodeId=${periodeId}`,
+    );
+    if (!response.ok) {
+      throw new Error("Failed to fetch opening balances");
+    }
+    return response.json();
+  }
+
+  static async createOpeningBalance(data: {
+    periodeId: string;
+    akunId: string;
+    saldo: number;
+  }): Promise<any> {
+    const response = await fetch(`${this.BASE_URL}/saldo-awal`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      throw new Error("Failed to create opening balance");
+    }
+    return response.json();
+  }
+
+  static async updateOpeningBalance(
+    akunId: string,
+    periodeId: string,
+    saldo: number,
+  ): Promise<any> {
+    const response = await fetch(
+      `${this.BASE_URL}/saldo-awal/${akunId}/${periodeId}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ saldo }),
+      },
+    );
+    if (!response.ok) {
+      throw new Error("Failed to update opening balance");
+    }
+    return response.json();
+  }
+
+  static async deleteOpeningBalance(
+    akunId: string,
+    periodeId: string,
+  ): Promise<void> {
+    const response = await fetch(
+      `${this.BASE_URL}/saldo-awal/${akunId}/${periodeId}`,
+      {
+        method: "DELETE",
+      },
+    );
+    if (!response.ok) {
+      throw new Error("Failed to delete opening balance");
+    }
+  }
+
   // Journal Entries
   static async getJournalEntries(params?: {
     periodeId?: string;

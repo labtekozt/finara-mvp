@@ -1,12 +1,56 @@
 import { useState, useEffect } from "react";
 import { PeriodClosingData, PeriodeAkuntansi } from "@/types/accounting";
 
+interface PreCloseValidation {
+  isValid: boolean;
+  issues: string[];
+  summary: {
+    totalJournals: number;
+    unpostedJournals: number;
+    totalRevenue: number;
+    totalExpenses: number;
+    netIncome: number;
+    retainedEarningsAccount?: {
+      id: string;
+      nama: string;
+      kode: string;
+    };
+  };
+}
+
 export function usePeriodClosing(periodeId: string) {
   const [closingData, setClosingData] = useState<PeriodClosingData | null>(
     null,
   );
+  const [preCloseValidation, setPreCloseValidation] =
+    useState<PreCloseValidation | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const loadPreCloseValidation = async () => {
+    setIsValidating(true);
+    setError(null);
+
+    try {
+      const response = await fetch(
+        `/api/akuntansi/periode/${periodeId}/pre-close`,
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setPreCloseValidation(data);
+      } else {
+        throw new Error("Failed to load pre-close validation");
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      setError(errorMessage);
+      console.error("Error loading pre-close validation:", err);
+    } finally {
+      setIsValidating(false);
+    }
+  };
 
   const loadClosingStatus = async () => {
     setIsLoading(true);
@@ -66,14 +110,18 @@ export function usePeriodClosing(periodeId: string) {
   useEffect(() => {
     if (periodeId) {
       loadClosingStatus();
+      loadPreCloseValidation();
     }
   }, [periodeId]);
 
   return {
     closingData,
+    preCloseValidation,
     isLoading,
+    isValidating,
     error,
     loadClosingStatus,
+    loadPreCloseValidation,
     closePeriod,
   };
 }

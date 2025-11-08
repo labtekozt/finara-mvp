@@ -15,6 +15,7 @@ import {
 import { useAccountingDashboard } from "@/hooks/accounting";
 import { AccountingDashboard } from "@/components/accounting/AccountingDashboard";
 import { AccountsManagement } from "@/components/accounting/AccountsManagement";
+import { OpeningBalanceManagement } from "@/components/accounting/OpeningBalanceManagement";
 import { JournalsManagement } from "@/components/accounting/JournalsManagement";
 import { ExpensesManagement } from "@/components/accounting/ExpensesManagement";
 import { GeneralLedger } from "@/components/accounting/GeneralLedger";
@@ -58,6 +59,10 @@ export default function AccountingPage() {
             <Calculator className="mr-2 h-4 w-4" />
             Daftar Akun
           </TabsTrigger>
+          <TabsTrigger value="saldo-awal">
+            <Scale className="mr-2 h-4 w-4" />
+            Saldo Awal
+          </TabsTrigger>
           <TabsTrigger value="buku-besar">
             <BookOpen className="mr-2 h-4 w-4" />
             Buku Besar
@@ -90,6 +95,10 @@ export default function AccountingPage() {
 
         <TabsContent value="akun" className="space-y-4">
           <AccountsManagement />
+        </TabsContent>
+
+        <TabsContent value="saldo-awal" className="space-y-4">
+          <OpeningBalanceManagement periods={periods} />
         </TabsContent>
 
         <TabsContent value="buku-besar" className="space-y-4">

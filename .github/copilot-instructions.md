@@ -30,6 +30,7 @@ This file gives focused, repository-specific guidance so an AI coding agent can 
 - alaways validate and sanitize user inputs
 - ensure data integrity in all database operations
 - always check lint and check types
+- use is not accounting so always follow simple accounting principles for all accounting features for easy understanding by non-accounting users
 
 ### Financial Calculation Rules (CRITICAL - ZERO TOLERANCE)
 

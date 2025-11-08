@@ -19,10 +19,36 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, Lock, Unlock, FileText, Download } from "lucide-react";
+import {
+  Loader2,
+  Lock,
+  Unlock,
+  FileText,
+  Download,
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 import { PeriodClosingData, PeriodeAkuntansi } from "@/types/accounting";
 import { exportPeriodClosingToPDF } from "@/lib/pdf-export";
+
+interface PreCloseValidation {
+  isValid: boolean;
+  issues: string[];
+  summary: {
+    totalJournals: number;
+    unpostedJournals: number;
+    totalRevenue: number;
+    totalExpenses: number;
+    netIncome: number;
+    retainedEarningsAccount?: {
+      id: string;
+      nama: string;
+      kode: string;
+    };
+  };
+}
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat("id-ID", {
@@ -39,11 +65,15 @@ export function PeriodClosing({ periode }: PeriodClosingProps) {
   const [closingData, setClosingData] = useState<PeriodClosingData | null>(
     null,
   );
+  const [preCloseValidation, setPreCloseValidation] =
+    useState<PreCloseValidation | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
 
   useEffect(() => {
     loadClosingStatus();
+    loadPreCloseValidation();
   }, [periode.id]);
 
   const loadClosingStatus = async () => {
@@ -65,6 +95,26 @@ export function PeriodClosing({ periode }: PeriodClosingProps) {
       toast.error("Gagal memuat status penutupan periode");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadPreCloseValidation = async () => {
+    setIsValidating(true);
+    try {
+      const response = await fetch(
+        `/api/akuntansi/periode/${periode.id}/pre-close`,
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setPreCloseValidation(data);
+      } else {
+        throw new Error("Failed to load pre-close validation");
+      }
+    } catch (error) {
+      console.error("Error loading pre-close validation:", error);
+      toast.error("Gagal memuat validasi pra-penutupan");
+    } finally {
+      setIsValidating(false);
     }
   };
 
@@ -149,10 +199,130 @@ export function PeriodClosing({ periode }: PeriodClosingProps) {
             </CardContent>
           </Card>
 
+          {/* Pre-close Validation */}
+          {isValidating ? (
+            <Card>
+              <CardContent className="flex items-center justify-center py-4">
+                <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                <span>Memvalidasi periode...</span>
+              </CardContent>
+            </Card>
+          ) : (
+            preCloseValidation && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    {preCloseValidation.isValid ? (
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-red-600" />
+                    )}
+                    Validasi Pra-Penutupan
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Summary */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center">
+                      <div className="text-lg font-semibold">
+                        {preCloseValidation.summary.totalJournals}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Total Jurnal
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-lg font-semibold text-orange-600">
+                        {preCloseValidation.summary.unpostedJournals}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Belum Diposting
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-lg font-semibold text-green-600">
+                        {formatCurrency(
+                          preCloseValidation.summary.totalRevenue,
+                        )}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Total Pendapatan
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-lg font-semibold text-red-600">
+                        {formatCurrency(
+                          preCloseValidation.summary.totalExpenses,
+                        )}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Total Beban
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <div className="text-sm text-muted-foreground">
+                        Laba Bersih Periode
+                      </div>
+                      <div
+                        className={`text-xl font-bold ${
+                          preCloseValidation.summary.netIncome >= 0
+                            ? "text-green-600"
+                            : "text-red-600"
+                        }`}
+                      >
+                        {formatCurrency(preCloseValidation.summary.netIncome)}
+                      </div>
+                    </div>
+                    {preCloseValidation.summary.retainedEarningsAccount && (
+                      <div className="text-right">
+                        <div className="text-sm text-muted-foreground">
+                          Akun Laba Ditahan
+                        </div>
+                        <div className="font-medium">
+                          {
+                            preCloseValidation.summary.retainedEarningsAccount
+                              .kode
+                          }{" "}
+                          -{" "}
+                          {
+                            preCloseValidation.summary.retainedEarningsAccount
+                              .nama
+                          }
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Issues */}
+                  {preCloseValidation.issues.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-red-600">
+                        <AlertTriangle className="h-4 w-4" />
+                        <span className="font-medium">
+                          Masalah yang harus diperbaiki:
+                        </span>
+                      </div>
+                      <ul className="list-disc list-inside space-y-1 text-sm text-red-700">
+                        {preCloseValidation.issues.map((issue, index) => (
+                          <li key={index}>{issue}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )
+          )}
+
           <div className="mt-4">
             <Button
               onClick={handleClosePeriod}
-              disabled={isClosing}
+              disabled={isClosing || !preCloseValidation?.isValid}
               className="w-full"
             >
               {isClosing ? (
@@ -167,6 +337,11 @@ export function PeriodClosing({ periode }: PeriodClosingProps) {
                 </>
               )}
             </Button>
+            {!preCloseValidation?.isValid && (
+              <p className="text-sm text-red-600 mt-2 text-center">
+                Perbaiki masalah validasi sebelum menutup periode
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>

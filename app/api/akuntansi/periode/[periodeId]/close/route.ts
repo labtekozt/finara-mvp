@@ -22,7 +22,7 @@ export async function POST(
 
     const { periodeId } = await params;
 
-    // Check if period exists and is not already closed
+    // Fetch the period to ensure it exists and get its details
     const periode = await prisma.periodeAkuntansi.findUnique({
       where: { id: periodeId },
     });
@@ -34,6 +34,35 @@ export async function POST(
     if (periode.isClosed) {
       return NextResponse.json(
         { error: "Period is already closed" },
+        { status: 400 },
+      );
+    }
+
+    // Pre-closing validation
+    const validationResponse = await fetch(
+      `${process.env.NEXTAUTH_URL}/api/akuntansi/periode/${periodeId}/pre-close`,
+      {
+        headers: {
+          cookie: request.headers.get("cookie") || "",
+        },
+      },
+    );
+
+    if (!validationResponse.ok) {
+      return NextResponse.json(
+        { error: "Failed to validate period before closing" },
+        { status: 500 },
+      );
+    }
+
+    const validation = await validationResponse.json();
+
+    if (!validation.isValid) {
+      return NextResponse.json(
+        {
+          error: "Period cannot be closed due to validation issues",
+          issues: validation.issues,
+        },
         { status: 400 },
       );
     }

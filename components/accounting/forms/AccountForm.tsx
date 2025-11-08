@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Akun, AkunFormData, AccountType } from "@/types/accounting";
+import { useAccounts } from "@/hooks/accounting";
 
 const ACCOUNT_TYPES: { value: AccountType; label: string }[] = [
   { value: "ASSET", label: "Aset" },
@@ -53,6 +54,17 @@ export function AccountForm({
     deskripsi: "",
   });
 
+  // Fetch all accounts for parent selection
+  const { accounts: allAccounts } = useAccounts({ autoLoad: true });
+
+  // Filter potential parent accounts (exclude current account and its children)
+  const availableParents =
+    allAccounts?.filter(
+      (acc) =>
+        acc.id !== account?.id &&
+        !account?.children?.some((child) => child.id === acc.id),
+    ) || [];
+
   useEffect(() => {
     if (account) {
       setFormData({
@@ -79,7 +91,10 @@ export function AccountForm({
     await onSubmit(formData);
   };
 
-  const handleInputChange = (field: keyof AkunFormData, value: string) => {
+  const handleInputChange = (
+    field: keyof AkunFormData,
+    value: string | undefined,
+  ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -145,6 +160,28 @@ export function AccountForm({
             </SelectContent>
           </Select>
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="parentId">Akun Induk (Opsional)</Label>
+        <Select
+          value={formData.parentId || ""}
+          onValueChange={(value) =>
+            handleInputChange("parentId", value === "" ? undefined : value)
+          }
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Pilih akun induk (kosongkan jika akun utama)" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">Tidak ada akun induk</SelectItem>
+            {availableParents.map((parentAccount) => (
+              <SelectItem key={parentAccount.id} value={parentAccount.id}>
+                {parentAccount.kode} - {parentAccount.nama}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="space-y-2">
