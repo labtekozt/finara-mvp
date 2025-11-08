@@ -17,6 +17,7 @@ export const ACCOUNT_CODES = {
 
   // Revenue
   SALES_REVENUE: "4001",
+  OTHER_REVENUE: "4002",
 
   // Expenses
   COST_OF_GOODS_SOLD: "5001",
@@ -566,6 +567,405 @@ export async function createJournalEntryForExpense(
             deskripsi: `Pembayaran ke ${pengeluaran.penerima}`,
           },
         ],
+      },
+    },
+    include: {
+      details: {
+        include: {
+          akun: true,
+        },
+      },
+    },
+  });
+
+  return jurnalEntry;
+}
+
+// Create journal entry for outgoing transactions based on purpose
+export async function createJournalEntryForOutgoingTransaction(
+  transaksiKeluarId: string,
+  totalAmount: number,
+  tujuan: string,
+  userId: string,
+) {
+  const periode = await getActiveAccountingPeriod();
+  if (!periode) {
+    throw new Error("Tidak ada periode akuntansi aktif");
+  }
+
+  const inventoryAccount = await getAccountByCode(ACCOUNT_CODES.INVENTORY);
+  const cashAccount = await getAccountByCode(ACCOUNT_CODES.CASH);
+  const cogsAccount = await getAccountByCode(ACCOUNT_CODES.COST_OF_GOODS_SOLD);
+  const otherExpenseAccount = await getAccountByCode(ACCOUNT_CODES.OTHER_EXPENSE);
+  const otherRevenueAccount = await getAccountByCode("4002"); // Other Revenue
+
+  if (!inventoryAccount) {
+    throw new Error("Akun persediaan tidak ditemukan");
+  }
+
+  // Determine transaction type based on purpose
+  const purpose = tujuan.toLowerCase();
+
+  // Transfer between warehouses - no journal entry needed
+  if (purpose.includes("transfer") || purpose.includes("pindah") || purpose.includes("gudang")) {
+    return null; // No accounting entry for warehouse transfers
+  }
+
+  // Sales (non-cashier) - treat as sale
+  if (purpose.includes("jual") || purpose.includes("penjualan") || purpose.includes("customer")) {
+    if (!cashAccount || !cogsAccount) {
+      throw new Error("Akun kas atau HPP tidak ditemukan");
+    }
+
+    const nomorJurnal = generateTransactionNumber("JR");
+
+    const jurnalEntry = await prisma.jurnalEntry.create({
+      data: {
+        nomorJurnal,
+        tanggal: new Date(),
+        deskripsi: `Penjualan Non-Kasir - ${transaksiKeluarId}`,
+        referensi: transaksiKeluarId,
+        tipeReferensi: "SALE",
+        periodeId: periode.id,
+        userId,
+        isPosted: true,
+        details: {
+          create: [
+            // Debit Cash (Asset increases)
+            {
+              akunId: cashAccount.id,
+              debit: totalAmount,
+              kredit: 0,
+              deskripsi: "Penerimaan kas dari penjualan",
+            },
+            // Debit COGS (Expense increases)
+            {
+              akunId: cogsAccount.id,
+              debit: totalAmount,
+              kredit: 0,
+              deskripsi: "Harga pokok penjualan",
+            },
+            // Credit Inventory (Asset decreases)
+            {
+              akunId: inventoryAccount.id,
+              debit: 0,
+              kredit: totalAmount,
+              deskripsi: "Pengurangan persediaan akibat penjualan",
+            },
+          ],
+        },
+      },
+      include: {
+        details: {
+          include: {
+            akun: true,
+          },
+        },
+      },
+    });
+
+    return jurnalEntry;
+  }
+
+  // Default: Adjustment/Loss - treat as expense
+  if (!otherExpenseAccount) {
+    throw new Error("Akun beban lain tidak ditemukan");
+  }
+
+  const nomorJurnal = generateTransactionNumber("JR");
+
+  const jurnalEntry = await prisma.jurnalEntry.create({
+    data: {
+      nomorJurnal,
+      tanggal: new Date(),
+      deskripsi: `Penyesuaian Persediaan - ${transaksiKeluarId}`,
+      referensi: transaksiKeluarId,
+      tipeReferensi: "ADJUSTMENT",
+      periodeId: periode.id,
+      userId,
+      isPosted: true,
+      details: {
+        create: [
+          // Debit Other Expense (Expense increases)
+          {
+            akunId: otherExpenseAccount.id,
+            debit: totalAmount,
+            kredit: 0,
+            deskripsi: "Penyesuaian persediaan keluar",
+          },
+          // Credit Inventory (Asset decreases)
+          {
+            akunId: inventoryAccount.id,
+            debit: 0,
+            kredit: totalAmount,
+            deskripsi: "Pengurangan persediaan",
+          },
+        ],
+      },
+    },
+    include: {
+      details: {
+        include: {
+          akun: true,
+        },
+      },
+    },
+  });
+
+  return jurnalEntry;
+}
+
+// Create journal entry for purchase return (supplier)
+export async function createJournalEntryForPurchaseReturn(
+  returnId: string,
+  totalAmount: number,
+  isCashPurchase: boolean,
+  userId: string,
+) {
+  const periode = await getActiveAccountingPeriod();
+  if (!periode) {
+    throw new Error("Tidak ada periode akuntansi aktif");
+  }
+
+  const salesRevenueAccount = await getAccountByCode(ACCOUNT_CODES.SALES_REVENUE);
+  const accountsPayableAccount = await getAccountByCode(ACCOUNT_CODES.ACCOUNTS_PAYABLE);
+  const cashAccount = await getAccountByCode(ACCOUNT_CODES.CASH);
+
+  if (!salesRevenueAccount) {
+    throw new Error("Akun pendapatan penjualan tidak ditemukan");
+  }
+
+  if (!isCashPurchase && !accountsPayableAccount) {
+    throw new Error("Akun hutang tidak ditemukan");
+  }
+
+  if (isCashPurchase && !cashAccount) {
+    throw new Error("Akun kas tidak ditemukan");
+  }
+
+  const nomorJurnal = generateTransactionNumber("JR");
+
+  console.log('Creating Purchase Return Journal (Revenue Correction):', {
+    returnId,
+    totalAmount,
+    isCashPurchase,
+    userId,
+  });
+
+  const jurnalEntry = await prisma.jurnalEntry.create({
+    data: {
+      nomorJurnal,
+      tanggal: new Date(),
+      deskripsi: `Retur Pembelian (Koreksi Pendapatan) ${isCashPurchase ? 'Tunai' : 'Kredit'} - ${returnId}`,
+      referensi: returnId,
+      tipeReferensi: "PURCHASE_RETURN",
+      periodeId: periode.id,
+      userId,
+      isPosted: true,
+      details: {
+        create: isCashPurchase ? [
+          // Jika pembelian tunai: Debit Sales Revenue, Credit Cash (mengurangi pendapatan dan kas)
+          {
+            akunId: salesRevenueAccount.id,
+            debit: totalAmount,
+            kredit: 0,
+            deskripsi: "Koreksi pendapatan dari pembelian yang salah dicatat",
+          },
+          {
+            akunId: cashAccount!.id,
+            debit: 0,
+            kredit: totalAmount,
+            deskripsi: "Pengembalian kas dari supplier",
+          },
+        ] : [
+          // Jika pembelian kredit: Debit Sales Revenue, Credit Accounts Payable (mengurangi pendapatan dan hutang)
+          {
+            akunId: salesRevenueAccount.id,
+            debit: totalAmount,
+            kredit: 0,
+            deskripsi: "Koreksi pendapatan dari pembelian yang salah dicatat",
+          },
+          {
+            akunId: accountsPayableAccount!.id,
+            debit: 0,
+            kredit: totalAmount,
+            deskripsi: "Pengurangan hutang supplier",
+          },
+        ],
+      },
+    },
+    include: {
+      details: {
+        include: {
+          akun: true,
+        },
+      },
+    },
+  });
+
+  return jurnalEntry;
+}
+
+// Create journal entry for sales return (customer)
+export async function createJournalEntryForSalesReturn(
+  returnId: string,
+  totalRevenue: number,
+  totalCOGS: number,
+  paymentMethod: string,
+  userId: string,
+) {
+  const periode = await getActiveAccountingPeriod();
+  if (!periode) {
+    throw new Error("Tidak ada periode akuntansi aktif");
+  }
+
+  const cashAccount = await getAccountByCode(ACCOUNT_CODES.CASH);
+  const accountsReceivableAccount = await getAccountByCode(ACCOUNT_CODES.ACCOUNTS_RECEIVABLE);
+  const salesRevenueAccount = await getAccountByCode(ACCOUNT_CODES.SALES_REVENUE);
+  const inventoryAccount = await getAccountByCode(ACCOUNT_CODES.INVENTORY);
+  const cogsAccount = await getAccountByCode(ACCOUNT_CODES.COST_OF_GOODS_SOLD);
+
+  if (!salesRevenueAccount || !inventoryAccount || !cogsAccount) {
+    throw new Error("Akun pendapatan, persediaan, atau HPP tidak ditemukan");
+  }
+
+  // Determine which account to use for refund based on payment method
+  const isCashSale = paymentMethod.toLowerCase().includes('tunai') ||
+                    paymentMethod.toLowerCase().includes('cash') ||
+                    paymentMethod === 'tunai';
+
+  const refundAccount = isCashSale ? cashAccount : accountsReceivableAccount;
+
+  if (!refundAccount) {
+    throw new Error(`Akun ${isCashSale ? 'kas' : 'piutang'} tidak ditemukan`);
+  }
+
+  const nomorJurnal = generateTransactionNumber("JR");
+
+  const jurnalEntry = await prisma.jurnalEntry.create({
+    data: {
+      nomorJurnal,
+      tanggal: new Date(),
+      deskripsi: `Retur Penjualan ${isCashSale ? 'Tunai' : 'Kredit'} - ${returnId}`,
+      referensi: returnId,
+      tipeReferensi: "SALES_RETURN",
+      periodeId: periode.id,
+      userId,
+      isPosted: true,
+      details: {
+        create: [
+          // Debit Sales Revenue (Revenue decreases)
+          {
+            akunId: salesRevenueAccount.id,
+            debit: totalRevenue,
+            kredit: 0,
+            deskripsi: "Pengurangan pendapatan penjualan",
+          },
+          // Debit Inventory (Asset increases - goods returned)
+          {
+            akunId: inventoryAccount.id,
+            debit: totalCOGS,
+            kredit: 0,
+            deskripsi: "Barang dikembalikan ke persediaan",
+          },
+          // Credit Cash/Accounts Receivable (Asset/Liability decreases - refund)
+          {
+            akunId: refundAccount.id,
+            debit: 0,
+            kredit: totalRevenue,
+            deskripsi: `Pengembalian ${isCashSale ? 'uang tunai' : 'piutang'} ke pelanggan`,
+          },
+          // Credit COGS (Expense decreases - reverse COGS)
+          {
+            akunId: cogsAccount.id,
+            debit: 0,
+            kredit: totalCOGS,
+            deskripsi: "Pembatalan harga pokok penjualan",
+          },
+        ],
+      },
+    },
+    include: {
+      details: {
+        include: {
+          akun: true,
+        },
+      },
+    },
+  });
+
+  return jurnalEntry;
+}
+
+// Create journal entry for stock adjustment (stock opname)
+export async function createJournalEntryForStockAdjustment(
+  adjustmentId: string,
+  adjustmentAmount: number, // Positive = increase, Negative = decrease
+  isIncrease: boolean,
+  userId: string,
+) {
+  const periode = await getActiveAccountingPeriod();
+  if (!periode) {
+    throw new Error("Tidak ada periode akuntansi aktif");
+  }
+
+  const inventoryAccount = await getAccountByCode(ACCOUNT_CODES.INVENTORY);
+  const otherExpenseAccount = await getAccountByCode(ACCOUNT_CODES.OTHER_EXPENSE);
+  const otherRevenueAccount = await getAccountByCode("4002"); // Other Revenue
+
+  if (!inventoryAccount || !otherExpenseAccount || !otherRevenueAccount) {
+    throw new Error("Akun persediaan, beban lain, atau pendapatan lain tidak ditemukan");
+  }
+
+  const nomorJurnal = generateTransactionNumber("JR");
+  const absAmount = Math.abs(adjustmentAmount);
+
+  const jurnalEntry = await prisma.jurnalEntry.create({
+    data: {
+      nomorJurnal,
+      tanggal: new Date(),
+      deskripsi: `Penyesuaian Stok Opname - ${adjustmentId}`,
+      referensi: adjustmentId,
+      tipeReferensi: "STOCK_ADJUSTMENT",
+      periodeId: periode.id,
+      userId,
+      isPosted: true,
+      details: {
+        create: isIncrease
+          ? [
+              // Stock increase (found extra stock)
+              // Debit Inventory (Asset increases)
+              {
+                akunId: inventoryAccount.id,
+                debit: absAmount,
+                kredit: 0,
+                deskripsi: "Penambahan persediaan dari stock opname",
+              },
+              // Credit Other Revenue (Revenue increases)
+              {
+                akunId: otherRevenueAccount.id,
+                debit: 0,
+                kredit: absAmount,
+                deskripsi: "Pendapatan dari penyesuaian persediaan",
+              },
+            ]
+          : [
+              // Stock decrease (missing stock)
+              // Debit Other Expense (Expense increases)
+              {
+                akunId: otherExpenseAccount.id,
+                debit: absAmount,
+                kredit: 0,
+                deskripsi: "Beban susut persediaan",
+              },
+              // Credit Inventory (Asset decreases)
+              {
+                akunId: inventoryAccount.id,
+                debit: 0,
+                kredit: absAmount,
+                deskripsi: "Pengurangan persediaan dari stock opname",
+              },
+            ],
       },
     },
     include: {

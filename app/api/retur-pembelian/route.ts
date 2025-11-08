@@ -1,0 +1,177 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth-options";
+import { prisma } from "@/lib/prisma";
+import { generateTransactionNumber } from "@/lib/transaction-number";
+import { createJournalEntryForPurchaseReturn } from "@/lib/accounting-utils";
+import { z } from "zod";
+
+const returPembelianSchema = z.object({
+  transaksiMasukId: z.string().min(1, "Transaksi pembelian harus dipilih"),
+  qty: z.number().int().positive("Jumlah harus lebih dari 0"),
+  alasan: z.string().min(1, "Alasan retur harus diisi"),
+  catatan: z.string().optional(),
+});
+
+// GET - List purchase returns
+export async function GET(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const searchParams = request.nextUrl.searchParams;
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
+
+    const where: any = {};
+    if (startDate || endDate) {
+      where.tanggal = {};
+      if (startDate) where.tanggal.gte = new Date(startDate);
+      if (endDate) where.tanggal.lte = new Date(endDate);
+    }
+
+    // For now, we'll use TransaksiMasuk as return records
+    // In a real implementation, you'd have a separate ReturPembelian model
+    const retur = await prisma.transaksiMasuk.findMany({
+      where: {
+        ...where,
+        keterangan: {
+          contains: "RETUR",
+        },
+      },
+      include: {
+        barang: true,
+        lokasi: true,
+      },
+      orderBy: {
+        tanggal: "desc",
+      },
+      take: 100,
+    });
+
+    return NextResponse.json(retur);
+  } catch (error) {
+    console.error("Error fetching retur pembelian:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch purchase returns" },
+      { status: 500 },
+    );
+  }
+}
+
+// POST - Create purchase return
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const validatedData = returPembelianSchema.parse(body);
+
+    // Get original purchase transaction
+    const originalTransaksi = await prisma.transaksiMasuk.findUnique({
+      where: { id: validatedData.transaksiMasukId },
+      include: { barang: true },
+    });
+
+    if (!originalTransaksi) {
+      return NextResponse.json(
+        { error: "Transaksi pembelian tidak ditemukan" },
+        { status: 404 },
+      );
+    }
+
+    if (originalTransaksi.qty < validatedData.qty) {
+      return NextResponse.json(
+        {
+          error: `Jumlah retur (${validatedData.qty}) melebihi jumlah pembelian (${originalTransaksi.qty})`,
+        },
+        { status: 400 },
+      );
+    }
+
+    const returnAmount = validatedData.qty * originalTransaksi.hargaBeli;
+
+    // Determine if original purchase was cash or credit based on source
+    const isCashPurchase = originalTransaksi.sumber.toLowerCase().includes('tunai') ||
+                          originalTransaksi.sumber.toLowerCase().includes('cash') ||
+                          originalTransaksi.sumber.toLowerCase().includes('bayar');
+
+    console.log('Retur Pembelian Debug:', {
+      sumber: originalTransaksi.sumber,
+      isCashPurchase,
+      returnAmount,
+    });
+
+    // Create return transaction and update stock
+    const retur = await prisma.$transaction(async (tx) => {
+      // Create a new "return" transaction record (using TransaksiMasuk with negative qty)
+      const returnTransaksi = await tx.transaksiMasuk.create({
+        data: {
+          nomorTransaksi: generateTransactionNumber("RTP"),
+          barangId: originalTransaksi.barangId,
+          qty: -validatedData.qty, // Negative to indicate return
+          hargaBeli: originalTransaksi.hargaBeli,
+          totalNilai: -returnAmount, // Negative
+          sumber: `Retur: ${originalTransaksi.sumber}`,
+          lokasiId: originalTransaksi.lokasiId,
+          keterangan: `RETUR - ${validatedData.alasan}${validatedData.catatan ? ` - ${validatedData.catatan}` : ''}`,
+        },
+        include: {
+          barang: true,
+          lokasi: true,
+        },
+      });
+
+      // Update stock (decrease due to return)
+      await tx.barang.update({
+        where: { id: originalTransaksi.barangId },
+        data: {
+          stok: {
+            decrement: validatedData.qty,
+          },
+        },
+      });
+
+      // Log activity
+      await tx.activityLog.create({
+        data: {
+          userId: session.user.id,
+          userName: session.user.name || "",
+          action: "CREATE",
+          entity: "ReturPembelian",
+          entityId: returnTransaksi.id,
+          description: `Retur pembelian ${returnTransaksi.nomorTransaksi} - ${returnTransaksi.barang.nama} (${validatedData.qty} ${returnTransaksi.barang.satuan})`,
+        },
+      });
+
+      return returnTransaksi;
+    });
+
+    // Create accounting journal entry (critical for balance)
+    await createJournalEntryForPurchaseReturn(
+      retur.nomorTransaksi,
+      returnAmount,
+      isCashPurchase,
+      session.user.id,
+    );
+
+    return NextResponse.json(retur, { status: 201 });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Validation error", details: error.errors },
+        { status: 400 },
+      );
+    }
+    console.error("Error creating retur pembelian:", error);
+    return NextResponse.json(
+      { error: "Failed to create purchase return" },
+      { status: 500 },
+    );
+  }
+}

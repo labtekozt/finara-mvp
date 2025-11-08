@@ -172,37 +172,13 @@ export async function POST(request: NextRequest) {
       return newTransaksi;
     });
 
-    // Create accounting journal entries
-    try {
-      // Create complete sales journal entry (revenue + COGS in one balanced entry)
-      const itemsWithCost = await Promise.all(
-        validatedData.items.map(async (item) => {
-          const barang = await prisma.barang.findUnique({
-            where: { id: item.barangId },
-          });
-          if (!barang) {
-            throw new Error(`Barang ${item.namaBarang} tidak ditemukan`);
-          }
-          return {
-            barangId: item.barangId,
-            qty: item.qty,
-            costPrice: barang.hargaBeli,
-          };
-        }),
-      );
-
-      await createJournalEntryForCompleteSale(
-        transaksi.nomorTransaksi,
-        validatedData.total,
-        itemsWithCost,
-        session.user.id,
-      );
-    } catch (accountingError) {
-      console.error("Error creating accounting entries:", accountingError);
-      // Don't fail the transaction if accounting fails, just log it
-    }
-
-    // Fetch complete transaction data
+    // Create accounting journal entry (critical for balance)
+    await createJournalEntryForCompleteSale(
+      transaksi.nomorTransaksi,
+      totalRevenue,
+      items,
+      session.user.id,
+    );    // Fetch complete transaction data
     const completeTransaksi = await prisma.transaksiKasir.findUnique({
       where: { id: transaksi.id },
       include: {

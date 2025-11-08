@@ -15,6 +15,8 @@ import {
   FileText,
   TrendingUp,
   Calendar,
+  ClipboardCheck,
+  RotateCcw,
 } from "lucide-react";
 
 import {
@@ -53,6 +55,18 @@ const menuItems = [
     href: "/transaksi",
     icon: ArrowLeftRight,
     permission: "canAccessTransaksi" as const,
+  },
+  {
+    title: "Retur Pembelian",
+    href: "/retur-pembelian",
+    icon: RotateCcw,
+    permission: "canAccessInventaris" as const,
+  },
+  {
+    title: "Retur Penjualan",
+    href: "/retur-penjualan",
+    icon: RotateCcw,
+    permission: "canAccessKasir" as const,
   },
   {
     title: "Akuntansi",

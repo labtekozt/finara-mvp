@@ -95,6 +95,7 @@ export async function GET(request: Request) {
         }
 
         // Final balance = opening balance + mutations
+        // For display, we want positive balances for normal balances
         const balance = saldoAwal + mutations;
 
         return {
@@ -115,19 +116,26 @@ export async function GET(request: Request) {
       (item) => item.akun.tipe === "EQUITY",
     );
 
-    // Calculate totals using signed balances (positive = normal balance)
+    // Calculate totals using absolute values for display (liabilities/equity are always positive)
     const totalAssets = assets.reduce(
-      (sum, item) => sum + (item.saldo > 0 ? item.saldo : 0),
+      (sum, item) => sum + Math.abs(item.saldo),
       0,
     );
     const totalLiabilities = liabilities.reduce(
-      (sum, item) => sum + (item.saldo > 0 ? item.saldo : 0),
+      (sum, item) => sum + Math.abs(item.saldo),
       0,
     );
     const totalEquity = equity.reduce(
-      (sum, item) => sum + (item.saldo > 0 ? item.saldo : 0),
+      (sum, item) => sum + Math.abs(item.saldo),
       0,
     );
+
+    // Debug logging
+    console.log('Balance Sheet Debug:');
+    console.log('Assets:', assets.map(a => ({ kode: a.akun.kode, nama: a.akun.nama, saldo: a.saldo, absSaldo: Math.abs(a.saldo) })));
+    console.log('Liabilities:', liabilities.map(l => ({ kode: l.akun.kode, nama: l.akun.nama, saldo: l.saldo, absSaldo: Math.abs(l.saldo) })));
+    console.log('Equity:', equity.map(e => ({ kode: e.akun.kode, nama: e.akun.nama, saldo: e.saldo, absSaldo: Math.abs(e.saldo) })));
+    console.log('Totals:', { totalAssets, totalLiabilities, totalEquity });
 
     // Calculate net income (revenue - expenses) for the period
     let netIncome = 0;

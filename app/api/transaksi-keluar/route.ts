@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/prisma";
 import { generateKeluarNumber } from "@/lib/transaction-number";
-import { createJournalEntryForInventoryAdjustment } from "@/lib/accounting-utils";
+import { createJournalEntryForOutgoingTransaction } from "@/lib/accounting-utils";
 import { z } from "zod";
 
 const transaksiKeluarSchema = z.object({
@@ -120,13 +120,19 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Create journal entry for inventory adjustment
+      // Create journal entry for outgoing transaction based on purpose
       try {
-        await createJournalEntryForInventoryAdjustment(
+        const journalEntry = await createJournalEntryForOutgoingTransaction(
           newTransaksi.id,
           totalNilai,
+          validatedData.tujuan,
           session.user.id,
         );
+        if (journalEntry) {
+          console.log(`Journal entry created for outgoing transaction: ${journalEntry.nomorJurnal}`);
+        } else {
+          console.log(`No journal entry needed for warehouse transfer: ${newTransaksi.nomorTransaksi}`);
+        }
       } catch (journalError) {
         console.error(
           "Failed to create journal entry for outgoing transaction:",

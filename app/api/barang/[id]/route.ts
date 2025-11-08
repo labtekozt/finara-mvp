@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/prisma";
+import { createJournalEntryForStockAdjustment } from "@/lib/accounting-utils";
 import { z } from "zod";
 
 const barangSchema = z.object({
@@ -65,6 +66,15 @@ export async function PUT(
     const body = await request.json();
     const validatedData = barangSchema.parse(body);
 
+    // Get current item to check for stock changes
+    const currentBarang = await prisma.barang.findUnique({
+      where: { id },
+    });
+
+    if (!currentBarang) {
+      return NextResponse.json({ error: "Item not found" }, { status: 404 });
+    }
+
     const barang = await prisma.barang.update({
       where: { id },
       data: validatedData,
@@ -72,6 +82,27 @@ export async function PUT(
         lokasi: true,
       },
     });
+
+    // Check for stock adjustment and create journal entry if needed
+    const stockDifference = validatedData.stok - currentBarang.stok;
+    if (stockDifference !== 0) {
+      try {
+        const adjustmentAmount = Math.abs(stockDifference) * currentBarang.hargaBeli;
+        const isIncrease = stockDifference > 0;
+
+        await createJournalEntryForStockAdjustment(
+          `ADJ-${barang.id}-${Date.now()}`,
+          adjustmentAmount,
+          isIncrease,
+          session.user.id,
+        );
+
+        console.log(`Stock adjustment journal created for ${barang.nama}: ${stockDifference > 0 ? '+' : ''}${stockDifference} units`);
+      } catch (journalError) {
+        console.error("Failed to create stock adjustment journal:", journalError);
+        // Don't fail the update if journal creation fails
+      }
+    }
 
     // Log activity
     await prisma.activityLog.create({
@@ -81,7 +112,7 @@ export async function PUT(
         action: "UPDATE",
         entity: "Barang",
         entityId: barang.id,
-        description: `Mengupdate barang: ${barang.nama}`,
+        description: `Mengupdate barang: ${barang.nama}${stockDifference !== 0 ? ` (stok: ${currentBarang.stok} → ${validatedData.stok})` : ''}`,
       },
     });
 

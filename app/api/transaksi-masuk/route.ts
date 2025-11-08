@@ -116,17 +116,12 @@ export async function POST(request: NextRequest) {
       return newTransaksi;
     });
 
-    // Create accounting journal entry
-    try {
-      await createJournalEntryForPurchase(
-        transaksi.nomorTransaksi,
-        totalNilai,
-        session.user.id,
-      );
-    } catch (accountingError) {
-      console.error("Error creating accounting entries:", accountingError);
-      // Don't fail the transaction if accounting fails, just log it
-    }
+    // Create accounting journal entry (critical for balance)
+    await createJournalEntryForPurchase(
+      transaksi.nomorTransaksi,
+      totalAmount,
+      session.user.id,
+    );
 
     return NextResponse.json(transaksi, { status: 201 });
   } catch (error) {
