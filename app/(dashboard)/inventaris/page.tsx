@@ -34,6 +34,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Plus, Minus, Search, Edit, Trash2, Package, AlertTriangle, ArrowUpDown, ArrowUp, ArrowDown, TrendingDown, History } from "lucide-react"
 import { toast } from "sonner"
 import { format } from "date-fns"
+import { StatsGrid, StatItem } from "./components/StatsGrid"
+import { Button as StatsButton } from "@/components/ui/button"
 
 interface Barang {
   id: string
@@ -772,68 +774,38 @@ export default function InventarisPage() {
               </CardHeader>
               <CardContent>
                 {/* Statistics */}
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                      <CardTitle className="text-sm font-medium">Total Barang</CardTitle>
-                      <Package className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{barang.length}</div>
-                      <p className="text-xs text-muted-foreground mb-3">
-                        Item dalam inventaris
-                      </p>
-                      {/* <Button
-                        variant="default"
-                        size="sm"
-                      >
-                        Lihat Semua Barang
-                      </Button> */}
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                      <CardTitle className="text-sm font-medium">Total Nilai</CardTitle>
-                      <Package className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">
-                        Rp {barang.reduce((sum, item) => sum + (item.stok * item.hargaBeli), 0).toLocaleString("id-ID")}
-                      </div>
-                      <p className="text-xs text-muted-foreground mb-3">
-                        Berdasarkan harga beli
-                      </p>
-                      {/* <Button
-                        variant="default"
-                        size="sm"
-                      >
-                        Lihat Semua Barang
-                      </Button> */}
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                      <CardTitle className="text-sm font-medium">Stok Rendah</CardTitle>
-                      <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">
-                        {barang.filter(item => item.stok <= item.stokMinimum).length}
-                      </div>
-                      <p className="text-xs text-muted-foreground mb-3">
-                        Perlu restock
-                      </p>
-                      <Button
-                        variant={stokRendahFilter ? "default" : "outline"}
-                        onClick={() => setStokRendahFilter(!stokRendahFilter)}
-                        className="w-full"
-                      >
-                        <AlertTriangle className="mr-2 h-4 w-4" />
-                        {stokRendahFilter ? "Stok Rendah Aktif" : "Tampilkan Stok Rendah"}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </div>
+                <StatsGrid
+                  stats={[
+                    {
+                      title: "Total Barang",
+                      value: barang.length,
+                      description: "Item dalam inventaris",
+                      icon: Package,
+                    },
+                    {
+                      title: "Total Nilai",
+                      value: `Rp ${barang.reduce((sum, item) => sum + (item.stok * item.hargaBeli), 0).toLocaleString("id-ID")}`,
+                      description: "Berdasarkan harga beli",
+                      icon: Package,
+                    },
+                    {
+                      title: "Stok Rendah",
+                      value: barang.filter(item => item.stok <= item.stokMinimum).length,
+                      description: "Perlu restock",
+                      icon: AlertTriangle,
+                      action: (
+                        <Button
+                          variant={stokRendahFilter ? "default" : "outline"}
+                          onClick={() => setStokRendahFilter(!stokRendahFilter)}
+                          className="w-full"
+                        >
+                          <AlertTriangle className="mr-2 h-4 w-4" />
+                          {stokRendahFilter ? "Stok Rendah Aktif" : "Tampilkan Stok Rendah"}
+                        </Button>
+                      ),
+                    },
+                  ]}
+                />
 
                 {/* Filters */}
                 <div className="flex flex-wrap gap-4 my-5">
@@ -1024,69 +996,36 @@ export default function InventarisPage() {
                 </CardHeader>
                 <CardContent>
                   {/* Statistics Cards */}
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <Card>
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Jenis Barang Keluar</CardTitle>
-                        <TrendingDown className="h-4 w-4 text-muted-foreground" />
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold">
-                          {(() => {
-                            const uniqueBarangIds = new Set(sortedTransaksiKeluar.map(tr => tr.barang.id))
-                            return uniqueBarangIds.size
-                          })()}
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          {startDateKeluar || endDateKeluar
-                            ? `${startDateKeluar ? format(new Date(startDateKeluar), "dd/MM/yyyy") : "..."} - ${endDateKeluar ? format(new Date(endDateKeluar), "dd/MM/yyyy") : "..."}`
-                            : "Total keseluruhan"}
-                        </p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Jumlah Barang</CardTitle>
-                        <TrendingDown className="h-4 w-4 text-muted-foreground" />
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold">
-                          {sortedTransaksiKeluar.reduce((sum, tr) => sum + tr.qty, 0)}
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Unit keluar
-                        </p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Nilai</CardTitle>
-                        <TrendingDown className="h-4 w-4 text-muted-foreground" />
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold">
-                          Rp {sortedTransaksiKeluar.reduce((sum, tr) => sum + tr.totalNilai, 0).toLocaleString("id-ID")}
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Nilai barang keluar
-                        </p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Rata-rata</CardTitle>
-                        <TrendingDown className="h-4 w-4 text-muted-foreground" />
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold">
-                          Rp {sortedTransaksiKeluar.length > 0 ? (sortedTransaksiKeluar.reduce((sum, tr) => sum + tr.totalNilai, 0) / sortedTransaksiKeluar.length).toLocaleString("id-ID") : "0"}
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Per transaksi
-                        </p>
-                      </CardContent>
-                    </Card>
-                  </div>
+                  <StatsGrid
+                    stats={[
+                      {
+                        title: "Total Jenis Barang Keluar",
+                        value: new Set(sortedTransaksiKeluar.map(tr => tr.barang.id)).size,
+                        description: startDateKeluar || endDateKeluar
+                          ? `${startDateKeluar ? format(new Date(startDateKeluar), "dd/MM/yyyy") : "..."} - ${endDateKeluar ? format(new Date(endDateKeluar), "dd/MM/yyyy") : "..."}`
+                          : "Total keseluruhan",
+                        icon: TrendingDown,
+                      },
+                      {
+                        title: "Total Jumlah Barang",
+                        value: sortedTransaksiKeluar.reduce((sum, tr) => sum + tr.qty, 0),
+                        description: "Unit keluar",
+                        icon: TrendingDown,
+                      },
+                      {
+                        title: "Total Nilai",
+                        value: `Rp ${sortedTransaksiKeluar.reduce((sum, tr) => sum + tr.totalNilai, 0).toLocaleString("id-ID")}`,
+                        description: "Nilai barang keluar",
+                        icon: TrendingDown,
+                      },
+                      {
+                        title: "Rata-rata",
+                        value: `Rp ${sortedTransaksiKeluar.length > 0 ? (sortedTransaksiKeluar.reduce((sum, tr) => sum + tr.totalNilai, 0) / sortedTransaksiKeluar.length).toLocaleString("id-ID") : "0"}`,
+                        description: "Per transaksi",
+                        icon: TrendingDown,
+                      },
+                    ]}
+                  />
                   {/* History Barang Keluar */}
                   {/* Filters */}
                   <div className="flex flex-wrap gap-4 my-5">
@@ -1284,74 +1223,44 @@ export default function InventarisPage() {
               </Card>
 
               {/* Statistics Cards */}
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Jenis Barang</CardTitle>
-                    <Package className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      {(() => {
-                        const uniqueBarangIds = new Set<string>()
-                        sortedTransaksiKasir.forEach(tr => {
-                          tr.itemTransaksi.forEach(item => {
-                            uniqueBarangIds.add(item.barang.id)
-                          })
+              <StatsGrid
+                stats={[
+                  {
+                    title: "Total Jenis Barang",
+                    value: (() => {
+                      const uniqueBarangIds = new Set<string>()
+                      sortedTransaksiKasir.forEach(tr => {
+                        tr.itemTransaksi.forEach(item => {
+                          uniqueBarangIds.add(item.barang.id)
                         })
-                        return uniqueBarangIds.size
-                      })()}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {startDateKasir || endDateKasir
-                        ? `${startDateKasir ? format(new Date(startDateKasir), "dd/MM/yyyy") : "..."} - ${endDateKasir ? format(new Date(endDateKasir), "dd/MM/yyyy") : "..."}`
-                        : "Total keseluruhan"}
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Qty Keluar</CardTitle>
-                    <TrendingDown className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      {sortedTransaksiKasir.reduce((sum, tr) => sum + tr.itemTransaksi.reduce((s, item) => s + item.qty, 0), 0)}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Unit terjual
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Nilai Penjualan</CardTitle>
-                    <TrendingDown className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      Rp {sortedTransaksiKasir.reduce((sum, tr) => sum + tr.total, 0).toLocaleString("id-ID")}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Omset penjualan
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Rata-rata</CardTitle>
-                    <TrendingDown className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      Rp {sortedTransaksiKasir.length > 0 ? (sortedTransaksiKasir.reduce((sum, tr) => sum + tr.total, 0) / sortedTransaksiKasir.length).toLocaleString("id-ID") : "0"}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Per transaksi
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
+                      })
+                      return uniqueBarangIds.size
+                    })(),
+                    description: startDateKasir || endDateKasir
+                      ? `${startDateKasir ? format(new Date(startDateKasir), "dd/MM/yyyy") : "..."} - ${endDateKasir ? format(new Date(endDateKasir), "dd/MM/yyyy") : "..."}`
+                      : "Total keseluruhan",
+                    icon: Package,
+                  },
+                  {
+                    title: "Total Qty Keluar",
+                    value: sortedTransaksiKasir.reduce((sum, tr) => sum + tr.itemTransaksi.reduce((s, item) => s + item.qty, 0), 0),
+                    description: "Unit terjual",
+                    icon: TrendingDown,
+                  },
+                  {
+                    title: "Total Nilai Penjualan",
+                    value: `Rp ${sortedTransaksiKasir.reduce((sum, tr) => sum + tr.total, 0).toLocaleString("id-ID")}`,
+                    description: "Omset penjualan",
+                    icon: TrendingDown,
+                  },
+                  {
+                    title: "Rata-rata",
+                    value: `Rp ${sortedTransaksiKasir.length > 0 ? (sortedTransaksiKasir.reduce((sum, tr) => sum + tr.total, 0) / sortedTransaksiKasir.length).toLocaleString("id-ID") : "0"}`,
+                    description: "Per transaksi",
+                    icon: TrendingDown,
+                  },
+                ]}
+              />
 
               {/* Table History Kasir - Per Item */}
               <Card>
