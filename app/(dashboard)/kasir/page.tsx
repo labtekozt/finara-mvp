@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Plus, Minus, Trash2, ShoppingCart, Search, Receipt, ChevronLeft, ChevronRight, X, ChevronDown, ChevronUp } from "lucide-react"
 import { toast } from "sonner"
 import { CartItem } from "@/types"
@@ -45,13 +46,15 @@ export default function KasirPage() {
   const [receiptDialog, setReceiptDialog] = useState(false)
   const [lastTransaction, setLastTransaction] = useState<any>(null)
   const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 9
+  const itemsPerPage = 12
   const [deleteDialog, setDeleteDialog] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<{ barangId: string; nama: string } | null>(null)
   const [deleteAllDialog, setDeleteAllDialog] = useState(false)
   const [jumlahBayarDisplay, setJumlahBayarDisplay] = useState("")
   const [confirmPaymentDialog, setConfirmPaymentDialog] = useState(false)
   const [cartMinimized, setCartMinimized] = useState(false)
+  const [selectedCategory, setSelectedCategory] = useState("all")
+  const [sortBy, setSortBy] = useState("default")
 
   // Calculations
   const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0)
@@ -68,22 +71,22 @@ export default function KasirPage() {
 
   // Parse Rupiah format to number
   function parseRupiah(value: string): number {
-    const cleanValue = value.replace(/\./g, "")
+    const cleanValue: string = value.replace(/\./g, "")
     return parseInt(cleanValue) || 0
   }
 
   // Handle payment input change
   function handleJumlahBayarChange(value: string) {
     // Remove all non-digit characters except dots
-    const cleanValue = value.replace(/[^\d]/g, "")
-    
+    const cleanValue: string = value.replace(/[^\d]/g, "")
+
     if (cleanValue === "") {
       setJumlahBayar(0)
       setJumlahBayarDisplay("")
       return
     }
 
-    const numericValue = parseInt(cleanValue)
+    const numericValue: number = parseInt(cleanValue)
     setJumlahBayar(numericValue)
     setJumlahBayarDisplay(formatRupiah(numericValue))
   }
@@ -136,9 +139,9 @@ export default function KasirPage() {
     const item = cart.find((c) => c.barangId === barangId)
     if (!item) return
 
-    if (newQty <= 0) {
-      // Open confirmation dialog instead of directly removing
-      openDeleteDialog(barangId, item.nama)
+    // Prevent invalid or empty values
+    if (isNaN(newQty) || newQty < 1) {
+      toast.error("Jumlah minimal adalah 1")
       return
     }
 
@@ -224,11 +227,11 @@ export default function KasirPage() {
       })
 
       if (!response.ok) {
-        const error = await response.json()
+        const error: any = await response.json()
         throw new Error(error.error || "Gagal memproses transaksi")
       }
 
-      const transaction = await response.json()
+      const transaction: any = await response.json()
       setLastTransaction(transaction)
       setReceiptDialog(true)
 
@@ -245,98 +248,117 @@ export default function KasirPage() {
     }
   }
 
-  const filteredBarang = barang.filter((item) =>
-    item.nama.toLowerCase().includes(search.toLowerCase())
-  )
+  // Extract unique categories from barang
+  const categories = Array.from(new Set(barang.map(item => item.kategori))).sort()
+
+  const filteredBarang = barang.filter((item) => {
+    const matchesSearch = item.nama.toLowerCase().includes(search.toLowerCase())
+    const matchesCategory = selectedCategory === "all" || item.kategori === selectedCategory
+    return matchesSearch && matchesCategory
+  })
+
+  // Sort barang based on selected sort option
+  const sortedBarang = [...filteredBarang].sort((a, b) => {
+    switch (sortBy) {
+      case "nama-asc":
+        return a.nama.localeCompare(b.nama)
+      case "nama-desc":
+        return b.nama.localeCompare(a.nama)
+      case "harga-asc":
+        return a.hargaJual - b.hargaJual
+      case "harga-desc":
+        return b.hargaJual - a.hargaJual
+      case "stok-asc":
+        return a.stok - b.stok
+      case "stok-desc":
+        return b.stok - a.stok
+      default:
+        return 0 // Keep original order
+    }
+  })
 
   // Pagination calculations
-  const totalPages = Math.ceil(filteredBarang.length / itemsPerPage)
+  const totalPages = Math.ceil(sortedBarang.length / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
   const endIndex = startIndex + itemsPerPage
-  const paginatedBarang = filteredBarang.slice(startIndex, endIndex)
+  const paginatedBarang = sortedBarang.slice(startIndex, endIndex)
 
-  // Reset to page 1 when search changes
+  // Reset to page 1 when search, category, or sort changes
   useEffect(() => {
     setCurrentPage(1)
-  }, [search])
+  }, [search, selectedCategory, sortBy])
 
   return (
     <div className="flex flex-col h-full">
-      <Header title="Kasir" description="Point of Sale (POS)" />
+      {/* <Header title="Kasir" description="Point of Sale (POS)" /> */}
 
-      <div className="flex-1 p-6 bg-blue-100">
+      <div className="flex-1 p-6 bg-blue-50/20">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
           {/* Product List */}
           <div className="lg:col-span-2">
             <Card className="h-full flex flex-col">
               <CardHeader>
                 <CardTitle>Pilih Barang</CardTitle>
-                <div className="grid grid-cols-2 gap-4 mt-4">
-                  <div className="relative">
+                <div className="grid grid-cols-12 gap-3 mt-4">
+                  <div className="relative col-span-8">
                     <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       placeholder="Cari barang..."
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
-                      className="pl-9"
+                      className="pl-9 h-10 border-2 shadow-sm"
                     />
                   </div>
-                  <div className="relative">
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih kategori" />
+                  <div className="relative col-span-4">
+                    <Select value={sortBy} onValueChange={setSortBy}>
+                      <SelectTrigger className="h-10 shadow-sm">
+                        <SelectValue placeholder="Urutkan" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Semua</SelectItem>
-                        <SelectItem value="elektronik">Elektronik</SelectItem>
-                        <SelectItem value="fashion">Fashion</SelectItem>
-                        <SelectItem value="makanan">Makanan</SelectItem>
-                        <SelectItem value="minuman">Minuman</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="relative">
-                    {/* sorting barang */}
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sortir berdasarkan" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="nama">Nama</SelectItem>
-                        <SelectItem value="harga">Harga</SelectItem>
-                        <SelectItem value="stok">Stok</SelectItem>
+                        <SelectItem value="default">Default</SelectItem>
+                        <SelectItem value="nama-asc">Nama (A-Z)</SelectItem>
+                        <SelectItem value="nama-desc">Nama (Z-A)</SelectItem>
+                        <SelectItem value="harga-asc">Harga (Rendah-Tinggi)</SelectItem>
+                        <SelectItem value="harga-desc">Harga (Tinggi-Rendah)</SelectItem>
+                        <SelectItem value="stok-asc">Stok (Rendah-Tinggi)</SelectItem>
+                        <SelectItem value="stok-desc">Stok (Tinggi-Rendah)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
+                <div className="mt-4 w-full overflow-x-auto">
+                  <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-auto p-1 bg-blue-100">
+                      <TabsTrigger value="all" className="whitespace-nowrap m-2">
+                        Semua
+                      </TabsTrigger>
+                      {categories.map((category) => (
+                        <TabsTrigger key={category} value={category} className="whitespace-nowrap">
+                          {category}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+                  </Tabs>
+                </div>
               </CardHeader>
               <CardContent className="flex-1 overflow-y-auto">
-              {paginatedBarang.length === 0 && (
-                    <div className="text-center text-muted-foreground py-8 flex items-center justify-center gap-2">
-                      <span>Tidak ada barang "{search}" yang ditemukan</span>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setSearch("")}
-                        className="mt-2 h-8 w-8 p-0"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
+                {paginatedBarang.length === 0 && (
+                  <div className="text-center text-muted-foreground py-8 flex items-center justify-center gap-2">
+                    <span>Tidak ada barang "{search}" yang ditemukan</span>
+                  </div>
+                )}
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   {paginatedBarang.map((item) => {
                     const cartItem = cart.find((c) => c.barangId === item.id)
                     const isInCart = !!cartItem
-                    
+
                     return (
-                      <Card
+                      <div
                         key={item.id}
-                        className={`cursor-pointer transition-colors relative ${
-                          isInCart 
-                            ? "border-2 border-blue-400 bg-green-50/50 hover:bg-green-100/50" 
-                            : "hover:bg-accent"
-                        }`}
+                        className={`cursor-pointer transition-colors relative border shadow rounded ${isInCart
+                          ? "border-2 border-blue-400 bg-blue-50/50 hover:bg-blue-100/50"
+                          : "hover:bg-accent"
+                          }`}
                         onClick={() => addToCart(item)}
                       >
                         {isInCart && (
@@ -344,26 +366,28 @@ export default function KasirPage() {
                             {cartItem.qty}
                           </div>
                         )}
-                        <CardContent className="p-3">
-                          <div className="font-medium text-xl mb-1">{item.nama}</div>
-                          <div className="text-2xl font-bold text-primary mb-1">
+                        <CardContent className="p-3 flex flex-col justify-between h-full">
+                          <div>
+                            <h1 className="font-medium text-lg mb-1 text-gray-700">{item.nama}</h1>
+                            <div className="flex flex-row justify-between mt-4">
+                              <Badge variant="outline" className="text-xs">
+                                {item.kategori}
+                              </Badge>
+                              <span className="text-sm">
+                                Stok: <strong>{item.stok}</strong>
+                              </span>
+                            </div>
+                          </div>
+                          <div className="text-2xl font-bold text-primary mt-4">
                             Rp {item.hargaJual.toLocaleString("id-ID")}
                           </div>
-                          <div className="flex flex-col">
-                            <Badge variant="outline" className="text-xs">
-                              {item.kategori}
-                            </Badge>
-                            <span className="text-sm text-muted-foreground">
-                              Stok: {item.stok}
-                            </span>
-                          </div>
                         </CardContent>
-                      </Card>
+                      </div>
                     )
                   })}
                 </div>
               </CardContent>
-              
+
               {/* Pagination - Fixed at Bottom */}
               {totalPages > 1 && (
                 <div className="border-t p-4 bg-background">
@@ -381,11 +405,11 @@ export default function KasirPage() {
                     <div className="flex items-center gap-1">
                       {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
                         // Show first page, last page, current page, and pages around current
-                        const showPage = 
-                          page === 1 || 
-                          page === totalPages || 
+                        const showPage =
+                          page === 1 ||
+                          page === totalPages ||
                           (page >= currentPage - 1 && page <= currentPage + 1)
-                        
+
                         // Show ellipsis
                         const showEllipsisBefore = page === currentPage - 2 && currentPage > 3
                         const showEllipsisAfter = page === currentPage + 2 && currentPage < totalPages - 2
@@ -430,13 +454,13 @@ export default function KasirPage() {
           </div>
 
           {/* Cart & Checkout */}
-          <div className="lg:col-span-1">
-            <Card className="flex flex-col sticky top-5">
+          <div className="lg:col-span-1  sticky top-5 space-y-5">
+            <Card className="flex flex-col">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2">
                     <ShoppingCart className="h-5 w-5" />
-                    Keranjang ({cart.length})
+                    <span className="text-sm font-medium">Keranjang ({cart.length})</span>
                   </CardTitle>
                   <div className="flex items-center gap-2">
                     {cart.length > 0 && !cartMinimized && (
@@ -447,7 +471,7 @@ export default function KasirPage() {
                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                       >
                         <Trash2 className="h-4 w-4 mr-1" />
-                        Hapus Semua
+                        Hapus
                       </Button>
                     )}
                     <Button
@@ -466,62 +490,85 @@ export default function KasirPage() {
                 </div>
               </CardHeader>
               {!cartMinimized && (
-              <CardContent className="flex-1 flex flex-col">
-                <div className="flex-1 overflow-y-auto space-y-2 mb-4">
-                  {cart.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-8">
-                      Keranjang kosong
-                    </p>
-                  ) : (
-                    <div className="max-h-64 overflow-y-auto space-y-2">
-                      {cart.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center gap-2 p-2 border rounded-lg bg-white"
-                      >
-                        <div className="flex-1">
-                          <div className="font-medium text-sm">{item.nama}</div>
-                          <div className="text-xs text-muted-foreground">
-                            Rp {item.hargaJual.toLocaleString("id-ID")} / {item.qty}x
-                          </div>
-                          <div className="text-sm font-bold">
-                            Rp {item.subtotal.toLocaleString("id-ID")}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Input
-                            type="number"
-                            value={item.qty}
-                            onChange={(e) => updateQuantity(item.barangId, parseInt(e.target.value))}
-                            className="w-16 text-center text-sm font-medium"
-                          />
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-6 w-6"
-                            onClick={() => openDeleteDialog(item.barangId, item.nama)}
+                <CardContent className="flex-1 flex flex-col">
+                  <div className="flex-1 overflow-y-auto space-y-2 mb-4">
+                    {cart.length === 0 ? (
+                      <p className="text-center text-muted-foreground py-8">
+                        Keranjang Kosong
+                      </p>
+                    ) : (
+                      <div className="max-h-64 overflow-y-auto space-y-2">
+                        {cart.map((item) => (
+                          <div
+                            key={item.id}
+                            className="flex items-center gap-2 p-2 border rounded-lg bg-white hover:bg-gray-50"
                           >
-                            <Trash2 className="h-3 w-3 text-red-600" />
-                          </Button>
-                        </div>
+                            <div className="flex-1">
+                              <div className="font-medium text-sm">{item.nama}</div>
+                              <div className="text-xs text-muted-foreground">
+                                Rp {item.hargaJual.toLocaleString("id-ID")} / {item.qty}x
+                              </div>
+                              <div className="text-lg font-bold mt-3">
+                                Rp {item.subtotal.toLocaleString("id-ID")}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Input
+                                type="number"
+                                value={item.qty}
+                                onChange={(e) => {
+                                  const value = e.target.value
+                                  // Don't update if empty or invalid
+                                  if (value === '') return
+
+                                  const numValue = parseInt(value)
+                                  if (!isNaN(numValue) && numValue >= 1) {
+                                    updateQuantity(item.barangId, numValue)
+                                  }
+                                }}
+                                onKeyDown={(e) => {
+                                  // Prevent deletion to 0 or negative
+                                  if (e.key === 'Backspace' || e.key === 'Delete') {
+                                    const input = e.currentTarget
+                                    if (input.value === '1' || input.value.length <= 1) {
+                                      e.preventDefault()
+                                    }
+                                  }
+                                }}
+                                className="w-16 text-center text-sm font-medium"
+                                min={1}
+                              />
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-6 w-6"
+                                onClick={() => openDeleteDialog(item.barangId, item.nama)}
+                              >
+                                <Trash2 className="h-3 w-3 text-red-600" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                    </div>
-                  )}
-                </div>
-
-                <Separator className="my-4" />
-
-                <div className="space-y-3">
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-xl font-bold">Total:</span>
-                      <span className="text-xl font-bold">Rp {total.toLocaleString("id-ID")}</span>
-                    </div>
-                    <Separator />
+                    )}
                   </div>
 
-                  {cart.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-lg">Total Pembayaran:</span>
+                        <span className="text-xl font-medium">Rp {total.toLocaleString("id-ID")}</span>
+                      </div>
+                      {/* <Separator /> */}
+                    </div>
+                  </div>
+                </CardContent>
+
+              )}
+            </Card>
+            <Card>
+              <CardContent className="flex-1 flex flex-col">
+                {cart.length > 0 && (
                   <div className="space-y-2">
                     <Label htmlFor="bayar">Jumlah Bayar</Label>
                     <div className="relative">
@@ -535,32 +582,30 @@ export default function KasirPage() {
                         value={jumlahBayarDisplay}
                         onChange={(e) => handleJumlahBayarChange(e.target.value)}
                         placeholder="0"
-                        className="pl-10"
+                        className="pl-10 text-2xl"
                       />
                     </div>
                   </div>
-                  )}
+                )}
 
-                  {jumlahBayar > 0 && (
-                    <div className="flex flex-col justify-between text-sm">
-                      <span>Kembalian:</span>
-                      <span className={kembalian < 0 ? "text-red-600 text-xl" : "text-green-600 text-xl"}>
-                        Rp {kembalian.toLocaleString("id-ID")}
-                      </span>
-                    </div>
-                  )}
+                {jumlahBayar > 0 && (
+                  <div className="flex flex-col justify-between text-sm mt-5">
+                    <span>Kembalian:</span>
+                    <span className={kembalian < 0 ? "text-red-600 text-xl" : "text-black-600 text-xl"}>
+                      Rp {kembalian.toLocaleString("id-ID")}
+                    </span>
+                  </div>
+                )}
 
-                  <Button
-                    className="w-full"
-                    onClick={openConfirmPayment}
-                    disabled={loading || cart.length === 0 || kembalian < 0}
-                  >
-                    <ShoppingCart className="mr-2 h-4 w-4" />
-                    Bayar
-                  </Button>
-                </div>
+                <Button
+                  className="w-full mt-4"
+                  onClick={openConfirmPayment}
+                  disabled={loading || cart.length === 0 || kembalian < 0}
+                >
+                  <ShoppingCart className="mr-2 h-4 w-4" />
+                  Bayar
+                </Button>
               </CardContent>
-              )}
             </Card>
           </div>
         </div>
@@ -766,32 +811,45 @@ export default function KasirPage() {
           </DialogHeader>
           {lastTransaction && (
             <div className="space-y-4">
-              <div className="text-center p-6 bg-green-50 rounded-lg">
-                <Receipt className="h-12 w-12 text-green-600 mx-auto mb-2" />
-                <div className="text-sm text-muted-foreground mb-1">
-                  No. Transaksi
+              <div className="p-3 bg-green-50 rounded-lg">
+                {/* <Receipt className="h-12 w-12 text-green-600 mx-auto mb-2" /> */}
+                <div className="flex justify-between w-full">
+                  <div className="text-sm text-muted-foreground mb-1">
+                    No. Transaksi
+                  </div>
+                  <div className="text-xs">
+                    {lastTransaction.nomorTransaksi}
+                  </div>
                 </div>
-                <div className="text-lg font-bold">
-                  {lastTransaction.nomorTransaksi}
+                <div className="overflow-x-auto">
+                  {lastTransaction.itemTransaksi.map((item: any) => (
+                    <p className="font-bold" key={item.id}>
+                      {item.namaBarang} x{item.qty}
+                    </p>
+                  ))}
                 </div>
               </div>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-2xl">Total:</span>
-                  <span className="font-bold text-2xl">
+                  <span className="text-lg">Total:</span>
+                  <span className="font-bold text-lg">
                     Rp {lastTransaction.total.toLocaleString("id-ID")}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-2xl">Bayar:</span>
-                  <span className="font-bold text-2xl">Rp {lastTransaction.jumlahBayar.toLocaleString("id-ID")}</span>
+                  <span className="text-lg">Bayar:</span>
+                  <span className="font-bold text-lg">Rp {lastTransaction.jumlahBayar.toLocaleString("id-ID")}</span>
                 </div>
                 <div className="flex justify-between text-green-600">
-                  <span className="text-2xl">Kembalian:</span>
-                  <span className="font-bold text-2xl">
+                  <span className="text-lg">Kembalian:</span>
+                  <span className="font-bold text-lg">
                     Rp {lastTransaction.kembalian.toLocaleString("id-ID")}
                   </span>
                 </div>
+              </div>
+              <div className="flex gap-2 w-fit justify-end">
+                <Button variant="outline" className="w-fit">Tutup</Button>
+                <Button variant="default" className="w-fit">Cetak Struk</Button>
               </div>
             </div>
           )}
@@ -800,8 +858,3 @@ export default function KasirPage() {
     </div>
   )
 }
-
-
-
-
-
