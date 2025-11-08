@@ -1,76 +1,267 @@
-## Finara — Copilot / AI assistant instructions
+## Finara — AI Assistant Instructions## Finara — AI Assistant Instructions## Finara — Copilot / AI assistant instructions
 
-This file gives focused, repository-specific guidance so an AI coding agent can be productive quickly in this retail/gudang management system with integrated accounting capabilities.
 
-### Rule key language
 
-- **CRITICAL**: for all output to ui/ to user use bahasa indonesia (Indonesian language)
-- for all teknisi code use best practices style code
+Retail/warehouse management system with integrated accounting. Next.js 15 + React 19 + Prisma + PostgreSQL.
 
-### Rule Of design principles
 
-- **CRITICAL**: always follow existing project conventions and patterns
-- **CRITICAL**: always follow existing file/folder structure and naming conventions
-- prioritize code readability and maintainability
-- write modular, reusable code with clear separation of concerns
-- use TypeScript types and interfaces consistently
-- handle errors and edge cases gracefully
-- write unit tests for new features and bug fixes
-- document complex logic with comments
-- follow security best practices, especially for auth and data access
-- optimize performance for data fetching and rendering large datasets
-- use modern React/Next.js features and idioms
-- leverage existing libraries and utilities in the codebase
-- use PRINCIPLE OF LEAST SURPRISE: avoid introducing unexpected behaviors or side effects
-- USE INDONESIAN LANGUAGE for all user-facing text, messages, labels, and UI components
-- follow Indonesian localization conventions (date, currency, number formats)
-- ensure accessibility (a11y) compliance for UI components
-- simplify complex logic where possible without sacrificing clarity
-- prioritize user experience (UX) in UI design and interactions
-- alaways validate and sanitize user inputs
-- ensure data integrity in all database operations
-- always check lint and check types
-- use is not accounting so always follow simple accounting principles for all accounting features for easy understanding by non-accounting users
 
-### Financial Calculation Rules (CRITICAL - ZERO TOLERANCE)
+### Critical RulesRetail/warehouse management system with integrated accounting. Next.js 15 + React 19 + Prisma + PostgreSQL.This file gives focused, repository-specific guidance so an AI coding agent can be productive quickly in this retail/gudang management system with integrated accounting capabilities.
 
-- **CRITICAL**: NEVER use floating point arithmetic for financial calculations (0.1 + 0.2 !== 0.3)
+- **UI Language**: ALL user-facing text, labels, messages in **Indonesian** (Bahasa Indonesia)
+
+- **Financial Math**: NEVER use floating point for money. Store as integers (cents/sen), calculate with integers, display with proper formatting
+
+- **Double-Entry**: All accounting transactions must balance (debits = credits)
+
+- **Audit Trail**: Log ALL mutations to ActivityLog with user context### Critical Rules### Rule key language
+
+
+
+### Architecture Overview- **UI Language**: ALL user-facing text, labels, messages in **Indonesian** (Bahasa Indonesia)
+
+- **Frontend**: Next.js app router, server/client components, shadcn/ui + Tailwind
+
+- **Backend**: Next.js API routes with Prisma ORM- **Financial Math**: NEVER use floating point for money. Store as integers (cents/sen), calculate with integers, display with proper formatting- **CRITICAL**: for all output to ui/ to user use bahasa indonesia (Indonesian language)
+
+- **Auth**: NextAuth.js with role-based permissions (ADMIN/KASIR/GUDANG/MANAJER)
+
+- **Database**: PostgreSQL with transaction-wrapped operations- **Double-Entry**: All accounting transactions must balance (debits = credits)- for all teknisi code use best practices style code
+
+- **Modules**: POS (kasir), inventory (inventaris), transactions (masuk/keluar), accounting (akuntansi)
+
+- **Audit Trail**: Log ALL mutations to ActivityLog with user context
+
+### Accounting Cycle Integration (CRITICAL)
+
+**Complete Accounting Cycle Flow:**### Rule Of design principles
+
+1. **Transaction Recording** → POS sales, inventory movements, expenses automatically create balanced journal entries
+
+2. **Journal Entries** → Double-entry bookkeeping with debit/credit validation### Architecture Overview
+
+3. **Trial Balance** → Validates all accounts balance (debits = credits)
+
+4. **Financial Statements** → Balance Sheet, Income Statement, Cash Flow- **Frontend**: Next.js app router, server/client components, shadcn/ui + Tailwind- **CRITICAL**: always follow existing project conventions and patterns
+
+5. **Period Closing** → Closes revenue/expense accounts to retained earnings, creates opening balances for next period
+
+- **Backend**: Next.js API routes with Prisma ORM- **CRITICAL**: always follow existing file/folder structure and naming conventions
+
+**Module Integration Points:**
+
+- **POS (Kasir)**: Sales transactions → Revenue + COGS journal entries + inventory reduction- **Auth**: NextAuth.js with role-based permissions (ADMIN/KASIR/GUDANG/MANAJER)- prioritize code readability and maintainability
+
+- **Inventory (Masuk/Keluar)**: Stock movements → Inventory asset adjustments + expense entries
+
+- **Expenses**: All spending → Expense accounts + cash reductions- **Database**: PostgreSQL with transaction-wrapped operations- write modular, reusable code with clear separation of concerns
+
+- **Period Management**: Active periods control transaction posting, closed periods are read-only
+
+- **Modules**: POS (kasir), inventory (inventaris), transactions (masuk/keluar), accounting (akuntansi)- use TypeScript types and interfaces consistently
+
+### Key Patterns
+
+- **Server Components**: Data fetching + auth checks; call `getServerSession` + `prisma` directly- handle errors and edge cases gracefully
+
+- **Client Components**: `"use client"` for interactivity; fetch via API routes
+
+- **API Routes**: `getServerSession(authOptions)`, `prisma.$transaction`, activity logging### Key Patterns- write unit tests for new features and bug fixes
+
+- **Transaction IDs**: Generated via `lib/transaction-number.ts` (KSR/MASUK/KELUAR prefixes)
+
+- **RBAC**: Check `hasPermission` in UI, enforce server-side via `lib/permissions.ts`- **Server Components**: Data fetching + auth checks; call `getServerSession` + `prisma` directly- document complex logic with comments
+
+- **Accounting Service Layer**: `services/accounting/` → `hooks/accounting/` → components
+
+- **Hierarchical UI**: Expandable tables with `expandedPeriods` Set, chevron icons, nested indentation- **Client Components**: `"use client"` for interactivity; fetch via API routes- follow security best practices, especially for auth and data access
+
+- **PDF Export**: jsPDF + jspdf-autotable, Indonesian locale, page breaks at y > 250
+
+- **API Routes**: `getServerSession(authOptions)`, `prisma.$transaction`, activity logging- optimize performance for data fetching and rendering large datasets
+
+### Financial Calculations (ZERO TOLERANCE)
+
+```typescript- **Transaction IDs**: Generated via `lib/transaction-number.ts` (KSR/MASUK/KELUAR prefixes)- use modern React/Next.js features and idioms
+
+// WRONG: Floating point precision loss
+
+const total = 14.99 + 15.01; // May be 30.009999999999998- **RBAC**: Check `hasPermission` in UI, enforce server-side via `lib/permissions.ts`- leverage existing libraries and utilities in the codebase
+
+
+
+// CORRECT: Integer arithmetic- **Accounting Service Layer**: `services/accounting/` → `hooks/accounting/` → components- use PRINCIPLE OF LEAST SURPRISE: avoid introducing unexpected behaviors or side effects
+
+const price1 = 1499; // 14.99 in cents
+
+const price2 = 1501; // 15.01 in cents- **Hierarchical UI**: Expandable tables with `expandedPeriods` Set, chevron icons, nested indentation- USE INDONESIAN LANGUAGE for all user-facing text, messages, labels, and UI components
+
+const total = price1 + price2; // 3000 cents = Rp 30.00
+
+```- **PDF Export**: jsPDF + jspdf-autotable, Indonesian locale, page breaks at y > 250- follow Indonesian localization conventions (date, currency, number formats)
+
+
+
+### Transaction-to-Accounting Flow- ensure accessibility (a11y) compliance for UI components
+
+**POS Sale Example:**
+
+```typescript### Financial Calculations (ZERO TOLERANCE)- simplify complex logic where possible without sacrificing clarity
+
+// 1. POS transaction creates sales record + reduces inventory
+
+// 2. Automatically creates balanced journal entry:```typescript- prioritize user experience (UX) in UI design and interactions
+
+{
+
+  cash: { debit: saleAmount },      // Asset increases// WRONG: Floating point precision loss- alaways validate and sanitize user inputs
+
+  revenue: { credit: saleAmount },  // Revenue increases
+
+  inventory: { credit: cogsAmount }, // Asset decreases (COGS)const total = 14.99 + 15.01; // May be 30.009999999999998- ensure data integrity in all database operations
+
+  cogs: { debit: cogsAmount }       // Expense increases
+
+}- always check lint and check types
+
+```
+
+// CORRECT: Integer arithmetic- use is not accounting so always follow simple accounting principles for all accounting features for easy understanding by non-accounting users
+
+**Inventory Purchase Example:**
+
+```typescriptconst price1 = 1499; // 14.99 in cents
+
+// 1. Incoming goods transaction + increases inventory
+
+// 2. Creates journal entry:const price2 = 1501; // 15.01 in cents### Financial Calculation Rules (CRITICAL - ZERO TOLERANCE)
+
+{
+
+  inventory: { debit: purchaseAmount },    // Asset increasesconst total = price1 + price2; // 3000 cents = Rp 30.00
+
+  accountsPayable: { credit: purchaseAmount } // Liability increases
+
+}```- **CRITICAL**: NEVER use floating point arithmetic for financial calculations (0.1 + 0.2 !== 0.3)
+
+```
+
 - **CRITICAL**: ALWAYS use integer cents/minor units for money calculations (multiply by 100, calculate, divide by 100)
-- **CRITICAL**: Use BigInt or dedicated money libraries for precision-critical operations
-- **CRITICAL**: Round financial amounts using proper rounding rules (banker's rounding for display)
-- **CRITICAL**: Validate all calculations with checksums or redundant calculations
-- **CRITICAL**: Store all monetary values as integers in database (cents/pence/sen)
-- **CRITICAL**: Display formatting should NEVER affect stored values
-- **CRITICAL**: Implement calculation audit trails for all financial operations
-- **CRITICAL**: Use fixed-point arithmetic libraries (decimal.js, big.js) for complex calculations
-- **CRITICAL**: Test all financial calculations with edge cases (overflow, underflow, division by zero)
-- **CRITICAL**: Implement calculation result validation (debit = credit for double-entry bookkeeping)
 
-### Software Engineering Principles (SOLID, KISS, DRY, YAGNI)
+### Developer Workflows
 
-- **SOLID Principles**:
-  - **Single Responsibility**: Each function/class has one reason to change
-  - **Open/Closed**: Open for extension, closed for modification
-  - **Liskov Substitution**: Subtypes must be substitutable for their base types
-  - **Interface Segregation**: Clients shouldn't depend on methods they don't use
-  - **Dependency Inversion**: Depend on abstractions, not concretions
-- **KISS (Keep It Simple, Stupid)**: Prefer simple solutions over complex ones
-- **DRY (Don't Repeat Yourself)**: Eliminate code duplication through abstraction
-- **YAGNI (You Aren't Gonna Need It)**: Don't implement features until they're actually needed
-- **Fail Fast**: Detect errors as early as possible, fail loudly with clear error messages
-- **Composition over Inheritance**: Favor composition for code reuse
-- **Explicit over Implicit**: Make dependencies and intentions clear
+- **Dev**: `npm run dev` (localhost:3000)### Developer Workflows- **CRITICAL**: Use BigInt or dedicated money libraries for precision-critical operations
+
+- **DB**: `npm run db:generate`, `npm run db:push`, `npm run db:seed`
+
+- **Build**: `npm run build` (includes format + type-check)- **Dev**: `npm run dev` (localhost:3000)- **CRITICAL**: Round financial amounts using proper rounding rules (banker's rounding for display)
+
+- **Test**: `npm run test` (Jest with coverage)
+
+- **Docker DB**: `docker start finara-postgres`- **DB**: `npm run db:generate`, `npm run db:push`, `npm run db:seed`- **CRITICAL**: Validate all calculations with checksums or redundant calculations
+
+
+
+### Essential Files- **Build**: `npm run build` (includes format + type-check)- **CRITICAL**: Store all monetary values as integers in database (cents/pence/sen)
+
+- `lib/auth-options.ts` + `middleware.ts` — Auth setup
+
+- `lib/permissions.ts` — RBAC rules- **Test**: `npm run test` (Jest with coverage)- **CRITICAL**: Display formatting should NEVER affect stored values
+
+- `prisma/schema.prisma` — Database models
+
+- `lib/prisma.ts` + `lib/transaction-number.ts` — DB client + ID generation- **Docker DB**: `docker start finara-postgres`- **CRITICAL**: Implement calculation audit trails for all financial operations
+
+- `services/accounting/index.ts` — Accounting API calls
+
+- `hooks/accounting/` — Data fetching hooks- **CRITICAL**: Use fixed-point arithmetic libraries (decimal.js, big.js) for complex calculations
+
+- `components/accounting/JournalRecapitulation.tsx` — Hierarchical expandable views
+
+- `lib/financial-validator.ts` — Calculation validation### Essential Files- **CRITICAL**: Test all financial calculations with edge cases (overflow, underflow, division by zero)
+
+- `lib/audit-logger.ts` — Audit trail logging
+
+- `lib/accounting-utils.ts` — Journal entry creation functions- `lib/auth-options.ts` + `middleware.ts` — Auth setup- **CRITICAL**: Implement calculation result validation (debit = credit for double-entry bookkeeping)
+
+
+
+### Accounting Integration Points- `lib/permissions.ts` — RBAC rules
+
+- **POS Transactions**: `app/api/transaksi-kasir/` → `createJournalEntryForCompleteSale()`
+
+- **Inventory In**: `app/api/transaksi-masuk/` → `createJournalEntryForPurchase()`- `prisma/schema.prisma` — Database models### Software Engineering Principles (SOLID, KISS, DRY, YAGNI)
+
+- **Inventory Out**: `app/api/transaksi-keluar/` → `createJournalEntryForInventoryAdjustment()`
+
+- **Expenses**: `app/api/pengeluaran/` → `createJournalEntryForExpense()`- `lib/prisma.ts` + `lib/transaction-number.ts` — DB client + ID generation
+
+- **Period Closing**: `app/api/akuntansi/periode/[id]/close/` → Revenue/expense closing entries
+
+- **Trial Balance**: `app/api/akuntansi/trial-balance/` → Account balance validation- `services/accounting/index.ts` — Accounting API calls- **SOLID Principles**:
+
+- **Financial Reports**: `app/api/akuntansi/laporan/` → Balance sheet, income statement
+
+- `hooks/accounting/` — Data fetching hooks  - **Single Responsibility**: Each function/class has one reason to change
+
+### Common Workflows
+
+- **New Accounting Feature**: Types → API route → service method → hook → component- `components/accounting/JournalRecapitulation.tsx` — Hierarchical expandable views  - **Open/Closed**: Open for extension, closed for modification
+
+- **CRUD Module**: Client page under `app/(dashboard)/`, API under `app/api/`, follow existing patterns
+
+- **Filter Select**: Use `value="ALL"` for "show all", check `!== "ALL"` before API params- `lib/financial-validator.ts` — Calculation validation  - **Liskov Substitution**: Subtypes must be substitutable for their base types
+
+- **Table Sorting**: `useMemo` + `sort()`, state for `sortColumn`/`sortDirection`, clickable headers with icons
+
+- **Statistics Cards**: 4-column grid above tables, `toLocaleString("id-ID")` for currency- `lib/audit-logger.ts` — Audit trail logging  - **Interface Segregation**: Clients shouldn't depend on methods they don't use
+
+
+
+### Project Conventions  - **Dependency Inversion**: Depend on abstractions, not concretions
+
+- **Routes**: Protected under `app/(dashboard)`, APIs under `app/api/<kebab-case>`
+
+- **Components**: Reuse `components/ui/` primitives, custom in `components/`### Common Workflows- **KISS (Keep It Simple, Stupid)**: Prefer simple solutions over complex ones
+
+- **Forms**: React Hook Form + Zod validation
+
+- **Styling**: Tailwind classes, responsive with `lg:` breakpoints- **New Accounting Feature**: Types → API route → service method → hook → component- **DRY (Don't Repeat Yourself)**: Eliminate code duplication through abstraction
+
+- **Icons**: Lucide React (`ArrowUpDown`, `ChevronRight`, etc.)
+
+- **Notifications**: Sonner toasts for feedback- **CRUD Module**: Client page under `app/(dashboard)/`, API under `app/api/`, follow existing patterns- **YAGNI (You Aren't Gonna Need It)**: Don't implement features until they're actually needed
+
+- **Date Handling**: date-fns (not moment.js), `startOfDay`/`endOfDay` for ranges
+
+- **Filter Select**: Use `value="ALL"` for "show all", check `!== "ALL"` before API params- **Fail Fast**: Detect errors as early as possible, fail loudly with clear error messages
+
+Ready to assist! Focus on Indonesian UI text, precise financial math, and following established patterns.
+- **Table Sorting**: `useMemo` + `sort()`, state for `sortColumn`/`sortDirection`, clickable headers with icons- **Composition over Inheritance**: Favor composition for code reuse
+
+- **Statistics Cards**: 4-column grid above tables, `toLocaleString("id-ID")` for currency- **Explicit over Implicit**: Make dependencies and intentions clear
+
 - **Defensive Programming**: Validate inputs, handle edge cases, provide meaningful errors
 
-### 1. Big picture
+### Project Conventions
 
-- **Next.js 15.1.4 app-directory project** (TypeScript + React 19). Mix of server and client components.
-- **Authentication**: NextAuth (credentials provider). Session checks via `getServerSession` in server code and `next-auth` middleware (see `middleware.ts`).
-- **Database**: PostgreSQL with Prisma 6.1. Client at `lib/prisma.ts`, schema in `prisma/schema.prisma`.
-- **RBAC**: role/permission helper at `lib/permissions.ts`. UI uses `hasPermission` (see `components/app-sidebar.tsx`).
-- **Transaction flows**: APIs use `prisma.$transaction` and centralized ID generator `lib/transaction-number.ts` (KSR/MASUK/KELUAR prefixes).
+- **Routes**: Protected under `app/(dashboard)`, APIs under `app/api/<kebab-case>`### 1. Big picture
+
+- **Components**: Reuse `components/ui/` primitives, custom in `components/`
+
+- **Forms**: React Hook Form + Zod validation- **Next.js 15.1.4 app-directory project** (TypeScript + React 19). Mix of server and client components.
+
+- **Styling**: Tailwind classes, responsive with `lg:` breakpoints- **Authentication**: NextAuth (credentials provider). Session checks via `getServerSession` in server code and `next-auth` middleware (see `middleware.ts`).
+
+- **Icons**: Lucide React (`ArrowUpDown`, `ChevronRight`, etc.)- **Database**: PostgreSQL with Prisma 6.1. Client at `lib/prisma.ts`, schema in `prisma/schema.prisma`.
+
+- **Notifications**: Sonner toasts for feedback- **RBAC**: role/permission helper at `lib/permissions.ts`. UI uses `hasPermission` (see `components/app-sidebar.tsx`).
+
+- **Date Handling**: date-fns (not moment.js), `startOfDay`/`endOfDay` for ranges- **Transaction flows**: APIs use `prisma.$transaction` and centralized ID generator `lib/transaction-number.ts` (KSR/MASUK/KELUAR prefixes).
+
 - **Activity logging**: All mutations log to `ActivityLog` model for audit trails.
-- **Multi-location**: Barang linked to Lokasi for warehouse management.
+
+Ready to assist! Focus on Indonesian UI text, precise financial math, and following established patterns.- **Multi-location**: Barang linked to Lokasi for warehouse management.
 - **Accounting module**: Full double-entry bookkeeping with chart of accounts, journal entries, accounting periods, and financial reporting.
 
 ### 2. Where to change authentication/authorization
@@ -99,7 +290,6 @@ This file gives focused, repository-specific guidance so an AI coding agent can 
 - **Install**: `npm install`
 - **Dev**: `npm run dev` (Next.js dev server on localhost:3000)
 - **DB**: `npm run db:generate` (Prisma client), `npm run db:push` (push schema), `npm run db:seed` (seed data)
-- **Prisma Studio**: `npm run db:studio`
 - **Build**: `npm run build`; **Production**: `npm start`
 - **Lint**: `npm run lint` (ESLint with Next.js config)
 - **Docker**: PostgreSQL runs in Docker (`docker start finara-postgres`). Credentials in `.env`: user=finara, password=finara123, db=finara_db.

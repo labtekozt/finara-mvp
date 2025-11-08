@@ -48,6 +48,7 @@ import {
 } from "lucide-react";
 import { useAccounts } from "@/hooks/accounting";
 import { Akun, AkunFormData, AccountType } from "@/types/accounting";
+import { getDisplayCategories, mapEnumToDisplayCategory } from "@/lib/accounting-mappings";
 import { AccountForm } from "./forms/AccountForm";
 
 const ACCOUNT_TYPES: { value: AccountType; label: string }[] = [
@@ -58,23 +59,14 @@ const ACCOUNT_TYPES: { value: AccountType; label: string }[] = [
   { value: "EXPENSE", label: "Beban" },
 ];
 
-const ACCOUNT_CATEGORIES = [
-  "Kas & Bank",
-  "Piutang",
-  "Persediaan",
-  "Aktiva Tetap",
-  "Utang",
-  "Ekuitas",
-  "Pendapatan",
-  "Beban Operasional",
-  "Beban Lainnya",
-];
+const ACCOUNT_CATEGORIES = getDisplayCategories();
 
 interface AccountsManagementProps {
   className?: string;
 }
 
 export function AccountsManagement({ className }: AccountsManagementProps) {
+  const ACCOUNT_CATEGORIES_LOCAL = getDisplayCategories();
   const [filterTipe, setFilterTipe] = useState<string>("ALL");
   const [filterKategori, setFilterKategori] = useState<string>("ALL");
   const [searchTerm, setSearchTerm] = useState("");
@@ -244,7 +236,7 @@ export function AccountsManagement({ className }: AccountsManagementProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ALL">Semua Kategori</SelectItem>
-                  {ACCOUNT_CATEGORIES.map((category) => (
+                  {ACCOUNT_CATEGORIES_LOCAL.filter(category => category && category.trim() !== "").map((category) => (
                     <SelectItem key={category} value={category}>
                       {category}
                     </SelectItem>
@@ -330,7 +322,7 @@ export function AccountsManagement({ className }: AccountsManagementProps) {
                         {getAccountTypeLabel(account.tipe)}
                       </Badge>
                     </TableCell>
-                    <TableCell>{account.kategori}</TableCell>
+                    <TableCell>{mapEnumToDisplayCategory(account.kategori) || account.kategori}</TableCell>
                     <TableCell>
                       <Badge
                         variant={account.isActive ? "default" : "secondary"}

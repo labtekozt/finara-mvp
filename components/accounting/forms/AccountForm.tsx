@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Akun, AkunFormData, AccountType } from "@/types/accounting";
 import { useAccounts } from "@/hooks/accounting";
+import { getDisplayCategories, mapEnumToDisplayCategory } from "@/lib/accounting-mappings";
 
 const ACCOUNT_TYPES: { value: AccountType; label: string }[] = [
   { value: "ASSET", label: "Aset" },
@@ -21,18 +22,6 @@ const ACCOUNT_TYPES: { value: AccountType; label: string }[] = [
   { value: "EQUITY", label: "Ekuitas" },
   { value: "REVENUE", label: "Pendapatan" },
   { value: "EXPENSE", label: "Beban" },
-];
-
-const ACCOUNT_CATEGORIES = [
-  "Kas & Bank",
-  "Piutang",
-  "Persediaan",
-  "Aktiva Tetap",
-  "Utang",
-  "Ekuitas",
-  "Pendapatan",
-  "Beban Operasional",
-  "Beban Lainnya",
 ];
 
 interface AccountFormProps {
@@ -65,13 +54,15 @@ export function AccountForm({
         !account?.children?.some((child) => child.id === acc.id),
     ) || [];
 
+  const ACCOUNT_CATEGORIES = getDisplayCategories();
+
   useEffect(() => {
     if (account) {
       setFormData({
         kode: account.kode,
         nama: account.nama,
         tipe: account.tipe,
-        kategori: account.kategori,
+        kategori: mapEnumToDisplayCategory(account.kategori) || account.kategori,
         parentId: account.parentId || undefined,
         deskripsi: account.deskripsi || "",
       });
@@ -152,7 +143,7 @@ export function AccountForm({
               <SelectValue placeholder="Pilih kategori" />
             </SelectTrigger>
             <SelectContent>
-              {ACCOUNT_CATEGORIES.map((category) => (
+              {ACCOUNT_CATEGORIES.filter(category => category && category.trim() !== "").map((category) => (
                 <SelectItem key={category} value={category}>
                   {category}
                 </SelectItem>
@@ -165,16 +156,16 @@ export function AccountForm({
       <div className="space-y-2">
         <Label htmlFor="parentId">Akun Induk (Opsional)</Label>
         <Select
-          value={formData.parentId || ""}
+          value={formData.parentId || "none"}
           onValueChange={(value) =>
-            handleInputChange("parentId", value === "" ? undefined : value)
+            handleInputChange("parentId", value === "none" ? undefined : value)
           }
         >
           <SelectTrigger>
             <SelectValue placeholder="Pilih akun induk (kosongkan jika akun utama)" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Tidak ada akun induk</SelectItem>
+            <SelectItem value="none">Tidak ada akun induk</SelectItem>
             {availableParents.map((parentAccount) => (
               <SelectItem key={parentAccount.id} value={parentAccount.id}>
                 {parentAccount.kode} - {parentAccount.nama}

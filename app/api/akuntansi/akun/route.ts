@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/prisma";
 import { hasPermission } from "@/lib/permissions";
+import { mapDisplayCategoryToEnum } from "@/lib/accounting-mappings";
 
 // GET /api/akuntansi/akun - Get all accounts
 export async function GET(request: Request) {
@@ -24,7 +25,15 @@ export async function GET(request: Request) {
     const where: any = { isActive: true };
 
     if (tipe) where.tipe = tipe;
-    if (kategori) where.kategori = kategori;
+    if (kategori) {
+      const enumKategori = mapDisplayCategoryToEnum(kategori);
+      if (enumKategori) {
+        where.kategori = enumKategori;
+      } else {
+        // If mapping fails, return empty result or error
+        return NextResponse.json([]);
+      }
+    }
     if (search) {
       where.OR = [
         { nama: { contains: search, mode: "insensitive" } },
@@ -78,6 +87,15 @@ export async function POST(request: Request) {
       );
     }
 
+    // Map display category to enum value
+    const enumKategori = mapDisplayCategoryToEnum(kategori);
+    if (!enumKategori) {
+      return NextResponse.json(
+        { error: "Invalid account category" },
+        { status: 400 },
+      );
+    }
+
     // Check if kode already exists
     const existingAkun = await prisma.akun.findUnique({
       where: { kode },
@@ -106,7 +124,7 @@ export async function POST(request: Request) {
         kode,
         nama,
         tipe,
-        kategori,
+        kategori: enumKategori,
         parentId,
         level,
         deskripsi,
