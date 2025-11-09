@@ -6,16 +6,13 @@ import { hasPermission } from "@/lib/permissions";
 import { AuditLogger } from "@/lib/audit-logger";
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 // GET /api/akuntansi/jurnal/[id] - Get single journal entry
-export async function GET(
-  request: NextRequest,
-  { params }: RouteParams,
-) {
+export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
@@ -68,10 +65,7 @@ export async function GET(
 }
 
 // DELETE /api/akuntansi/jurnal/[id] - Delete journal entry
-export async function DELETE(
-  request: NextRequest,
-  { params }: RouteParams,
-) {
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
@@ -142,13 +136,19 @@ export async function DELETE(
     });
 
     // Log audit trail
-    await AuditLogger.logReportGeneration(
-      "journal_entry",
-      entry.periodeId || "no_period",
-      session.user.id,
-      "DELETE",
-      { journalId: id, nomorJurnal: entry.nomorJurnal },
-    );
+    await AuditLogger.logFinancialChange({
+      tableName: "jurnalEntry",
+      recordId: id,
+      action: "DELETE",
+      oldValues: {
+        nomorJurnal: entry.nomorJurnal,
+        deskripsi: entry.deskripsi,
+        tanggal: entry.tanggal.toISOString(),
+        isPosted: entry.isPosted,
+      },
+      changeReason: "Journal entry deletion",
+      changedBy: session.user.id,
+    });
 
     return NextResponse.json({ message: "Journal entry deleted successfully" });
   } catch (error) {

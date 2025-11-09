@@ -5,9 +5,11 @@ This directory contains reusable components for the Inventaris page.
 ## Components
 
 ### StatCard
+
 A reusable card component for displaying a single statistic.
 
 **Props:**
+
 - `title`: string - The title of the stat
 - `value`: string | number - The main value to display
 - `description`: string - Helper text below the value
@@ -15,6 +17,7 @@ A reusable card component for displaying a single statistic.
 - `action`: ReactNode (optional) - Optional action button or element
 
 **Example:**
+
 ```tsx
 <StatCard
   title="Total Barang"
@@ -25,23 +28,27 @@ A reusable card component for displaying a single statistic.
 ```
 
 ### StatsGrid
+
 A grid layout component that displays multiple StatCard components.
 
 **Props:**
+
 - `stats`: StatItem[] - Array of stat objects
 
 **StatItem interface:**
+
 ```typescript
 interface StatItem {
-  title: string
-  value: string | number
-  description: string
-  icon: LucideIcon
-  action?: ReactNode
+  title: string;
+  value: string | number;
+  description: string;
+  icon: LucideIcon;
+  action?: ReactNode;
 }
 ```
 
 **Example:**
+
 ```tsx
 <StatsGrid
   stats={[
@@ -64,6 +71,7 @@ interface StatItem {
 ## Usage in page.tsx
 
 The StatCard and StatsGrid components are now used in three places:
+
 1. **Barang Tab** - Statistics for inventory items
 2. **History Keluar Tab** - Statistics for outgoing transactions
 3. **History Kasir Tab** - Statistics for POS transactions
@@ -87,4 +95,3 @@ app/(dashboard)/inventaris/
     ├── StatsGrid.tsx
     └── README.md
 ```
-

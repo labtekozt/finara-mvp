@@ -135,7 +135,9 @@ export default function ReturPenjualanPage() {
         throw new Error(`Failed to fetch retur data: ${returRes.status}`);
       }
       if (!transaksiRes.ok) {
-        throw new Error(`Failed to fetch transaksi data: ${transaksiRes.status}`);
+        throw new Error(
+          `Failed to fetch transaksi data: ${transaksiRes.status}`,
+        );
       }
       if (!lokasiRes.ok) {
         throw new Error(`Failed to fetch lokasi data: ${lokasiRes.status}`);
@@ -216,10 +218,12 @@ export default function ReturPenjualanPage() {
     try {
       const payload = {
         transaksiKasirId: formData.transaksiKasirId,
-        items: [{
-          barangId: selectedItem.barang?.id || "",
-          qty: formData.qty,
-        }],
+        items: [
+          {
+            barangId: selectedItem.barang?.id || "",
+            qty: formData.qty,
+          },
+        ],
         alasan: formData.alasan,
         catatan: formData.catatan,
       };
@@ -264,8 +268,12 @@ export default function ReturPenjualanPage() {
   }
 
   function handleItemChange(itemId: string) {
-    const selectedTransaksi = transaksiKasir.find((t) => t.id === formData.transaksiKasirId);
-    const selectedItem = selectedTransaksi?.itemTransaksi.find((item) => item.id === itemId);
+    const selectedTransaksi = transaksiKasir.find(
+      (t) => t.id === formData.transaksiKasirId,
+    );
+    const selectedItem = selectedTransaksi?.itemTransaksi.find(
+      (item) => item.id === itemId,
+    );
 
     if (selectedItem) {
       setFormData({
@@ -277,18 +285,24 @@ export default function ReturPenjualanPage() {
   }
 
   const selectedTransaksi = transaksiKasir.find(
-    (t) => t.id === formData.transaksiKasirId
+    (t) => t.id === formData.transaksiKasirId,
   );
   const selectedItem = selectedTransaksi?.itemTransaksi.find(
-    (item) => item.id === formData.itemTransaksiId
+    (item) => item.id === formData.itemTransaksiId,
   );
 
   const totalRetur = returPenjualan.length;
-  const totalValue = returPenjualan.reduce((sum, item) => sum + Math.abs(item.totalNilai), 0);
+  const totalValue = returPenjualan.reduce(
+    (sum, item) => sum + Math.abs(item.totalNilai),
+    0,
+  );
 
   return (
     <div className="flex flex-col h-full">
-      <Header title="Retur Penjualan" description="Pengembalian barang dari pelanggan" />
+      <Header
+        title="Retur Penjualan"
+        description="Pengembalian barang dari pelanggan"
+      />
 
       <div className="flex-1 p-6 space-y-6">
         {/* Filters */}
@@ -354,16 +368,12 @@ export default function ReturPenjualanPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total Retur
-              </CardTitle>
+              <CardTitle className="text-sm font-medium">Total Retur</CardTitle>
               <RotateCcw className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{totalRetur}</div>
-              <p className="text-xs text-muted-foreground">
-                Kali pengembalian
-              </p>
+              <p className="text-xs text-muted-foreground">Kali pengembalian</p>
             </CardContent>
           </Card>
           <Card>
@@ -387,7 +397,10 @@ export default function ReturPenjualanPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                Rp {totalRetur > 0 ? (totalValue / totalRetur).toLocaleString("id-ID") : "0"}
+                Rp{" "}
+                {totalRetur > 0
+                  ? (totalValue / totalRetur).toLocaleString("id-ID")
+                  : "0"}
               </div>
               <p className="text-xs text-muted-foreground">
                 Per transaksi retur
@@ -401,11 +414,15 @@ export default function ReturPenjualanPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {new Set(returPenjualan.filter((item) => item.lokasi).map((item) => item.lokasi.id)).size}
+                {
+                  new Set(
+                    returPenjualan
+                      .filter((item) => item.lokasi)
+                      .map((item) => item.lokasi.id),
+                  ).size
+                }
               </div>
-              <p className="text-xs text-muted-foreground">
-                Lokasi berbeda
-              </p>
+              <p className="text-xs text-muted-foreground">Lokasi berbeda</p>
             </CardContent>
           </Card>
         </div>
@@ -488,7 +505,9 @@ export default function ReturPenjualanPage() {
                         </TableCell>
                         <TableCell>
                           <div>
-                            <div className="font-medium">{item.barang?.nama || "N/A"}</div>
+                            <div className="font-medium">
+                              {item.barang?.nama || "N/A"}
+                            </div>
                             {item.barang?.sku && (
                               <div className="text-sm text-muted-foreground">
                                 SKU: {item.barang.sku}
@@ -496,7 +515,9 @@ export default function ReturPenjualanPage() {
                             )}
                           </div>
                         </TableCell>
-                        <TableCell>{item.lokasi?.namaLokasi || "N/A"}</TableCell>
+                        <TableCell>
+                          {item.lokasi?.namaLokasi || "N/A"}
+                        </TableCell>
                         <TableCell className="text-center">
                           {Math.abs(item.qty)} {item.barang?.satuan || ""}
                         </TableCell>
@@ -546,7 +567,9 @@ export default function ReturPenjualanPage() {
                   <SelectContent>
                     {transaksiKasir.map((transaksi) => (
                       <SelectItem key={transaksi.id} value={transaksi.id}>
-                        {transaksi.nomorTransaksi} - {transaksi.pelanggan || "Umum"} (Rp {transaksi.total.toLocaleString("id-ID")})
+                        {transaksi.nomorTransaksi} -{" "}
+                        {transaksi.pelanggan || "Umum"} (Rp{" "}
+                        {transaksi.total.toLocaleString("id-ID")})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -567,7 +590,9 @@ export default function ReturPenjualanPage() {
                     <SelectContent>
                       {selectedTransaksi.itemTransaksi.map((item) => (
                         <SelectItem key={item.id} value={item.id}>
-                          {item.barang?.nama || "N/A"} - {item.qty} {item.barang?.satuan || ""} @ Rp {(item.hargaSatuan ?? 0).toLocaleString("id-ID")}
+                          {item.barang?.nama || "N/A"} - {item.qty}{" "}
+                          {item.barang?.satuan || ""} @ Rp{" "}
+                          {(item.hargaSatuan ?? 0).toLocaleString("id-ID")}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -583,16 +608,22 @@ export default function ReturPenjualanPage() {
                   <CardContent className="pt-0">
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <span className="font-medium">Barang:</span> {selectedItem.barang?.nama || "N/A"}
+                        <span className="font-medium">Barang:</span>{" "}
+                        {selectedItem.barang?.nama || "N/A"}
                       </div>
                       <div>
-                        <span className="font-medium">Qty Asli:</span> {selectedItem.qty} {selectedItem.barang?.satuan || ""}
+                        <span className="font-medium">Qty Asli:</span>{" "}
+                        {selectedItem.qty} {selectedItem.barang?.satuan || ""}
                       </div>
                       <div>
-                        <span className="font-medium">Harga Jual:</span> Rp {(selectedItem.hargaSatuan ?? 0).toLocaleString("id-ID")}
+                        <span className="font-medium">Harga Jual:</span> Rp{" "}
+                        {(selectedItem.hargaSatuan ?? 0).toLocaleString(
+                          "id-ID",
+                        )}
                       </div>
                       <div>
-                        <span className="font-medium">Total:</span> Rp {(selectedItem.total ?? 0).toLocaleString("id-ID")}
+                        <span className="font-medium">Total:</span> Rp{" "}
+                        {(selectedItem.total ?? 0).toLocaleString("id-ID")}
                       </div>
                     </div>
                   </CardContent>
@@ -615,7 +646,8 @@ export default function ReturPenjualanPage() {
                   max={selectedItem?.qty || 0}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Maksimal: {selectedItem?.qty || 0} {selectedItem?.barang?.satuan || ""}
+                  Maksimal: {selectedItem?.qty || 0}{" "}
+                  {selectedItem?.barang?.satuan || ""}
                 </p>
               </div>
 
@@ -633,8 +665,12 @@ export default function ReturPenjualanPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Barang Rusak">Barang Rusak</SelectItem>
-                    <SelectItem value="Tidak Sesuai Pesanan">Tidak Sesuai Pesanan</SelectItem>
-                    <SelectItem value="Kesalahan Pengiriman">Kesalahan Pengiriman</SelectItem>
+                    <SelectItem value="Tidak Sesuai Pesanan">
+                      Tidak Sesuai Pesanan
+                    </SelectItem>
+                    <SelectItem value="Kesalahan Pengiriman">
+                      Kesalahan Pengiriman
+                    </SelectItem>
                     <SelectItem value="Ubah Pikiran">Ubah Pikiran</SelectItem>
                     <SelectItem value="Lainnya">Lainnya</SelectItem>
                   </SelectContent>
@@ -664,12 +700,17 @@ export default function ReturPenjualanPage() {
                       <div className="flex justify-between">
                         <span>Nilai Retur:</span>
                         <span className="font-medium">
-                          Rp {(formData.qty * (selectedItem?.hargaSatuan ?? 0)).toLocaleString("id-ID")}
+                          Rp{" "}
+                          {(
+                            formData.qty * (selectedItem?.hargaSatuan ?? 0)
+                          ).toLocaleString("id-ID")}
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span>Jurnal:</span>
-                        <span className="font-medium">Penjualan Cr, Persediaan Dr</span>
+                        <span className="font-medium">
+                          Penjualan Cr, Persediaan Dr
+                        </span>
                       </div>
                     </div>
                   </CardContent>

@@ -118,8 +118,8 @@ export async function POST(request: NextRequest) {
 
     // Create accounting journal entry (critical for balance)
     await createJournalEntryForPurchase(
-      transaksi.nomorTransaksi,
-      totalAmount,
+      transaksi.id,
+      totalNilai,
       session.user.id,
     );
 

@@ -131,11 +131,35 @@ export async function GET(request: Request) {
     );
 
     // Debug logging
-    console.log('Balance Sheet Debug:');
-    console.log('Assets:', assets.map(a => ({ kode: a.akun.kode, nama: a.akun.nama, saldo: a.saldo, absSaldo: Math.abs(a.saldo) })));
-    console.log('Liabilities:', liabilities.map(l => ({ kode: l.akun.kode, nama: l.akun.nama, saldo: l.saldo, absSaldo: Math.abs(l.saldo) })));
-    console.log('Equity:', equity.map(e => ({ kode: e.akun.kode, nama: e.akun.nama, saldo: e.saldo, absSaldo: Math.abs(e.saldo) })));
-    console.log('Totals:', { totalAssets, totalLiabilities, totalEquity });
+    console.log("Balance Sheet Debug:");
+    console.log(
+      "Assets:",
+      assets.map((a) => ({
+        kode: a.akun.kode,
+        nama: a.akun.nama,
+        saldo: a.saldo,
+        absSaldo: Math.abs(a.saldo),
+      })),
+    );
+    console.log(
+      "Liabilities:",
+      liabilities.map((l) => ({
+        kode: l.akun.kode,
+        nama: l.akun.nama,
+        saldo: l.saldo,
+        absSaldo: Math.abs(l.saldo),
+      })),
+    );
+    console.log(
+      "Equity:",
+      equity.map((e) => ({
+        kode: e.akun.kode,
+        nama: e.akun.nama,
+        saldo: e.saldo,
+        absSaldo: Math.abs(e.saldo),
+      })),
+    );
+    console.log("Totals:", { totalAssets, totalLiabilities, totalEquity });
 
     // Calculate net income (revenue - expenses) for the period
     let netIncome = 0;
@@ -175,9 +199,12 @@ export async function GET(request: Request) {
               debit: true,
             },
           });
-          return details.reduce((sum, detail) => sum + detail.kredit - detail.debit, 0);
-        })
-      ).then(results => results.reduce((sum, val) => sum + val, 0));
+          return details.reduce(
+            (sum, detail) => sum + detail.kredit - detail.debit,
+            0,
+          );
+        }),
+      ).then((results) => results.reduce((sum, val) => sum + val, 0));
 
       // Calculate total expenses
       const totalExpenses = await Promise.all(
@@ -197,9 +224,12 @@ export async function GET(request: Request) {
               kredit: true,
             },
           });
-          return details.reduce((sum, detail) => sum + detail.debit - detail.kredit, 0);
-        })
-      ).then(results => results.reduce((sum, val) => sum + val, 0));
+          return details.reduce(
+            (sum, detail) => sum + detail.debit - detail.kredit,
+            0,
+          );
+        }),
+      ).then((results) => results.reduce((sum, val) => sum + val, 0));
 
       netIncome = totalRevenue - totalExpenses;
     } else {
@@ -235,9 +265,12 @@ export async function GET(request: Request) {
               debit: true,
             },
           });
-          return details.reduce((sum, detail) => sum + detail.kredit - detail.debit, 0);
-        })
-      ).then(results => results.reduce((sum, val) => sum + val, 0));
+          return details.reduce(
+            (sum, detail) => sum + detail.kredit - detail.debit,
+            0,
+          );
+        }),
+      ).then((results) => results.reduce((sum, val) => sum + val, 0));
 
       // Calculate total expenses for all periods
       const totalExpenses = await Promise.all(
@@ -254,9 +287,12 @@ export async function GET(request: Request) {
               kredit: true,
             },
           });
-          return details.reduce((sum, detail) => sum + detail.debit - detail.kredit, 0);
-        })
-      ).then(results => results.reduce((sum, val) => sum + val, 0));
+          return details.reduce(
+            (sum, detail) => sum + detail.debit - detail.kredit,
+            0,
+          );
+        }),
+      ).then((results) => results.reduce((sum, val) => sum + val, 0));
 
       netIncome = totalRevenue - totalExpenses;
     }

@@ -231,15 +231,21 @@ export default function ReturPembelianPage() {
   }
 
   const selectedTransaksi = transaksiMasuk.find(
-    (t) => t.id === formData.transaksiMasukId
+    (t) => t.id === formData.transaksiMasukId,
   );
 
   const totalRetur = returPembelian.length;
-  const totalValue = returPembelian.reduce((sum, item) => sum + Math.abs(item.totalNilai), 0);
+  const totalValue = returPembelian.reduce(
+    (sum, item) => sum + Math.abs(item.totalNilai),
+    0,
+  );
 
   return (
     <div className="flex flex-col h-full">
-      <Header title="Retur Pembelian" description="Pengembalian barang ke supplier" />
+      <Header
+        title="Retur Pembelian"
+        description="Pengembalian barang ke supplier"
+      />
 
       <div className="flex-1 p-6 space-y-6">
         {/* Filters */}
@@ -305,16 +311,12 @@ export default function ReturPembelianPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total Retur
-              </CardTitle>
+              <CardTitle className="text-sm font-medium">Total Retur</CardTitle>
               <RotateCcw className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{totalRetur}</div>
-              <p className="text-xs text-muted-foreground">
-                Kali pengembalian
-              </p>
+              <p className="text-xs text-muted-foreground">Kali pengembalian</p>
             </CardContent>
           </Card>
           <Card>
@@ -338,7 +340,10 @@ export default function ReturPembelianPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                Rp {totalRetur > 0 ? (totalValue / totalRetur).toLocaleString("id-ID") : "0"}
+                Rp{" "}
+                {totalRetur > 0
+                  ? (totalValue / totalRetur).toLocaleString("id-ID")
+                  : "0"}
               </div>
               <p className="text-xs text-muted-foreground">
                 Per transaksi retur
@@ -352,11 +357,15 @@ export default function ReturPembelianPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {new Set(returPembelian.filter((item) => item.lokasi).map((item) => item.lokasi.id)).size}
+                {
+                  new Set(
+                    returPembelian
+                      .filter((item) => item.lokasi)
+                      .map((item) => item.lokasi.id),
+                  ).size
+                }
               </div>
-              <p className="text-xs text-muted-foreground">
-                Lokasi berbeda
-              </p>
+              <p className="text-xs text-muted-foreground">Lokasi berbeda</p>
             </CardContent>
           </Card>
         </div>
@@ -439,7 +448,9 @@ export default function ReturPembelianPage() {
                         </TableCell>
                         <TableCell>
                           <div>
-                            <div className="font-medium">{item.barang?.nama || "N/A"}</div>
+                            <div className="font-medium">
+                              {item.barang?.nama || "N/A"}
+                            </div>
                             {item.barang?.sku && (
                               <div className="text-sm text-muted-foreground">
                                 SKU: {item.barang.sku}
@@ -447,7 +458,9 @@ export default function ReturPembelianPage() {
                             )}
                           </div>
                         </TableCell>
-                        <TableCell>{item.lokasi?.namaLokasi || "N/A"}</TableCell>
+                        <TableCell>
+                          {item.lokasi?.namaLokasi || "N/A"}
+                        </TableCell>
                         <TableCell className="text-center">
                           {Math.abs(item.qty)} {item.barang?.satuan || ""}
                         </TableCell>
@@ -497,7 +510,8 @@ export default function ReturPembelianPage() {
                   <SelectContent>
                     {transaksiMasuk.map((transaksi) => (
                       <SelectItem key={transaksi.id} value={transaksi.id}>
-                        {transaksi.nomorTransaksi} - {transaksi.barang.nama} ({transaksi.qty} {transaksi.barang.satuan})
+                        {transaksi.nomorTransaksi} - {transaksi.barang.nama} (
+                        {transaksi.qty} {transaksi.barang.satuan})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -507,21 +521,32 @@ export default function ReturPembelianPage() {
               {selectedTransaksi && (
                 <Card className="bg-muted/50">
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-sm">Detail Transaksi Asli</CardTitle>
+                    <CardTitle className="text-sm">
+                      Detail Transaksi Asli
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <span className="font-medium">Barang:</span> {selectedTransaksi.barang.nama}
+                        <span className="font-medium">Barang:</span>{" "}
+                        {selectedTransaksi.barang.nama}
                       </div>
                       <div>
-                        <span className="font-medium">Qty Asli:</span> {selectedTransaksi.qty} {selectedTransaksi.barang.satuan}
+                        <span className="font-medium">Qty Asli:</span>{" "}
+                        {selectedTransaksi.qty}{" "}
+                        {selectedTransaksi.barang.satuan}
                       </div>
                       <div>
-                        <span className="font-medium">Harga Beli:</span> Rp {(selectedTransaksi.hargaBeli ?? 0).toLocaleString("id-ID")}
+                        <span className="font-medium">Harga Beli:</span> Rp{" "}
+                        {(selectedTransaksi.hargaBeli ?? 0).toLocaleString(
+                          "id-ID",
+                        )}
                       </div>
                       <div>
-                        <span className="font-medium">Total:</span> Rp {(selectedTransaksi.totalNilai ?? 0).toLocaleString("id-ID")}
+                        <span className="font-medium">Total:</span> Rp{" "}
+                        {(selectedTransaksi.totalNilai ?? 0).toLocaleString(
+                          "id-ID",
+                        )}
                       </div>
                     </div>
                   </CardContent>
@@ -544,7 +569,8 @@ export default function ReturPembelianPage() {
                   max={selectedTransaksi?.qty || 0}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Maksimal: {selectedTransaksi?.qty || 0} {selectedTransaksi?.barang.satuan || ""}
+                  Maksimal: {selectedTransaksi?.qty || 0}{" "}
+                  {selectedTransaksi?.barang.satuan || ""}
                 </p>
               </div>
 
@@ -562,9 +588,13 @@ export default function ReturPembelianPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Barang Rusak">Barang Rusak</SelectItem>
-                    <SelectItem value="Barang Tidak Sesuai Pesanan">Barang Tidak Sesuai Pesanan</SelectItem>
+                    <SelectItem value="Barang Tidak Sesuai Pesanan">
+                      Barang Tidak Sesuai Pesanan
+                    </SelectItem>
                     <SelectItem value="Kedaluwarsa">Kedaluwarsa</SelectItem>
-                    <SelectItem value="Kesalahan Pengiriman">Kesalahan Pengiriman</SelectItem>
+                    <SelectItem value="Kesalahan Pengiriman">
+                      Kesalahan Pengiriman
+                    </SelectItem>
                     <SelectItem value="Lainnya">Lainnya</SelectItem>
                   </SelectContent>
                 </Select>
@@ -593,12 +623,17 @@ export default function ReturPembelianPage() {
                       <div className="flex justify-between">
                         <span>Nilai Retur:</span>
                         <span className="font-medium">
-                          Rp {(formData.qty * selectedTransaksi.hargaBeli).toLocaleString("id-ID")}
+                          Rp{" "}
+                          {(
+                            formData.qty * selectedTransaksi.hargaBeli
+                          ).toLocaleString("id-ID")}
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span>Jurnal:</span>
-                        <span className="font-medium">Hutang Dagang Dr, Persediaan Cr</span>
+                        <span className="font-medium">
+                          Hutang Dagang Dr, Persediaan Cr
+                        </span>
                       </div>
                     </div>
                   </CardContent>

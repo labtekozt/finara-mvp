@@ -129,9 +129,13 @@ export async function POST(request: NextRequest) {
           session.user.id,
         );
         if (journalEntry) {
-          console.log(`Journal entry created for outgoing transaction: ${journalEntry.nomorJurnal}`);
+          console.log(
+            `Journal entry created for outgoing transaction: ${journalEntry.nomorJurnal}`,
+          );
         } else {
-          console.log(`No journal entry needed for warehouse transfer: ${newTransaksi.nomorTransaksi}`);
+          console.log(
+            `No journal entry needed for warehouse transfer: ${newTransaksi.nomorTransaksi}`,
+          );
         }
       } catch (journalError) {
         console.error(

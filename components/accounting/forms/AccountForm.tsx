@@ -14,7 +14,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Akun, AkunFormData, AccountType } from "@/types/accounting";
 import { useAccounts } from "@/hooks/accounting";
-import { getDisplayCategories, mapEnumToDisplayCategory } from "@/lib/accounting-mappings";
+import {
+  getDisplayCategories,
+  mapEnumToDisplayCategory,
+} from "@/lib/accounting-mappings";
 
 const ACCOUNT_TYPES: { value: AccountType; label: string }[] = [
   { value: "ASSET", label: "Aset" },
@@ -62,7 +65,8 @@ export function AccountForm({
         kode: account.kode,
         nama: account.nama,
         tipe: account.tipe,
-        kategori: mapEnumToDisplayCategory(account.kategori) || account.kategori,
+        kategori:
+          mapEnumToDisplayCategory(account.kategori) || account.kategori,
         parentId: account.parentId || undefined,
         deskripsi: account.deskripsi || "",
       });
@@ -143,7 +147,9 @@ export function AccountForm({
               <SelectValue placeholder="Pilih kategori" />
             </SelectTrigger>
             <SelectContent>
-              {ACCOUNT_CATEGORIES.filter(category => category && category.trim() !== "").map((category) => (
+              {ACCOUNT_CATEGORIES.filter(
+                (category) => category && category.trim() !== "",
+              ).map((category) => (
                 <SelectItem key={category} value={category}>
                   {category}
                 </SelectItem>

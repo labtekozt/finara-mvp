@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
           totalNilai: adjustmentAmount,
           tujuan: "Stock Opname",
           lokasiId: validatedData.lokasiId,
-          keterangan: `OPNAME - ${validatedData.keterangan} (Sistem: ${validatedData.stokSistem}, Fisik: ${validatedData.stokFisik}, Selisih: ${adjustmentQty > 0 ? '+' : ''}${adjustmentQty})`,
+          keterangan: `OPNAME - ${validatedData.keterangan} (Sistem: ${validatedData.stokSistem}, Fisik: ${validatedData.stokFisik}, Selisih: ${adjustmentQty > 0 ? "+" : ""}${adjustmentQty})`,
         },
         include: {
           barang: true,
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
           action: "CREATE",
           entity: "StockOpname",
           entityId: adjustmentTransaksi.id,
-          description: `Stock opname ${adjustmentTransaksi.nomorTransaksi} - ${adjustmentTransaksi.barang.nama}: ${validatedData.stokSistem} → ${validatedData.stokFisik} (${adjustmentQty > 0 ? '+' : ''}${adjustmentQty})`,
+          description: `Stock opname ${adjustmentTransaksi.nomorTransaksi} - ${adjustmentTransaksi.barang.nama}: ${validatedData.stokSistem} → ${validatedData.stokFisik} (${adjustmentQty > 0 ? "+" : ""}${adjustmentQty})`,
         },
       });
 
@@ -146,8 +146,8 @@ export async function POST(request: NextRequest) {
     });
 
     // Create accounting journal entry (critical for balance)
-    await createJournalEntryForInventoryAdjustment(
-      opname.nomorTransaksi,
+    await createJournalEntryForStockAdjustment(
+      adjustment.nomorTransaksi,
       adjustmentAmount,
       isIncrease,
       session.user.id,

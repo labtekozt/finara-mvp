@@ -48,7 +48,10 @@ import {
 } from "lucide-react";
 import { useAccounts } from "@/hooks/accounting";
 import { Akun, AkunFormData, AccountType } from "@/types/accounting";
-import { getDisplayCategories, mapEnumToDisplayCategory } from "@/lib/accounting-mappings";
+import {
+  getDisplayCategories,
+  mapEnumToDisplayCategory,
+} from "@/lib/accounting-mappings";
 import { AccountForm } from "./forms/AccountForm";
 
 const ACCOUNT_TYPES: { value: AccountType; label: string }[] = [
@@ -236,7 +239,9 @@ export function AccountsManagement({ className }: AccountsManagementProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ALL">Semua Kategori</SelectItem>
-                  {ACCOUNT_CATEGORIES_LOCAL.filter(category => category && category.trim() !== "").map((category) => (
+                  {ACCOUNT_CATEGORIES_LOCAL.filter(
+                    (category) => category && category.trim() !== "",
+                  ).map((category) => (
                     <SelectItem key={category} value={category}>
                       {category}
                     </SelectItem>
@@ -322,7 +327,10 @@ export function AccountsManagement({ className }: AccountsManagementProps) {
                         {getAccountTypeLabel(account.tipe)}
                       </Badge>
                     </TableCell>
-                    <TableCell>{mapEnumToDisplayCategory(account.kategori) || account.kategori}</TableCell>
+                    <TableCell>
+                      {mapEnumToDisplayCategory(account.kategori) ||
+                        account.kategori}
+                    </TableCell>
                     <TableCell>
                       <Badge
                         variant={account.isActive ? "default" : "secondary"}

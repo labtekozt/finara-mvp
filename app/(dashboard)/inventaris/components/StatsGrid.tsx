@@ -1,17 +1,17 @@
-import { LucideIcon } from "lucide-react"
-import { ReactNode } from "react"
-import { StatCard } from "./StatCard"
+import { LucideIcon } from "lucide-react";
+import { ReactNode } from "react";
+import { StatCard } from "./StatCard";
 
 export interface StatItem {
-  title: string
-  value: string | number
-  description: string
-  icon: LucideIcon
-  action?: ReactNode
+  title: string;
+  value: string | number;
+  description: string;
+  icon: LucideIcon;
+  action?: ReactNode;
 }
 
 interface StatsGridProps {
-  stats: StatItem[]
+  stats: StatItem[];
 }
 
 export function StatsGrid({ stats }: StatsGridProps) {
@@ -28,6 +28,5 @@ export function StatsGrid({ stats }: StatsGridProps) {
         />
       ))}
     </div>
-  )
+  );
 }
-

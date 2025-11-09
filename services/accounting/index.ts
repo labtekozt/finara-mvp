@@ -251,9 +251,7 @@ export class AccountingService {
     if (params?.kategori) searchParams.set("kategori", params.kategori);
     if (params?.search) searchParams.set("search", params.search);
 
-    const response = await fetch(
-      `/api/pengeluaran?${searchParams}`,
-    );
+    const response = await fetch(`/api/pengeluaran?${searchParams}`);
     if (!response.ok) {
       throw new Error("Failed to fetch expenses");
     }

@@ -8,10 +8,14 @@ import { z } from "zod";
 
 const returPenjualanSchema = z.object({
   transaksiKasirId: z.string().min(1, "Transaksi penjualan harus dipilih"),
-  items: z.array(z.object({
-    barangId: z.string(),
-    qty: z.number().int().positive(),
-  })).min(1, "Minimal 1 item harus diretur"),
+  items: z
+    .array(
+      z.object({
+        barangId: z.string(),
+        qty: z.number().int().positive(),
+      }),
+    )
+    .min(1, "Minimal 1 item harus diretur"),
   alasan: z.string().min(1, "Alasan retur harus diisi"),
   catatan: z.string().optional(),
 });
@@ -73,18 +77,31 @@ export async function GET(request: NextRequest) {
       id: transaksi.id,
       nomorTransaksi: transaksi.nomorTransaksi,
       tanggal: transaksi.tanggal,
-      barang: transaksi.itemTransaksi.length > 0 ? {
-        id: transaksi.itemTransaksi[0].barang.id,
-        nama: transaksi.itemTransaksi[0].barang.nama,
-        sku: transaksi.itemTransaksi[0].barang.sku,
-        satuan: transaksi.itemTransaksi[0].barang.satuan,
-      } : null,
-      lokasi: transaksi.itemTransaksi.length > 0 && transaksi.itemTransaksi[0].barang.lokasi ? {
-        id: transaksi.itemTransaksi[0].barang.lokasi.id,
-        namaLokasi: transaksi.itemTransaksi[0].barang.lokasi.namaLokasi,
-      } : null,
-      qty: transaksi.itemTransaksi.length > 0 ? Math.abs(transaksi.itemTransaksi[0].qty) : 0,
-      hargaJual: transaksi.itemTransaksi.length > 0 ? transaksi.itemTransaksi[0].hargaSatuan : 0,
+      barang:
+        transaksi.itemTransaksi.length > 0
+          ? {
+              id: transaksi.itemTransaksi[0].barang.id,
+              nama: transaksi.itemTransaksi[0].barang.nama,
+              sku: transaksi.itemTransaksi[0].barang.sku,
+              satuan: transaksi.itemTransaksi[0].barang.satuan,
+            }
+          : null,
+      lokasi:
+        transaksi.itemTransaksi.length > 0 &&
+        transaksi.itemTransaksi[0].barang.lokasi
+          ? {
+              id: transaksi.itemTransaksi[0].barang.lokasi.id,
+              namaLokasi: transaksi.itemTransaksi[0].barang.lokasi.namaLokasi,
+            }
+          : null,
+      qty:
+        transaksi.itemTransaksi.length > 0
+          ? Math.abs(transaksi.itemTransaksi[0].qty)
+          : 0,
+      hargaJual:
+        transaksi.itemTransaksi.length > 0
+          ? transaksi.itemTransaksi[0].hargaSatuan
+          : 0,
       totalNilai: Math.abs(transaksi.total),
       pelanggan: transaksi.catatan?.replace("RETUR: ", "") || "Umum",
       keterangan: transaksi.catatan || "",
@@ -136,12 +153,14 @@ export async function POST(request: NextRequest) {
 
     for (const returnItem of validatedData.items) {
       const originalItem = originalTransaksi.itemTransaksi.find(
-        item => item.barangId === returnItem.barangId
+        (item) => item.barangId === returnItem.barangId,
       );
 
       if (!originalItem) {
         return NextResponse.json(
-          { error: `Barang ${returnItem.barangId} tidak ditemukan dalam transaksi asli` },
+          {
+            error: `Barang ${returnItem.barangId} tidak ditemukan dalam transaksi asli`,
+          },
           { status: 400 },
         );
       }
@@ -173,14 +192,14 @@ export async function POST(request: NextRequest) {
           jumlahBayar: 0,
           kembalian: 0,
           kasirId: session.user.id,
-          catatan: `RETUR - ${validatedData.alasan}${validatedData.catatan ? ` - ${validatedData.catatan}` : ''}`,
+          catatan: `RETUR - ${validatedData.alasan}${validatedData.catatan ? ` - ${validatedData.catatan}` : ""}`,
         },
       });
 
       // Create return items and update stock
       for (const returnItem of validatedData.items) {
         const originalItem = originalTransaksi.itemTransaksi.find(
-          item => item.barangId === returnItem.barangId
+          (item) => item.barangId === returnItem.barangId,
         );
 
         await tx.itemTransaksi.create({
@@ -220,7 +239,7 @@ export async function POST(request: NextRequest) {
       return returnTransaksi;
     });
 
-        // Create accounting journal entry (critical for balance)
+    // Create accounting journal entry (critical for balance)
     await createJournalEntryForSalesReturn(
       retur.nomorTransaksi,
       totalRevenue,

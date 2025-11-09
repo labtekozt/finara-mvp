@@ -97,11 +97,12 @@ export async function POST(request: NextRequest) {
     const returnAmount = validatedData.qty * originalTransaksi.hargaBeli;
 
     // Determine if original purchase was cash or credit based on source
-    const isCashPurchase = originalTransaksi.sumber.toLowerCase().includes('tunai') ||
-                          originalTransaksi.sumber.toLowerCase().includes('cash') ||
-                          originalTransaksi.sumber.toLowerCase().includes('bayar');
+    const isCashPurchase =
+      originalTransaksi.sumber.toLowerCase().includes("tunai") ||
+      originalTransaksi.sumber.toLowerCase().includes("cash") ||
+      originalTransaksi.sumber.toLowerCase().includes("bayar");
 
-    console.log('Retur Pembelian Debug:', {
+    console.log("Retur Pembelian Debug:", {
       sumber: originalTransaksi.sumber,
       isCashPurchase,
       returnAmount,
@@ -119,7 +120,7 @@ export async function POST(request: NextRequest) {
           totalNilai: -returnAmount, // Negative
           sumber: `Retur: ${originalTransaksi.sumber}`,
           lokasiId: originalTransaksi.lokasiId,
-          keterangan: `RETUR - ${validatedData.alasan}${validatedData.catatan ? ` - ${validatedData.catatan}` : ''}`,
+          keterangan: `RETUR - ${validatedData.alasan}${validatedData.catatan ? ` - ${validatedData.catatan}` : ""}`,
         },
         include: {
           barang: true,

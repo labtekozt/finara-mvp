@@ -87,7 +87,8 @@ export async function PUT(
     const stockDifference = validatedData.stok - currentBarang.stok;
     if (stockDifference !== 0) {
       try {
-        const adjustmentAmount = Math.abs(stockDifference) * currentBarang.hargaBeli;
+        const adjustmentAmount =
+          Math.abs(stockDifference) * currentBarang.hargaBeli;
         const isIncrease = stockDifference > 0;
 
         await createJournalEntryForStockAdjustment(
@@ -97,9 +98,14 @@ export async function PUT(
           session.user.id,
         );
 
-        console.log(`Stock adjustment journal created for ${barang.nama}: ${stockDifference > 0 ? '+' : ''}${stockDifference} units`);
+        console.log(
+          `Stock adjustment journal created for ${barang.nama}: ${stockDifference > 0 ? "+" : ""}${stockDifference} units`,
+        );
       } catch (journalError) {
-        console.error("Failed to create stock adjustment journal:", journalError);
+        console.error(
+          "Failed to create stock adjustment journal:",
+          journalError,
+        );
         // Don't fail the update if journal creation fails
       }
     }
@@ -112,7 +118,7 @@ export async function PUT(
         action: "UPDATE",
         entity: "Barang",
         entityId: barang.id,
-        description: `Mengupdate barang: ${barang.nama}${stockDifference !== 0 ? ` (stok: ${currentBarang.stok} → ${validatedData.stok})` : ''}`,
+        description: `Mengupdate barang: ${barang.nama}${stockDifference !== 0 ? ` (stok: ${currentBarang.stok} → ${validatedData.stok})` : ""}`,
       },
     });
 

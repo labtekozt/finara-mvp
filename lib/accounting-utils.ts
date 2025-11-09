@@ -596,7 +596,9 @@ export async function createJournalEntryForOutgoingTransaction(
   const inventoryAccount = await getAccountByCode(ACCOUNT_CODES.INVENTORY);
   const cashAccount = await getAccountByCode(ACCOUNT_CODES.CASH);
   const cogsAccount = await getAccountByCode(ACCOUNT_CODES.COST_OF_GOODS_SOLD);
-  const otherExpenseAccount = await getAccountByCode(ACCOUNT_CODES.OTHER_EXPENSE);
+  const otherExpenseAccount = await getAccountByCode(
+    ACCOUNT_CODES.OTHER_EXPENSE,
+  );
   const otherRevenueAccount = await getAccountByCode("4002"); // Other Revenue
 
   if (!inventoryAccount) {
@@ -607,12 +609,20 @@ export async function createJournalEntryForOutgoingTransaction(
   const purpose = tujuan.toLowerCase();
 
   // Transfer between warehouses - no journal entry needed
-  if (purpose.includes("transfer") || purpose.includes("pindah") || purpose.includes("gudang")) {
+  if (
+    purpose.includes("transfer") ||
+    purpose.includes("pindah") ||
+    purpose.includes("gudang")
+  ) {
     return null; // No accounting entry for warehouse transfers
   }
 
   // Sales (non-cashier) - treat as sale
-  if (purpose.includes("jual") || purpose.includes("penjualan") || purpose.includes("customer")) {
+  if (
+    purpose.includes("jual") ||
+    purpose.includes("penjualan") ||
+    purpose.includes("customer")
+  ) {
     if (!cashAccount || !cogsAccount) {
       throw new Error("Akun kas atau HPP tidak ditemukan");
     }
@@ -727,8 +737,12 @@ export async function createJournalEntryForPurchaseReturn(
     throw new Error("Tidak ada periode akuntansi aktif");
   }
 
-  const salesRevenueAccount = await getAccountByCode(ACCOUNT_CODES.SALES_REVENUE);
-  const accountsPayableAccount = await getAccountByCode(ACCOUNT_CODES.ACCOUNTS_PAYABLE);
+  const salesRevenueAccount = await getAccountByCode(
+    ACCOUNT_CODES.SALES_REVENUE,
+  );
+  const accountsPayableAccount = await getAccountByCode(
+    ACCOUNT_CODES.ACCOUNTS_PAYABLE,
+  );
   const cashAccount = await getAccountByCode(ACCOUNT_CODES.CASH);
 
   if (!salesRevenueAccount) {
@@ -745,7 +759,7 @@ export async function createJournalEntryForPurchaseReturn(
 
   const nomorJurnal = generateTransactionNumber("JR");
 
-  console.log('Creating Purchase Return Journal (Revenue Correction):', {
+  console.log("Creating Purchase Return Journal (Revenue Correction):", {
     returnId,
     totalAmount,
     isCashPurchase,
@@ -756,42 +770,46 @@ export async function createJournalEntryForPurchaseReturn(
     data: {
       nomorJurnal,
       tanggal: new Date(),
-      deskripsi: `Retur Pembelian (Koreksi Pendapatan) ${isCashPurchase ? 'Tunai' : 'Kredit'} - ${returnId}`,
+      deskripsi: `Retur Pembelian (Koreksi Pendapatan) ${isCashPurchase ? "Tunai" : "Kredit"} - ${returnId}`,
       referensi: returnId,
       tipeReferensi: "PURCHASE_RETURN",
       periodeId: periode.id,
       userId,
       isPosted: true,
       details: {
-        create: isCashPurchase ? [
-          // Jika pembelian tunai: Debit Sales Revenue, Credit Cash (mengurangi pendapatan dan kas)
-          {
-            akunId: salesRevenueAccount.id,
-            debit: totalAmount,
-            kredit: 0,
-            deskripsi: "Koreksi pendapatan dari pembelian yang salah dicatat",
-          },
-          {
-            akunId: cashAccount!.id,
-            debit: 0,
-            kredit: totalAmount,
-            deskripsi: "Pengembalian kas dari supplier",
-          },
-        ] : [
-          // Jika pembelian kredit: Debit Sales Revenue, Credit Accounts Payable (mengurangi pendapatan dan hutang)
-          {
-            akunId: salesRevenueAccount.id,
-            debit: totalAmount,
-            kredit: 0,
-            deskripsi: "Koreksi pendapatan dari pembelian yang salah dicatat",
-          },
-          {
-            akunId: accountsPayableAccount!.id,
-            debit: 0,
-            kredit: totalAmount,
-            deskripsi: "Pengurangan hutang supplier",
-          },
-        ],
+        create: isCashPurchase
+          ? [
+              // Jika pembelian tunai: Debit Sales Revenue, Credit Cash (mengurangi pendapatan dan kas)
+              {
+                akunId: salesRevenueAccount.id,
+                debit: totalAmount,
+                kredit: 0,
+                deskripsi:
+                  "Koreksi pendapatan dari pembelian yang salah dicatat",
+              },
+              {
+                akunId: cashAccount!.id,
+                debit: 0,
+                kredit: totalAmount,
+                deskripsi: "Pengembalian kas dari supplier",
+              },
+            ]
+          : [
+              // Jika pembelian kredit: Debit Sales Revenue, Credit Accounts Payable (mengurangi pendapatan dan hutang)
+              {
+                akunId: salesRevenueAccount.id,
+                debit: totalAmount,
+                kredit: 0,
+                deskripsi:
+                  "Koreksi pendapatan dari pembelian yang salah dicatat",
+              },
+              {
+                akunId: accountsPayableAccount!.id,
+                debit: 0,
+                kredit: totalAmount,
+                deskripsi: "Pengurangan hutang supplier",
+              },
+            ],
       },
     },
     include: {
@@ -820,8 +838,12 @@ export async function createJournalEntryForSalesReturn(
   }
 
   const cashAccount = await getAccountByCode(ACCOUNT_CODES.CASH);
-  const accountsReceivableAccount = await getAccountByCode(ACCOUNT_CODES.ACCOUNTS_RECEIVABLE);
-  const salesRevenueAccount = await getAccountByCode(ACCOUNT_CODES.SALES_REVENUE);
+  const accountsReceivableAccount = await getAccountByCode(
+    ACCOUNT_CODES.ACCOUNTS_RECEIVABLE,
+  );
+  const salesRevenueAccount = await getAccountByCode(
+    ACCOUNT_CODES.SALES_REVENUE,
+  );
   const inventoryAccount = await getAccountByCode(ACCOUNT_CODES.INVENTORY);
   const cogsAccount = await getAccountByCode(ACCOUNT_CODES.COST_OF_GOODS_SOLD);
 
@@ -830,14 +852,15 @@ export async function createJournalEntryForSalesReturn(
   }
 
   // Determine which account to use for refund based on payment method
-  const isCashSale = paymentMethod.toLowerCase().includes('tunai') ||
-                    paymentMethod.toLowerCase().includes('cash') ||
-                    paymentMethod === 'tunai';
+  const isCashSale =
+    paymentMethod.toLowerCase().includes("tunai") ||
+    paymentMethod.toLowerCase().includes("cash") ||
+    paymentMethod === "tunai";
 
   const refundAccount = isCashSale ? cashAccount : accountsReceivableAccount;
 
   if (!refundAccount) {
-    throw new Error(`Akun ${isCashSale ? 'kas' : 'piutang'} tidak ditemukan`);
+    throw new Error(`Akun ${isCashSale ? "kas" : "piutang"} tidak ditemukan`);
   }
 
   const nomorJurnal = generateTransactionNumber("JR");
@@ -846,7 +869,7 @@ export async function createJournalEntryForSalesReturn(
     data: {
       nomorJurnal,
       tanggal: new Date(),
-      deskripsi: `Retur Penjualan ${isCashSale ? 'Tunai' : 'Kredit'} - ${returnId}`,
+      deskripsi: `Retur Penjualan ${isCashSale ? "Tunai" : "Kredit"} - ${returnId}`,
       referensi: returnId,
       tipeReferensi: "SALES_RETURN",
       periodeId: periode.id,
@@ -873,7 +896,7 @@ export async function createJournalEntryForSalesReturn(
             akunId: refundAccount.id,
             debit: 0,
             kredit: totalRevenue,
-            deskripsi: `Pengembalian ${isCashSale ? 'uang tunai' : 'piutang'} ke pelanggan`,
+            deskripsi: `Pengembalian ${isCashSale ? "uang tunai" : "piutang"} ke pelanggan`,
           },
           // Credit COGS (Expense decreases - reverse COGS)
           {
@@ -910,11 +933,15 @@ export async function createJournalEntryForStockAdjustment(
   }
 
   const inventoryAccount = await getAccountByCode(ACCOUNT_CODES.INVENTORY);
-  const otherExpenseAccount = await getAccountByCode(ACCOUNT_CODES.OTHER_EXPENSE);
+  const otherExpenseAccount = await getAccountByCode(
+    ACCOUNT_CODES.OTHER_EXPENSE,
+  );
   const otherRevenueAccount = await getAccountByCode("4002"); // Other Revenue
 
   if (!inventoryAccount || !otherExpenseAccount || !otherRevenueAccount) {
-    throw new Error("Akun persediaan, beban lain, atau pendapatan lain tidak ditemukan");
+    throw new Error(
+      "Akun persediaan, beban lain, atau pendapatan lain tidak ditemukan",
+    );
   }
 
   const nomorJurnal = generateTransactionNumber("JR");

@@ -3,12 +3,15 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/prisma";
 import { hasPermission } from "@/lib/permissions";
-import { createJournalEntryForExpense, reverseJournalEntry } from "@/lib/accounting-utils";
+import {
+  createJournalEntryForExpense,
+  reverseJournalEntry,
+} from "@/lib/accounting-utils";
 
 // PUT /api/pengeluaran/[id] - Update expense
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -31,6 +34,8 @@ export async function PUT(
       catatan,
     } = body;
 
+    const { id } = await params;
+
     // Validate required fields
     if (!tanggal || !kategori || !deskripsi || !jumlah || !penerima) {
       return NextResponse.json(
@@ -42,7 +47,7 @@ export async function PUT(
     const result = await prisma.$transaction(async (tx) => {
       // Get the current expense
       const currentExpense = await tx.pengeluaran.findUnique({
-        where: { id: params.id },
+        where: { id },
         include: {
           user: {
             select: {
@@ -60,7 +65,7 @@ export async function PUT(
 
       // Update the expense
       const updatedExpense = await tx.pengeluaran.update({
-        where: { id: params.id },
+        where: { id },
         data: {
           tanggal: new Date(tanggal),
           kategori,
@@ -97,7 +102,11 @@ export async function PUT(
 
         // Create new journal entry
         try {
-          await createJournalEntryForExpense(tx, updatedExpense, session.user.id);
+          await createJournalEntryForExpense(
+            tx,
+            updatedExpense,
+            session.user.id,
+          );
         } catch (journalError) {
           console.error(
             "Error creating journal entry for updated expense:",
@@ -135,7 +144,7 @@ export async function PUT(
 // DELETE /api/pengeluaran/[id] - Delete expense
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -147,10 +156,12 @@ export async function DELETE(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    const { id } = await params;
+
     const result = await prisma.$transaction(async (tx) => {
       // Get the expense before deleting
       const expense = await tx.pengeluaran.findUnique({
-        where: { id: params.id },
+        where: { id },
       });
 
       if (!expense) {
@@ -171,7 +182,7 @@ export async function DELETE(
 
       // Delete the expense
       await tx.pengeluaran.delete({
-        where: { id: params.id },
+        where: { id },
       });
 
       // Log activity
@@ -181,7 +192,7 @@ export async function DELETE(
           userName: session.user.name || session.user.username,
           action: "DELETE",
           entity: "PENGELUARAN",
-          entityId: params.id,
+          entityId: id,
           description: `Deleted expense: ${expense.deskripsi} - Rp ${expense.jumlah.toLocaleString("id-ID")}`,
         },
       });

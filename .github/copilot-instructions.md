@@ -1,10 +1,6 @@
 ## Finara — AI Assistant Instructions## Finara — AI Assistant Instructions## Finara — Copilot / AI assistant instructions
 
-
-
 Retail/warehouse management system with integrated accounting. Next.js 15 + React 19 + Prisma + PostgreSQL.
-
-
 
 ### Critical RulesRetail/warehouse management system with integrated accounting. Next.js 15 + React 19 + Prisma + PostgreSQL.This file gives focused, repository-specific guidance so an AI coding agent can be productive quickly in this retail/gudang management system with integrated accounting capabilities.
 
@@ -15,8 +11,6 @@ Retail/warehouse management system with integrated accounting. Next.js 15 + Reac
 - **Double-Entry**: All accounting transactions must balance (debits = credits)
 
 - **Audit Trail**: Log ALL mutations to ActivityLog with user context### Critical Rules### Rule key language
-
-
 
 ### Architecture Overview- **UI Language**: ALL user-facing text, labels, messages in **Indonesian** (Bahasa Indonesia)
 
@@ -88,8 +82,6 @@ Retail/warehouse management system with integrated accounting. Next.js 15 + Reac
 
 const total = 14.99 + 15.01; // May be 30.009999999999998- **RBAC**: Check `hasPermission` in UI, enforce server-side via `lib/permissions.ts`- leverage existing libraries and utilities in the codebase
 
-
-
 // CORRECT: Integer arithmetic- **Accounting Service Layer**: `services/accounting/` → `hooks/accounting/` → components- use PRINCIPLE OF LEAST SURPRISE: avoid introducing unexpected behaviors or side effects
 
 const price1 = 1499; // 14.99 in cents
@@ -98,7 +90,7 @@ const price2 = 1501; // 15.01 in cents- **Hierarchical UI**: Expandable tables w
 
 const total = price1 + price2; // 3000 cents = Rp 30.00
 
-```- **PDF Export**: jsPDF + jspdf-autotable, Indonesian locale, page breaks at y > 250- follow Indonesian localization conventions (date, currency, number formats)
+````- **PDF Export**: jsPDF + jspdf-autotable, Indonesian locale, page breaks at y > 250- follow Indonesian localization conventions (date, currency, number formats)
 
 
 
@@ -124,13 +116,13 @@ const total = price1 + price2; // 3000 cents = Rp 30.00
 
 }- always check lint and check types
 
-```
+````
 
 // CORRECT: Integer arithmetic- use is not accounting so always follow simple accounting principles for all accounting features for easy understanding by non-accounting users
 
 **Inventory Purchase Example:**
 
-```typescriptconst price1 = 1499; // 14.99 in cents
+````typescriptconst price1 = 1499; // 14.99 in cents
 
 // 1. Incoming goods transaction + increases inventory
 
@@ -144,7 +136,7 @@ const total = price1 + price2; // 3000 cents = Rp 30.00
 
 }```- **CRITICAL**: NEVER use floating point arithmetic for financial calculations (0.1 + 0.2 !== 0.3)
 
-```
+````
 
 - **CRITICAL**: ALWAYS use integer cents/minor units for money calculations (multiply by 100, calculate, divide by 100)
 
@@ -159,8 +151,6 @@ const total = price1 + price2; // 3000 cents = Rp 30.00
 - **Test**: `npm run test` (Jest with coverage)
 
 - **Docker DB**: `docker start finara-postgres`- **DB**: `npm run db:generate`, `npm run db:push`, `npm run db:seed`- **CRITICAL**: Validate all calculations with checksums or redundant calculations
-
-
 
 ### Essential Files- **Build**: `npm run build` (includes format + type-check)- **CRITICAL**: Store all monetary values as integers in database (cents/pence/sen)
 
@@ -184,8 +174,6 @@ const total = price1 + price2; // 3000 cents = Rp 30.00
 
 - `lib/accounting-utils.ts` — Journal entry creation functions- `lib/auth-options.ts` + `middleware.ts` — Auth setup- **CRITICAL**: Implement calculation result validation (debit = credit for double-entry bookkeeping)
 
-
-
 ### Accounting Integration Points- `lib/permissions.ts` — RBAC rules
 
 - **POS Transactions**: `app/api/transaksi-kasir/` → `createJournalEntryForCompleteSale()`
@@ -202,23 +190,21 @@ const total = price1 + price2; // 3000 cents = Rp 30.00
 
 - **Financial Reports**: `app/api/akuntansi/laporan/` → Balance sheet, income statement
 
-- `hooks/accounting/` — Data fetching hooks  - **Single Responsibility**: Each function/class has one reason to change
+- `hooks/accounting/` — Data fetching hooks - **Single Responsibility**: Each function/class has one reason to change
 
 ### Common Workflows
 
-- **New Accounting Feature**: Types → API route → service method → hook → component- `components/accounting/JournalRecapitulation.tsx` — Hierarchical expandable views  - **Open/Closed**: Open for extension, closed for modification
+- **New Accounting Feature**: Types → API route → service method → hook → component- `components/accounting/JournalRecapitulation.tsx` — Hierarchical expandable views - **Open/Closed**: Open for extension, closed for modification
 
 - **CRUD Module**: Client page under `app/(dashboard)/`, API under `app/api/`, follow existing patterns
 
-- **Filter Select**: Use `value="ALL"` for "show all", check `!== "ALL"` before API params- `lib/financial-validator.ts` — Calculation validation  - **Liskov Substitution**: Subtypes must be substitutable for their base types
+- **Filter Select**: Use `value="ALL"` for "show all", check `!== "ALL"` before API params- `lib/financial-validator.ts` — Calculation validation - **Liskov Substitution**: Subtypes must be substitutable for their base types
 
 - **Table Sorting**: `useMemo` + `sort()`, state for `sortColumn`/`sortDirection`, clickable headers with icons
 
-- **Statistics Cards**: 4-column grid above tables, `toLocaleString("id-ID")` for currency- `lib/audit-logger.ts` — Audit trail logging  - **Interface Segregation**: Clients shouldn't depend on methods they don't use
+- **Statistics Cards**: 4-column grid above tables, `toLocaleString("id-ID")` for currency- `lib/audit-logger.ts` — Audit trail logging - **Interface Segregation**: Clients shouldn't depend on methods they don't use
 
-
-
-### Project Conventions  - **Dependency Inversion**: Depend on abstractions, not concretions
+### Project Conventions - **Dependency Inversion**: Depend on abstractions, not concretions
 
 - **Routes**: Protected under `app/(dashboard)`, APIs under `app/api/<kebab-case>`
 
@@ -237,6 +223,7 @@ const total = price1 + price2; // 3000 cents = Rp 30.00
 - **Filter Select**: Use `value="ALL"` for "show all", check `!== "ALL"` before API params- **Fail Fast**: Detect errors as early as possible, fail loudly with clear error messages
 
 Ready to assist! Focus on Indonesian UI text, precise financial math, and following established patterns.
+
 - **Table Sorting**: `useMemo` + `sort()`, state for `sortColumn`/`sortDirection`, clickable headers with icons- **Composition over Inheritance**: Favor composition for code reuse
 
 - **Statistics Cards**: 4-column grid above tables, `toLocaleString("id-ID")` for currency- **Explicit over Implicit**: Make dependencies and intentions clear
@@ -262,6 +249,7 @@ Ready to assist! Focus on Indonesian UI text, precise financial math, and follow
 - **Activity logging**: All mutations log to `ActivityLog` model for audit trails.
 
 Ready to assist! Focus on Indonesian UI text, precise financial math, and following established patterns.- **Multi-location**: Barang linked to Lokasi for warehouse management.
+
 - **Accounting module**: Full double-entry bookkeeping with chart of accounts, journal entries, accounting periods, and financial reporting.
 
 ### 2. Where to change authentication/authorization

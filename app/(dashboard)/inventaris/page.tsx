@@ -1,10 +1,16 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useMemo } from "react"
-import { Header } from "@/components/header"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useEffect, useMemo } from "react";
+import { Header } from "@/components/header";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -12,7 +18,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -20,115 +26,132 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Plus, Minus, Search, Edit, Trash2, Package, AlertTriangle, ArrowUpDown, ArrowUp, ArrowDown, TrendingDown, History } from "lucide-react"
-import { toast } from "sonner"
-import { format } from "date-fns"
-import { StatsGrid, StatItem } from "./components/StatsGrid"
-import { Button as StatsButton } from "@/components/ui/button"
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Plus,
+  Minus,
+  Search,
+  Edit,
+  Trash2,
+  Package,
+  AlertTriangle,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  TrendingDown,
+  History,
+} from "lucide-react";
+import { toast } from "sonner";
+import { format } from "date-fns";
+import { StatsGrid, StatItem } from "./components/StatsGrid";
+import { Button as StatsButton } from "@/components/ui/button";
 
 interface Barang {
-  id: string
-  nama: string
-  sku?: string
-  kategori: string
-  stok: number
-  stokMinimum: number
-  hargaBeli: number
-  hargaJual: number
-  satuan: string
-  deskripsi?: string
-  lokasiId: string
+  id: string;
+  nama: string;
+  sku?: string;
+  kategori: string;
+  stok: number;
+  stokMinimum: number;
+  hargaBeli: number;
+  hargaJual: number;
+  satuan: string;
+  deskripsi?: string;
+  lokasiId: string;
   lokasi: {
-    id: string
-    namaLokasi: string
-  }
+    id: string;
+    namaLokasi: string;
+  };
 }
 
 interface Lokasi {
-  id: string
-  namaLokasi: string
-  alamat?: string
+  id: string;
+  namaLokasi: string;
+  alamat?: string;
 }
 
 interface TransaksiKeluar {
-  id: string
-  nomorTransaksi: string
-  tanggal: string
-  qty: number
-  hargaBarang: number
-  totalNilai: number
-  tujuan: string
-  keterangan?: string
-  barang: Barang
-  lokasi: Lokasi
+  id: string;
+  nomorTransaksi: string;
+  tanggal: string;
+  qty: number;
+  hargaBarang: number;
+  totalNilai: number;
+  tujuan: string;
+  keterangan?: string;
+  barang: Barang;
+  lokasi: Lokasi;
 }
 
 interface ItemTransaksiKasir {
-  id: string
-  namaBarang: string
-  qty: number
-  hargaSatuan: number
-  subtotal: number
-  barang: Barang
+  id: string;
+  namaBarang: string;
+  qty: number;
+  hargaSatuan: number;
+  subtotal: number;
+  barang: Barang;
 }
 
 interface TransaksiKasir {
-  id: string
-  nomorTransaksi: string
-  tanggal: string
-  total: number
-  metodePembayaran: string
+  id: string;
+  nomorTransaksi: string;
+  tanggal: string;
+  total: number;
+  metodePembayaran: string;
   kasir: {
-    id: string
-    nama: string
-    username: string
-  }
-  itemTransaksi: ItemTransaksiKasir[]
+    id: string;
+    nama: string;
+    username: string;
+  };
+  itemTransaksi: ItemTransaksiKasir[];
 }
 
 export default function InventarisPage() {
-  const [barang, setBarang] = useState<Barang[]>([])
-  const [lokasi, setLokasi] = useState<Lokasi[]>([])
-  const [transaksiKeluar, setTransaksiKeluar] = useState<TransaksiKeluar[]>([])
-  const [transaksiKasir, setTransaksiKasir] = useState<TransaksiKasir[]>([])
-  const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState("")
-  const [kategoriFilter, setKategoriFilter] = useState("ALL")
-  const [lokasiFilter, setLokasiFilter] = useState("ALL")
-  const [stokRendahFilter, setStokRendahFilter] = useState(false)
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [dialogKeluarOpen, setDialogKeluarOpen] = useState(false)
-  const [editingItem, setEditingItem] = useState<Barang | null>(null)
-  const [sortColumn, setSortColumn] = useState<string>("nama")
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
-  const [startDateKeluar, setStartDateKeluar] = useState("")
-  const [endDateKeluar, setEndDateKeluar] = useState("")
-  const [startDateKasir, setStartDateKasir] = useState("")
-  const [endDateKasir, setEndDateKasir] = useState("")
-  const [sortColumnKeluar, setSortColumnKeluar] = useState<string>("tanggal")
-  const [sortDirectionKeluar, setSortDirectionKeluar] = useState<"asc" | "desc">("desc")
-  const [sortColumnKasir, setSortColumnKasir] = useState<string>("tanggal")
-  const [sortDirectionKasir, setSortDirectionKasir] = useState<"asc" | "desc">("desc")
+  const [barang, setBarang] = useState<Barang[]>([]);
+  const [lokasi, setLokasi] = useState<Lokasi[]>([]);
+  const [transaksiKeluar, setTransaksiKeluar] = useState<TransaksiKeluar[]>([]);
+  const [transaksiKasir, setTransaksiKasir] = useState<TransaksiKasir[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [kategoriFilter, setKategoriFilter] = useState("ALL");
+  const [lokasiFilter, setLokasiFilter] = useState("ALL");
+  const [stokRendahFilter, setStokRendahFilter] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogKeluarOpen, setDialogKeluarOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<Barang | null>(null);
+  const [sortColumn, setSortColumn] = useState<string>("nama");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [startDateKeluar, setStartDateKeluar] = useState("");
+  const [endDateKeluar, setEndDateKeluar] = useState("");
+  const [startDateKasir, setStartDateKasir] = useState("");
+  const [endDateKasir, setEndDateKasir] = useState("");
+  const [sortColumnKeluar, setSortColumnKeluar] = useState<string>("tanggal");
+  const [sortDirectionKeluar, setSortDirectionKeluar] = useState<
+    "asc" | "desc"
+  >("desc");
+  const [sortColumnKasir, setSortColumnKasir] = useState<string>("tanggal");
+  const [sortDirectionKasir, setSortDirectionKasir] = useState<"asc" | "desc">(
+    "desc",
+  );
 
   // Pagination states
-  const [currentPageBarang, setCurrentPageBarang] = useState(1)
-  const [currentPageKeluar, setCurrentPageKeluar] = useState(1)
-  const [currentPageKasir, setCurrentPageKasir] = useState(1)
-  const itemsPerPage = 10
+  const [currentPageBarang, setCurrentPageBarang] = useState(1);
+  const [currentPageKeluar, setCurrentPageKeluar] = useState(1);
+  const [currentPageKasir, setCurrentPageKasir] = useState(1);
+  const itemsPerPage = 10;
 
   // Mode: "new" untuk barang baru custom, "existing" untuk update stok barang existing
-  const [tambahMode, setTambahMode] = useState<"new" | "existing">("existing")
+  const [tambahMode, setTambahMode] = useState<"new" | "existing">("existing");
 
   const [formData, setFormData] = useState({
     nama: "",
@@ -141,7 +164,7 @@ export default function InventarisPage() {
     satuan: "pcs",
     deskripsi: "",
     lokasiId: "",
-  })
+  });
 
   // Form untuk tambah stok barang existing
   const [formTambahStok, setFormTambahStok] = useState({
@@ -151,7 +174,7 @@ export default function InventarisPage() {
     sumber: "",
     lokasiId: "",
     keterangan: "",
-  })
+  });
 
   // Form untuk barang keluar
   const [formKeluar, setFormKeluar] = useState({
@@ -160,263 +183,301 @@ export default function InventarisPage() {
     tujuan: "",
     lokasiId: "",
     keterangan: "",
-  })
+  });
 
   useEffect(() => {
-    fetchData()
-  }, [search, kategoriFilter, lokasiFilter])
+    fetchData();
+  }, [search, kategoriFilter, lokasiFilter]);
 
   // Reset pagination saat filter/sort berubah
   useEffect(() => {
-    setCurrentPageBarang(1)
-  }, [search, kategoriFilter, lokasiFilter, stokRendahFilter, sortColumn, sortDirection])
+    setCurrentPageBarang(1);
+  }, [
+    search,
+    kategoriFilter,
+    lokasiFilter,
+    stokRendahFilter,
+    sortColumn,
+    sortDirection,
+  ]);
 
   useEffect(() => {
-    setCurrentPageKeluar(1)
-  }, [startDateKeluar, endDateKeluar, sortColumnKeluar, sortDirectionKeluar])
+    setCurrentPageKeluar(1);
+  }, [startDateKeluar, endDateKeluar, sortColumnKeluar, sortDirectionKeluar]);
 
   useEffect(() => {
-    setCurrentPageKasir(1)
-  }, [startDateKasir, endDateKasir, sortColumnKasir, sortDirectionKasir])
+    setCurrentPageKasir(1);
+  }, [startDateKasir, endDateKasir, sortColumnKasir, sortDirectionKasir]);
 
   const sortedBarang = useMemo(() => {
-    let filtered = [...barang]
+    let filtered = [...barang];
 
     // Filter stok rendah jika diaktifkan
     if (stokRendahFilter) {
-      filtered = filtered.filter(item => item.stok <= item.stokMinimum)
+      filtered = filtered.filter((item) => item.stok <= item.stokMinimum);
     }
 
     return filtered.sort((a, b) => {
-      let aValue: any = a[sortColumn as keyof Barang]
-      let bValue: any = b[sortColumn as keyof Barang]
+      let aValue: any = a[sortColumn as keyof Barang];
+      let bValue: any = b[sortColumn as keyof Barang];
 
       if (sortColumn === "lokasi") {
-        aValue = a.lokasi.namaLokasi
-        bValue = b.lokasi.namaLokasi
+        aValue = a.lokasi.namaLokasi;
+        bValue = b.lokasi.namaLokasi;
       }
 
       if (typeof aValue === "string") {
-        aValue = aValue.toLowerCase()
-        bValue = bValue.toLowerCase()
+        aValue = aValue.toLowerCase();
+        bValue = bValue.toLowerCase();
       }
 
-      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1
-      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1
-      return 0
-    })
-  }, [barang, sortColumn, sortDirection, stokRendahFilter])
+      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [barang, sortColumn, sortDirection, stokRendahFilter]);
 
   const sortedTransaksiKeluar = useMemo(() => {
-    let filtered = [...transaksiKeluar]
+    let filtered = [...transaksiKeluar];
 
     // Filter berdasarkan range tanggal
     if (startDateKeluar || endDateKeluar) {
-      filtered = filtered.filter(tr => {
-        const transaksiDate = new Date(tr.tanggal)
-        const start = startDateKeluar ? new Date(startDateKeluar) : null
-        const end = endDateKeluar ? new Date(endDateKeluar) : null
+      filtered = filtered.filter((tr) => {
+        const transaksiDate = new Date(tr.tanggal);
+        const start = startDateKeluar ? new Date(startDateKeluar) : null;
+        const end = endDateKeluar ? new Date(endDateKeluar) : null;
 
         // Set time untuk perbandingan yang akurat
-        if (start) start.setHours(0, 0, 0, 0)
-        if (end) end.setHours(23, 59, 59, 999)
-        transaksiDate.setHours(0, 0, 0, 0)
+        if (start) start.setHours(0, 0, 0, 0);
+        if (end) end.setHours(23, 59, 59, 999);
+        transaksiDate.setHours(0, 0, 0, 0);
 
         if (start && end) {
-          return transaksiDate >= start && transaksiDate <= end
+          return transaksiDate >= start && transaksiDate <= end;
         } else if (start) {
-          return transaksiDate >= start
+          return transaksiDate >= start;
         } else if (end) {
-          return transaksiDate <= end
+          return transaksiDate <= end;
         }
-        return true
-      })
+        return true;
+      });
     }
 
     return filtered.sort((a, b) => {
-      let aValue: any = a[sortColumnKeluar as keyof TransaksiKeluar]
-      let bValue: any = b[sortColumnKeluar as keyof TransaksiKeluar]
+      let aValue: any = a[sortColumnKeluar as keyof TransaksiKeluar];
+      let bValue: any = b[sortColumnKeluar as keyof TransaksiKeluar];
 
       if (sortColumnKeluar === "tanggal") {
-        aValue = new Date(aValue).getTime()
-        bValue = new Date(bValue).getTime()
+        aValue = new Date(aValue).getTime();
+        bValue = new Date(bValue).getTime();
       } else if (sortColumnKeluar === "barang") {
-        aValue = a.barang.nama.toLowerCase()
-        bValue = b.barang.nama.toLowerCase()
+        aValue = a.barang.nama.toLowerCase();
+        bValue = b.barang.nama.toLowerCase();
       } else if (sortColumnKeluar === "lokasi") {
-        aValue = a.lokasi.namaLokasi.toLowerCase()
-        bValue = b.lokasi.namaLokasi.toLowerCase()
+        aValue = a.lokasi.namaLokasi.toLowerCase();
+        bValue = b.lokasi.namaLokasi.toLowerCase();
       } else if (typeof aValue === "string") {
-        aValue = aValue.toLowerCase()
-        bValue = bValue.toLowerCase()
+        aValue = aValue.toLowerCase();
+        bValue = bValue.toLowerCase();
       }
 
-      if (aValue < bValue) return sortDirectionKeluar === "asc" ? -1 : 1
-      if (aValue > bValue) return sortDirectionKeluar === "asc" ? 1 : -1
-      return 0
-    })
-  }, [transaksiKeluar, sortColumnKeluar, sortDirectionKeluar, startDateKeluar, endDateKeluar])
+      if (aValue < bValue) return sortDirectionKeluar === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortDirectionKeluar === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [
+    transaksiKeluar,
+    sortColumnKeluar,
+    sortDirectionKeluar,
+    startDateKeluar,
+    endDateKeluar,
+  ]);
 
   const sortedTransaksiKasir = useMemo(() => {
-    let filtered = [...transaksiKasir]
+    let filtered = [...transaksiKasir];
 
     // Filter berdasarkan range tanggal
     if (startDateKasir || endDateKasir) {
-      filtered = filtered.filter(tr => {
-        const transaksiDate = new Date(tr.tanggal)
-        const start = startDateKasir ? new Date(startDateKasir) : null
-        const end = endDateKasir ? new Date(endDateKasir) : null
+      filtered = filtered.filter((tr) => {
+        const transaksiDate = new Date(tr.tanggal);
+        const start = startDateKasir ? new Date(startDateKasir) : null;
+        const end = endDateKasir ? new Date(endDateKasir) : null;
 
         // Set time untuk perbandingan yang akurat
-        if (start) start.setHours(0, 0, 0, 0)
-        if (end) end.setHours(23, 59, 59, 999)
-        transaksiDate.setHours(0, 0, 0, 0)
+        if (start) start.setHours(0, 0, 0, 0);
+        if (end) end.setHours(23, 59, 59, 999);
+        transaksiDate.setHours(0, 0, 0, 0);
 
         if (start && end) {
-          return transaksiDate >= start && transaksiDate <= end
+          return transaksiDate >= start && transaksiDate <= end;
         } else if (start) {
-          return transaksiDate >= start
+          return transaksiDate >= start;
         } else if (end) {
-          return transaksiDate <= end
+          return transaksiDate <= end;
         }
-        return true
-      })
+        return true;
+      });
     }
 
     return filtered.sort((a, b) => {
-      let aValue: any = a[sortColumnKasir as keyof TransaksiKasir]
-      let bValue: any = b[sortColumnKasir as keyof TransaksiKasir]
+      let aValue: any = a[sortColumnKasir as keyof TransaksiKasir];
+      let bValue: any = b[sortColumnKasir as keyof TransaksiKasir];
 
       if (sortColumnKasir === "tanggal") {
-        aValue = new Date(aValue).getTime()
-        bValue = new Date(bValue).getTime()
+        aValue = new Date(aValue).getTime();
+        bValue = new Date(bValue).getTime();
       } else if (sortColumnKasir === "kasir") {
-        aValue = a.kasir.nama.toLowerCase()
-        bValue = b.kasir.nama.toLowerCase()
+        aValue = a.kasir.nama.toLowerCase();
+        bValue = b.kasir.nama.toLowerCase();
       } else if (sortColumnKasir === "metodePembayaran") {
-        aValue = aValue.toLowerCase()
-        bValue = bValue.toLowerCase()
+        aValue = aValue.toLowerCase();
+        bValue = bValue.toLowerCase();
       } else if (typeof aValue === "string") {
-        aValue = aValue.toLowerCase()
-        bValue = bValue.toLowerCase()
+        aValue = aValue.toLowerCase();
+        bValue = bValue.toLowerCase();
       }
 
-      if (aValue < bValue) return sortDirectionKasir === "asc" ? -1 : 1
-      if (aValue > bValue) return sortDirectionKasir === "asc" ? 1 : -1
-      return 0
-    })
-  }, [transaksiKasir, sortColumnKasir, sortDirectionKasir, startDateKasir, endDateKasir])
+      if (aValue < bValue) return sortDirectionKasir === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortDirectionKasir === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [
+    transaksiKasir,
+    sortColumnKasir,
+    sortDirectionKasir,
+    startDateKasir,
+    endDateKasir,
+  ]);
 
   // Pagination untuk Barang
   const paginatedBarang = useMemo(() => {
-    const startIndex = (currentPageBarang - 1) * itemsPerPage
-    const endIndex = startIndex + itemsPerPage
-    return sortedBarang.slice(startIndex, endIndex)
-  }, [sortedBarang, currentPageBarang, itemsPerPage])
+    const startIndex = (currentPageBarang - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return sortedBarang.slice(startIndex, endIndex);
+  }, [sortedBarang, currentPageBarang, itemsPerPage]);
 
-  const totalPagesBarang = Math.ceil(sortedBarang.length / itemsPerPage)
+  const totalPagesBarang = Math.ceil(sortedBarang.length / itemsPerPage);
 
   // Pagination untuk Transaksi Keluar
   const paginatedTransaksiKeluar = useMemo(() => {
-    const startIndex = (currentPageKeluar - 1) * itemsPerPage
-    const endIndex = startIndex + itemsPerPage
-    return sortedTransaksiKeluar.slice(startIndex, endIndex)
-  }, [sortedTransaksiKeluar, currentPageKeluar, itemsPerPage])
+    const startIndex = (currentPageKeluar - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return sortedTransaksiKeluar.slice(startIndex, endIndex);
+  }, [sortedTransaksiKeluar, currentPageKeluar, itemsPerPage]);
 
-  const totalPagesKeluar = Math.ceil(sortedTransaksiKeluar.length / itemsPerPage)
+  const totalPagesKeluar = Math.ceil(
+    sortedTransaksiKeluar.length / itemsPerPage,
+  );
 
   // Pagination untuk Transaksi Kasir (per item)
   const paginatedTransaksiKasir = useMemo(() => {
     // Flatten dulu untuk menghitung total items
     const allItems = sortedTransaksiKasir.flatMap((tr) =>
-      tr.itemTransaksi.map((item) => ({ tr, item }))
-    )
+      tr.itemTransaksi.map((item) => ({ tr, item })),
+    );
 
-    const startIndex = (currentPageKasir - 1) * itemsPerPage
-    const endIndex = startIndex + itemsPerPage
-    return allItems.slice(startIndex, endIndex)
-  }, [sortedTransaksiKasir, currentPageKasir, itemsPerPage])
+    const startIndex = (currentPageKasir - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return allItems.slice(startIndex, endIndex);
+  }, [sortedTransaksiKasir, currentPageKasir, itemsPerPage]);
 
   const totalPagesKasir = Math.ceil(
-    sortedTransaksiKasir.reduce((sum, tr) => sum + tr.itemTransaksi.length, 0) / itemsPerPage
-  )
+    sortedTransaksiKasir.reduce((sum, tr) => sum + tr.itemTransaksi.length, 0) /
+      itemsPerPage,
+  );
 
   function handleSort(column: string) {
     if (sortColumn === column) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc")
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
-      setSortColumn(column)
-      setSortDirection("asc")
+      setSortColumn(column);
+      setSortDirection("asc");
     }
   }
 
   function handleSortKeluar(column: string) {
     if (sortColumnKeluar === column) {
-      setSortDirectionKeluar(sortDirectionKeluar === "asc" ? "desc" : "asc")
+      setSortDirectionKeluar(sortDirectionKeluar === "asc" ? "desc" : "asc");
     } else {
-      setSortColumnKeluar(column)
-      setSortDirectionKeluar("desc")
+      setSortColumnKeluar(column);
+      setSortDirectionKeluar("desc");
     }
   }
 
   function getSortIcon(column: string) {
-    if (sortColumn !== column) return <ArrowUpDown className="ml-2 h-4 w-4" />
-    return sortDirection === "asc" ? <ArrowUp className="ml-2 h-4 w-4" /> : <ArrowDown className="ml-2 h-4 w-4" />
+    if (sortColumn !== column) return <ArrowUpDown className="ml-2 h-4 w-4" />;
+    return sortDirection === "asc" ? (
+      <ArrowUp className="ml-2 h-4 w-4" />
+    ) : (
+      <ArrowDown className="ml-2 h-4 w-4" />
+    );
   }
 
   function getSortIconKeluar(column: string) {
-    if (sortColumnKeluar !== column) return <ArrowUpDown className="ml-2 h-4 w-4" />
-    return sortDirectionKeluar === "asc" ? <ArrowUp className="ml-2 h-4 w-4" /> : <ArrowDown className="ml-2 h-4 w-4" />
+    if (sortColumnKeluar !== column)
+      return <ArrowUpDown className="ml-2 h-4 w-4" />;
+    return sortDirectionKeluar === "asc" ? (
+      <ArrowUp className="ml-2 h-4 w-4" />
+    ) : (
+      <ArrowDown className="ml-2 h-4 w-4" />
+    );
   }
 
   function handleSortKasir(column: string) {
     if (sortColumnKasir === column) {
-      setSortDirectionKasir(sortDirectionKasir === "asc" ? "desc" : "asc")
+      setSortDirectionKasir(sortDirectionKasir === "asc" ? "desc" : "asc");
     } else {
-      setSortColumnKasir(column)
-      setSortDirectionKasir("desc")
+      setSortColumnKasir(column);
+      setSortDirectionKasir("desc");
     }
   }
 
   function getSortIconKasir(column: string) {
-    if (sortColumnKasir !== column) return <ArrowUpDown className="ml-2 h-4 w-4" />
-    return sortDirectionKasir === "asc" ? <ArrowUp className="ml-2 h-4 w-4" /> : <ArrowDown className="ml-2 h-4 w-4" />
+    if (sortColumnKasir !== column)
+      return <ArrowUpDown className="ml-2 h-4 w-4" />;
+    return sortDirectionKasir === "asc" ? (
+      <ArrowUp className="ml-2 h-4 w-4" />
+    ) : (
+      <ArrowDown className="ml-2 h-4 w-4" />
+    );
   }
 
   async function fetchData() {
     try {
-      setLoading(true)
-      const params = new URLSearchParams()
-      if (search) params.append("search", search)
-      if (kategoriFilter && kategoriFilter !== "ALL") params.append("kategori", kategoriFilter)
-      if (lokasiFilter && lokasiFilter !== "ALL") params.append("lokasiId", lokasiFilter)
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (search) params.append("search", search);
+      if (kategoriFilter && kategoriFilter !== "ALL")
+        params.append("kategori", kategoriFilter);
+      if (lokasiFilter && lokasiFilter !== "ALL")
+        params.append("lokasiId", lokasiFilter);
 
       const [barangRes, lokasiRes, keluarRes, kasirRes] = await Promise.all([
         fetch(`/api/barang?${params}`),
         fetch("/api/lokasi"),
         fetch("/api/transaksi-keluar"),
         fetch("/api/transaksi-kasir"),
-      ])
+      ]);
 
-      const barangData = await barangRes.json()
-      const lokasiData = await lokasiRes.json()
-      const keluarData = await keluarRes.json()
-      const kasirData = await kasirRes.json()
+      const barangData = await barangRes.json();
+      const lokasiData = await lokasiRes.json();
+      const keluarData = await keluarRes.json();
+      const kasirData = await kasirRes.json();
 
-      setBarang(barangData)
-      setLokasi(lokasiData)
-      setTransaksiKeluar(keluarData)
-      setTransaksiKasir(kasirData)
+      setBarang(barangData);
+      setLokasi(lokasiData);
+      setTransaksiKeluar(keluarData);
+      setTransaksiKasir(kasirData);
     } catch (error) {
-      toast.error("Gagal memuat data")
+      toast.error("Gagal memuat data");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    setLoading(true);
 
     try {
       if (editingItem) {
@@ -425,113 +486,113 @@ export default function InventarisPage() {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(formData),
-        })
+        });
 
         if (!response.ok) {
-          const error = await response.json()
-          throw new Error(error.error || "Gagal mengupdate data")
+          const error = await response.json();
+          throw new Error(error.error || "Gagal mengupdate data");
         }
 
-        toast.success("Barang berhasil diupdate")
+        toast.success("Barang berhasil diupdate");
       } else if (tambahMode === "new") {
         // Mode tambah barang baru custom
         const response = await fetch("/api/barang", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(formData),
-        })
+        });
 
         if (!response.ok) {
-          const error = await response.json()
-          throw new Error(error.error || "Gagal menambahkan barang baru")
+          const error = await response.json();
+          throw new Error(error.error || "Gagal menambahkan barang baru");
         }
 
-        toast.success("Barang baru berhasil ditambahkan")
+        toast.success("Barang baru berhasil ditambahkan");
       } else {
         // Mode tambah stok barang existing
         const response = await fetch("/api/transaksi-masuk", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(formTambahStok),
-        })
+        });
 
         if (!response.ok) {
-          const error = await response.json()
-          throw new Error(error.error || "Gagal menambah stok barang")
+          const error = await response.json();
+          throw new Error(error.error || "Gagal menambah stok barang");
         }
 
-        toast.success("Stok barang berhasil ditambahkan")
+        toast.success("Stok barang berhasil ditambahkan");
       }
 
-      setDialogOpen(false)
-      resetForm()
-      fetchData()
+      setDialogOpen(false);
+      resetForm();
+      fetchData();
     } catch (error: any) {
-      toast.error(error.message)
+      toast.error(error.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   async function handleSubmitKeluar(e: React.FormEvent) {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    setLoading(true);
 
     try {
       const response = await fetch("/api/transaksi-keluar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formKeluar),
-      })
+      });
 
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || "Gagal menyimpan transaksi")
+        const error = await response.json();
+        throw new Error(error.error || "Gagal menyimpan transaksi");
       }
 
-      toast.success("Barang keluar berhasil dicatat")
-      setDialogKeluarOpen(false)
-      resetFormKeluar()
-      fetchData()
+      toast.success("Barang keluar berhasil dicatat");
+      setDialogKeluarOpen(false);
+      resetFormKeluar();
+      fetchData();
     } catch (error: any) {
-      toast.error(error.message)
+      toast.error(error.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Yakin ingin menghapus barang ini?")) return
+    if (!confirm("Yakin ingin menghapus barang ini?")) return;
 
     try {
       const response = await fetch(`/api/barang/${id}`, {
         method: "DELETE",
-      })
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (!response.ok) {
         // Jika barang sudah digunakan dalam transaksi
         if (response.status === 400 && data.message) {
           toast.error(data.message, {
             duration: 5000, // Tampil lebih lama karena pesan panjang
-          })
+          });
         } else {
-          toast.error(data.error || "Gagal menghapus barang")
+          toast.error(data.error || "Gagal menghapus barang");
         }
-        return
+        return;
       }
 
-      toast.success("Barang berhasil dihapus")
-      fetchData()
+      toast.success("Barang berhasil dihapus");
+      fetchData();
     } catch (error: any) {
-      toast.error(error.message || "Terjadi kesalahan")
+      toast.error(error.message || "Terjadi kesalahan");
     }
   }
 
   function openEditDialog(item: Barang) {
-    setEditingItem(item)
-    setTambahMode("new") // Tidak digunakan saat edit
+    setEditingItem(item);
+    setTambahMode("new"); // Tidak digunakan saat edit
     setFormData({
       nama: item.nama,
       sku: item.sku || "",
@@ -543,19 +604,19 @@ export default function InventarisPage() {
       satuan: item.satuan,
       deskripsi: item.deskripsi || "",
       lokasiId: item.lokasiId,
-    })
-    setDialogOpen(true)
+    });
+    setDialogOpen(true);
   }
 
   function openTambahDialog() {
-    setEditingItem(null)
-    setTambahMode("existing") // Default: tambah stok
-    resetForm()
-    setDialogOpen(true)
+    setEditingItem(null);
+    setTambahMode("existing"); // Default: tambah stok
+    resetForm();
+    setDialogOpen(true);
   }
 
   function resetForm() {
-    setEditingItem(null)
+    setEditingItem(null);
     setFormData({
       nama: "",
       sku: "",
@@ -567,7 +628,7 @@ export default function InventarisPage() {
       satuan: "pcs",
       deskripsi: "",
       lokasiId: "",
-    })
+    });
     setFormTambahStok({
       barangId: "",
       qty: 0,
@@ -575,7 +636,7 @@ export default function InventarisPage() {
       sumber: "",
       lokasiId: "",
       keterangan: "",
-    })
+    });
   }
 
   function resetFormKeluar() {
@@ -585,26 +646,26 @@ export default function InventarisPage() {
       tujuan: "",
       lokasiId: "",
       keterangan: "",
-    })
+    });
   }
 
   function handleBarangChangeTambahStok(barangId: string) {
-    const selectedBarang = barang.find((b) => b.id === barangId)
-    if (!selectedBarang) return
+    const selectedBarang = barang.find((b) => b.id === barangId);
+    if (!selectedBarang) return;
 
     setFormTambahStok({
       ...formTambahStok,
       barangId,
       hargaBeli: selectedBarang.hargaBeli,
       lokasiId: selectedBarang.lokasiId,
-    })
+    });
   }
 
   // Handler untuk Select gabungan di modal tambah: jika value === "NEW" => mode new
   function handleSelectForTambah(value: string) {
     if (value === "NEW") {
       // pilih untuk membuat barang baru
-      setTambahMode("new")
+      setTambahMode("new");
       // kosongkan pilihan tambah stok
       setFormTambahStok({
         barangId: "",
@@ -613,7 +674,7 @@ export default function InventarisPage() {
         sumber: "",
         lokasiId: "",
         keterangan: "",
-      })
+      });
       // reset formData untuk input barang baru
       setFormData({
         nama: "",
@@ -626,48 +687,48 @@ export default function InventarisPage() {
         satuan: "pcs",
         deskripsi: "",
         lokasiId: "",
-      })
+      });
     } else {
       // pilih barang existing
-      setTambahMode("existing")
-      handleBarangChangeTambahStok(value)
+      setTambahMode("existing");
+      handleBarangChangeTambahStok(value);
     }
   }
 
   function handleBarangChangeKeluar(barangId: string) {
-    const selectedBarang = barang.find((b) => b.id === barangId)
-    if (!selectedBarang) return
+    const selectedBarang = barang.find((b) => b.id === barangId);
+    if (!selectedBarang) return;
 
     setFormKeluar({
       ...formKeluar,
       barangId,
       lokasiId: selectedBarang.lokasiId,
-    })
+    });
   }
 
-  const kategoriList = Array.from(new Set(barang.map(item => item.kategori)))
+  const kategoriList = Array.from(new Set(barang.map((item) => item.kategori)));
 
   // Komponen Pagination
   const Pagination = ({
     currentPage,
     totalPages,
-    onPageChange
+    onPageChange,
   }: {
-    currentPage: number
-    totalPages: number
-    onPageChange: (page: number) => void
+    currentPage: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
   }) => {
-    const pages = []
-    const maxPagesToShow = 5
-    let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2))
-    let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1)
+    const pages = [];
+    const maxPagesToShow = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+    let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
 
     if (endPage - startPage < maxPagesToShow - 1) {
-      startPage = Math.max(1, endPage - maxPagesToShow + 1)
+      startPage = Math.max(1, endPage - maxPagesToShow + 1);
     }
 
     for (let i = startPage; i <= endPage; i++) {
-      pages.push(i)
+      pages.push(i);
     }
 
     return (
@@ -728,15 +789,14 @@ export default function InventarisPage() {
           </Button>
         </div>
       </div>
-    )
-  }
+    );
+  };
 
   return (
     <div className="flex flex-col h-full">
       <Header title="Inventaris" description="Kelola data barang dan stok" />
 
       <div className="flex-1 p-3 space-y-6">
-
         {/* Tabs: Daftar Barang & History Keluar */}
         <Tabs defaultValue="barang" className="space-y-4">
           <div className="flex justify-between items-center">
@@ -784,13 +844,15 @@ export default function InventarisPage() {
                     },
                     {
                       title: "Total Nilai",
-                      value: `Rp ${barang.reduce((sum, item) => sum + (item.stok * item.hargaBeli), 0).toLocaleString("id-ID")}`,
+                      value: `Rp ${barang.reduce((sum, item) => sum + item.stok * item.hargaBeli, 0).toLocaleString("id-ID")}`,
                       description: "Berdasarkan harga beli",
                       icon: Package,
                     },
                     {
                       title: "Stok Rendah",
-                      value: barang.filter(item => item.stok <= item.stokMinimum).length,
+                      value: barang.filter(
+                        (item) => item.stok <= item.stokMinimum,
+                      ).length,
                       description: "Perlu restock",
                       icon: AlertTriangle,
                       action: (
@@ -800,7 +862,9 @@ export default function InventarisPage() {
                           className="w-full"
                         >
                           <AlertTriangle className="mr-2 h-4 w-4" />
-                          {stokRendahFilter ? "Stok Rendah Aktif" : "Tampilkan Stok Rendah"}
+                          {stokRendahFilter
+                            ? "Stok Rendah Aktif"
+                            : "Tampilkan Stok Rendah"}
                         </Button>
                       ),
                     },
@@ -822,7 +886,10 @@ export default function InventarisPage() {
                       />
                     </div>
                   </div>
-                  <Select value={kategoriFilter} onValueChange={setKategoriFilter}>
+                  <Select
+                    value={kategoriFilter}
+                    onValueChange={setKategoriFilter}
+                  >
                     <SelectTrigger className="w-[200px] bg-white">
                       <SelectValue placeholder="Semua Kategori" />
                     </SelectTrigger>
@@ -854,43 +921,64 @@ export default function InventarisPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="cursor-pointer select-none" onClick={() => handleSort("nama")}>
+                        <TableHead
+                          className="cursor-pointer select-none"
+                          onClick={() => handleSort("nama")}
+                        >
                           <div className="flex items-center">
                             Nama
                             {getSortIcon("nama")}
                           </div>
                         </TableHead>
-                        <TableHead className="cursor-pointer select-none" onClick={() => handleSort("sku")}>
+                        <TableHead
+                          className="cursor-pointer select-none"
+                          onClick={() => handleSort("sku")}
+                        >
                           <div className="flex items-center">
                             SKU
                             {getSortIcon("sku")}
                           </div>
                         </TableHead>
-                        <TableHead className="cursor-pointer select-none" onClick={() => handleSort("kategori")}>
+                        <TableHead
+                          className="cursor-pointer select-none"
+                          onClick={() => handleSort("kategori")}
+                        >
                           <div className="flex items-center">
                             Kategori
                             {getSortIcon("kategori")}
                           </div>
                         </TableHead>
-                        <TableHead className="cursor-pointer select-none" onClick={() => handleSort("stok")}>
+                        <TableHead
+                          className="cursor-pointer select-none"
+                          onClick={() => handleSort("stok")}
+                        >
                           <div className="flex items-center">
                             Stok
                             {getSortIcon("stok")}
                           </div>
                         </TableHead>
-                        <TableHead className="cursor-pointer select-none" onClick={() => handleSort("hargaBeli")}>
+                        <TableHead
+                          className="cursor-pointer select-none"
+                          onClick={() => handleSort("hargaBeli")}
+                        >
                           <div className="flex items-center">
                             Harga Beli
                             {getSortIcon("hargaBeli")}
                           </div>
                         </TableHead>
-                        <TableHead className="cursor-pointer select-none" onClick={() => handleSort("hargaJual")}>
+                        <TableHead
+                          className="cursor-pointer select-none"
+                          onClick={() => handleSort("hargaJual")}
+                        >
                           <div className="flex items-center">
                             Harga Jual
                             {getSortIcon("hargaJual")}
                           </div>
                         </TableHead>
-                        <TableHead className="cursor-pointer select-none" onClick={() => handleSort("lokasi")}>
+                        <TableHead
+                          className="cursor-pointer select-none"
+                          onClick={() => handleSort("lokasi")}
+                        >
                           <div className="flex items-center">
                             Lokasi
                             {getSortIcon("lokasi")}
@@ -988,7 +1076,10 @@ export default function InventarisPage() {
                 <CardHeader className="flex flex-row items-center justify-between space-y-0">
                   <CardTitle>History Barang Keluar</CardTitle>
                   <CardDescription>
-                    <Button onClick={() => setDialogKeluarOpen(true)} variant="default">
+                    <Button
+                      onClick={() => setDialogKeluarOpen(true)}
+                      variant="default"
+                    >
                       <Minus className="mr-2 h-4 w-4" />
                       Catat Barang Keluar
                     </Button>
@@ -1000,15 +1091,21 @@ export default function InventarisPage() {
                     stats={[
                       {
                         title: "Total Jenis Barang Keluar",
-                        value: new Set(sortedTransaksiKeluar.map(tr => tr.barang.id)).size,
-                        description: startDateKeluar || endDateKeluar
-                          ? `${startDateKeluar ? format(new Date(startDateKeluar), "dd/MM/yyyy") : "..."} - ${endDateKeluar ? format(new Date(endDateKeluar), "dd/MM/yyyy") : "..."}`
-                          : "Total keseluruhan",
+                        value: new Set(
+                          sortedTransaksiKeluar.map((tr) => tr.barang.id),
+                        ).size,
+                        description:
+                          startDateKeluar || endDateKeluar
+                            ? `${startDateKeluar ? format(new Date(startDateKeluar), "dd/MM/yyyy") : "..."} - ${endDateKeluar ? format(new Date(endDateKeluar), "dd/MM/yyyy") : "..."}`
+                            : "Total keseluruhan",
                         icon: TrendingDown,
                       },
                       {
                         title: "Total Jumlah Barang",
-                        value: sortedTransaksiKeluar.reduce((sum, tr) => sum + tr.qty, 0),
+                        value: sortedTransaksiKeluar.reduce(
+                          (sum, tr) => sum + tr.qty,
+                          0,
+                        ),
                         description: "Unit keluar",
                         icon: TrendingDown,
                       },
@@ -1042,7 +1139,10 @@ export default function InventarisPage() {
                         />
                       </div>
                     </div>
-                    <Select value={kategoriFilter} onValueChange={setKategoriFilter}>
+                    <Select
+                      value={kategoriFilter}
+                      onValueChange={setKategoriFilter}
+                    >
                       <SelectTrigger className="w-[200px] bg-white">
                         <SelectValue placeholder="Semua Kategori" />
                       </SelectTrigger>
@@ -1055,7 +1155,10 @@ export default function InventarisPage() {
                         ))}
                       </SelectContent>
                     </Select>
-                    <Select value={lokasiFilter} onValueChange={setLokasiFilter}>
+                    <Select
+                      value={lokasiFilter}
+                      onValueChange={setLokasiFilter}
+                    >
                       <SelectTrigger className="w-[200px] bg-white">
                         <SelectValue placeholder="Semua Lokasi" />
                       </SelectTrigger>
@@ -1073,49 +1176,73 @@ export default function InventarisPage() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="cursor-pointer select-none" onClick={() => handleSortKeluar("nomorTransaksi")}>
+                          <TableHead
+                            className="cursor-pointer select-none"
+                            onClick={() => handleSortKeluar("nomorTransaksi")}
+                          >
                             <div className="flex items-center">
                               No. Transaksi
                               {getSortIconKeluar("nomorTransaksi")}
                             </div>
                           </TableHead>
-                          <TableHead className="cursor-pointer select-none" onClick={() => handleSortKeluar("tanggal")}>
+                          <TableHead
+                            className="cursor-pointer select-none"
+                            onClick={() => handleSortKeluar("tanggal")}
+                          >
                             <div className="flex items-center">
                               Tanggal
                               {getSortIconKeluar("tanggal")}
                             </div>
                           </TableHead>
-                          <TableHead className="cursor-pointer select-none" onClick={() => handleSortKeluar("barang")}>
+                          <TableHead
+                            className="cursor-pointer select-none"
+                            onClick={() => handleSortKeluar("barang")}
+                          >
                             <div className="flex items-center">
                               Barang
                               {getSortIconKeluar("barang")}
                             </div>
                           </TableHead>
-                          <TableHead className="cursor-pointer select-none" onClick={() => handleSortKeluar("qty")}>
+                          <TableHead
+                            className="cursor-pointer select-none"
+                            onClick={() => handleSortKeluar("qty")}
+                          >
                             <div className="flex items-center">
                               Qty
                               {getSortIconKeluar("qty")}
                             </div>
                           </TableHead>
-                          <TableHead className="cursor-pointer select-none" onClick={() => handleSortKeluar("hargaBarang")}>
+                          <TableHead
+                            className="cursor-pointer select-none"
+                            onClick={() => handleSortKeluar("hargaBarang")}
+                          >
                             <div className="flex items-center">
                               Harga
                               {getSortIconKeluar("hargaBarang")}
                             </div>
                           </TableHead>
-                          <TableHead className="cursor-pointer select-none" onClick={() => handleSortKeluar("totalNilai")}>
+                          <TableHead
+                            className="cursor-pointer select-none"
+                            onClick={() => handleSortKeluar("totalNilai")}
+                          >
                             <div className="flex items-center">
                               Total Nilai
                               {getSortIconKeluar("totalNilai")}
                             </div>
                           </TableHead>
-                          <TableHead className="cursor-pointer select-none" onClick={() => handleSortKeluar("tujuan")}>
+                          <TableHead
+                            className="cursor-pointer select-none"
+                            onClick={() => handleSortKeluar("tujuan")}
+                          >
                             <div className="flex items-center">
                               Tujuan
                               {getSortIconKeluar("tujuan")}
                             </div>
                           </TableHead>
-                          <TableHead className="cursor-pointer select-none" onClick={() => handleSortKeluar("lokasi")}>
+                          <TableHead
+                            className="cursor-pointer select-none"
+                            onClick={() => handleSortKeluar("lokasi")}
+                          >
                             <div className="flex items-center">
                               Lokasi
                               {getSortIconKeluar("lokasi")}
@@ -1127,7 +1254,9 @@ export default function InventarisPage() {
                         {paginatedTransaksiKeluar.length === 0 ? (
                           <TableRow>
                             <TableCell colSpan={8} className="text-center">
-                              {startDateKeluar || endDateKeluar ? "Tidak ada transaksi pada rentang tanggal tersebut" : "Belum ada transaksi"}
+                              {startDateKeluar || endDateKeluar
+                                ? "Tidak ada transaksi pada rentang tanggal tersebut"
+                                : "Belum ada transaksi"}
                             </TableCell>
                           </TableRow>
                         ) : (
@@ -1137,7 +1266,10 @@ export default function InventarisPage() {
                                 {tr.nomorTransaksi}
                               </TableCell>
                               <TableCell>
-                                {format(new Date(tr.tanggal), "dd/MM/yyyy HH:mm")}
+                                {format(
+                                  new Date(tr.tanggal),
+                                  "dd/MM/yyyy HH:mm",
+                                )}
                               </TableCell>
                               <TableCell>{tr.barang.nama}</TableCell>
                               <TableCell>
@@ -1210,8 +1342,8 @@ export default function InventarisPage() {
                         <Button
                           variant="outline"
                           onClick={() => {
-                            setStartDateKasir("")
-                            setEndDateKasir("")
+                            setStartDateKasir("");
+                            setEndDateKasir("");
                           }}
                         >
                           Reset Filter
@@ -1228,22 +1360,28 @@ export default function InventarisPage() {
                   {
                     title: "Total Jenis Barang",
                     value: (() => {
-                      const uniqueBarangIds = new Set<string>()
-                      sortedTransaksiKasir.forEach(tr => {
-                        tr.itemTransaksi.forEach(item => {
-                          uniqueBarangIds.add(item.barang.id)
-                        })
-                      })
-                      return uniqueBarangIds.size
+                      const uniqueBarangIds = new Set<string>();
+                      sortedTransaksiKasir.forEach((tr) => {
+                        tr.itemTransaksi.forEach((item) => {
+                          uniqueBarangIds.add(item.barang.id);
+                        });
+                      });
+                      return uniqueBarangIds.size;
                     })(),
-                    description: startDateKasir || endDateKasir
-                      ? `${startDateKasir ? format(new Date(startDateKasir), "dd/MM/yyyy") : "..."} - ${endDateKasir ? format(new Date(endDateKasir), "dd/MM/yyyy") : "..."}`
-                      : "Total keseluruhan",
+                    description:
+                      startDateKasir || endDateKasir
+                        ? `${startDateKasir ? format(new Date(startDateKasir), "dd/MM/yyyy") : "..."} - ${endDateKasir ? format(new Date(endDateKasir), "dd/MM/yyyy") : "..."}`
+                        : "Total keseluruhan",
                     icon: Package,
                   },
                   {
                     title: "Total Qty Keluar",
-                    value: sortedTransaksiKasir.reduce((sum, tr) => sum + tr.itemTransaksi.reduce((s, item) => s + item.qty, 0), 0),
+                    value: sortedTransaksiKasir.reduce(
+                      (sum, tr) =>
+                        sum +
+                        tr.itemTransaksi.reduce((s, item) => s + item.qty, 0),
+                      0,
+                    ),
                     description: "Unit terjual",
                     icon: TrendingDown,
                   },
@@ -1275,13 +1413,19 @@ export default function InventarisPage() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="cursor-pointer select-none" onClick={() => handleSortKasir("nomorTransaksi")}>
+                          <TableHead
+                            className="cursor-pointer select-none"
+                            onClick={() => handleSortKasir("nomorTransaksi")}
+                          >
                             <div className="flex items-center">
                               No. Transaksi
                               {getSortIconKasir("nomorTransaksi")}
                             </div>
                           </TableHead>
-                          <TableHead className="cursor-pointer select-none" onClick={() => handleSortKasir("tanggal")}>
+                          <TableHead
+                            className="cursor-pointer select-none"
+                            onClick={() => handleSortKasir("tanggal")}
+                          >
                             <div className="flex items-center">
                               Tanggal
                               {getSortIconKasir("tanggal")}
@@ -1291,13 +1435,19 @@ export default function InventarisPage() {
                           <TableHead>Qty</TableHead>
                           <TableHead>Harga Satuan</TableHead>
                           <TableHead>Subtotal</TableHead>
-                          <TableHead className="cursor-pointer select-none" onClick={() => handleSortKasir("metodePembayaran")}>
+                          <TableHead
+                            className="cursor-pointer select-none"
+                            onClick={() => handleSortKasir("metodePembayaran")}
+                          >
                             <div className="flex items-center">
                               Metode Bayar
                               {getSortIconKasir("metodePembayaran")}
                             </div>
                           </TableHead>
-                          <TableHead className="cursor-pointer select-none" onClick={() => handleSortKasir("kasir")}>
+                          <TableHead
+                            className="cursor-pointer select-none"
+                            onClick={() => handleSortKasir("kasir")}
+                          >
                             <div className="flex items-center">
                               Kasir
                               {getSortIconKasir("kasir")}
@@ -1309,7 +1459,9 @@ export default function InventarisPage() {
                         {paginatedTransaksiKasir.length === 0 ? (
                           <TableRow>
                             <TableCell colSpan={8} className="text-center">
-                              {startDateKasir || endDateKasir ? "Tidak ada transaksi pada rentang tanggal tersebut" : "Belum ada transaksi"}
+                              {startDateKasir || endDateKasir
+                                ? "Tidak ada transaksi pada rentang tanggal tersebut"
+                                : "Belum ada transaksi"}
                             </TableCell>
                           </TableRow>
                         ) : (
@@ -1319,7 +1471,10 @@ export default function InventarisPage() {
                                 {tr.nomorTransaksi}
                               </TableCell>
                               <TableCell>
-                                {format(new Date(tr.tanggal), "dd/MM/yyyy HH:mm")}
+                                {format(
+                                  new Date(tr.tanggal),
+                                  "dd/MM/yyyy HH:mm",
+                                )}
                               </TableCell>
                               <TableCell>{item.namaBarang}</TableCell>
                               <TableCell>
@@ -1357,14 +1512,16 @@ export default function InventarisPage() {
             </div>
           </TabsContent>
         </Tabs>
-
       </div>
 
       {/* Dialog Tambah/Edit Barang */}
-      <Dialog open={dialogOpen} onOpenChange={(open: boolean) => {
-        setDialogOpen(open)
-        if (!open) resetForm()
-      }}>
+      <Dialog
+        open={dialogOpen}
+        onOpenChange={(open: boolean) => {
+          setDialogOpen(open);
+          if (!open) resetForm();
+        }}
+      >
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
@@ -1379,8 +1536,14 @@ export default function InventarisPage() {
                 <div className="space-y-2">
                   <Label>Pilih Barang atau Tambah Baru</Label>
                   <Select
-                    value={tambahMode === "new" ? "NEW" : formTambahStok.barangId || ""}
-                    onValueChange={(value: string) => handleSelectForTambah(value)}
+                    value={
+                      tambahMode === "new"
+                        ? "NEW"
+                        : formTambahStok.barangId || ""
+                    }
+                    onValueChange={(value: string) =>
+                      handleSelectForTambah(value)
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Pilih barang atau tambah baru" />
@@ -1407,7 +1570,12 @@ export default function InventarisPage() {
                         id="qty-tambah"
                         type="number"
                         value={formTambahStok.qty || ""}
-                        onChange={(e) => setFormTambahStok({ ...formTambahStok, qty: parseInt(e.target.value) || 0 })}
+                        onChange={(e) =>
+                          setFormTambahStok({
+                            ...formTambahStok,
+                            qty: parseInt(e.target.value) || 0,
+                          })
+                        }
                         required
                         min="1"
                       />
@@ -1418,7 +1586,12 @@ export default function InventarisPage() {
                         id="harga-beli-tambah"
                         type="number"
                         value={formTambahStok.hargaBeli || ""}
-                        onChange={(e) => setFormTambahStok({ ...formTambahStok, hargaBeli: parseFloat(e.target.value) || 0 })}
+                        onChange={(e) =>
+                          setFormTambahStok({
+                            ...formTambahStok,
+                            hargaBeli: parseFloat(e.target.value) || 0,
+                          })
+                        }
                         required
                         min="0"
                       />
@@ -1430,7 +1603,12 @@ export default function InventarisPage() {
                     <Input
                       id="sumber-tambah"
                       value={formTambahStok.sumber}
-                      onChange={(e) => setFormTambahStok({ ...formTambahStok, sumber: e.target.value })}
+                      onChange={(e) =>
+                        setFormTambahStok({
+                          ...formTambahStok,
+                          sumber: e.target.value,
+                        })
+                      }
                       placeholder="Contoh: Supplier A, Pembelian Lokal, Transfer Cabang"
                       required
                     />
@@ -1440,7 +1618,12 @@ export default function InventarisPage() {
                     <Label htmlFor="lokasi-tambah">Lokasi Gudang *</Label>
                     <Select
                       value={formTambahStok.lokasiId}
-                      onValueChange={(value: string) => setFormTambahStok({ ...formTambahStok, lokasiId: value })}
+                      onValueChange={(value: string) =>
+                        setFormTambahStok({
+                          ...formTambahStok,
+                          lokasiId: value,
+                        })
+                      }
                       required
                     >
                       <SelectTrigger>
@@ -1461,16 +1644,26 @@ export default function InventarisPage() {
                     <Input
                       id="keterangan-tambah"
                       value={formTambahStok.keterangan}
-                      onChange={(e) => setFormTambahStok({ ...formTambahStok, keterangan: e.target.value })}
+                      onChange={(e) =>
+                        setFormTambahStok({
+                          ...formTambahStok,
+                          keterangan: e.target.value,
+                        })
+                      }
                       placeholder="Catatan tambahan (opsional)"
                     />
                   </div>
 
                   {formTambahStok.qty > 0 && formTambahStok.hargaBeli > 0 && (
                     <div className="p-4 bg-muted rounded-lg">
-                      <div className="text-sm text-muted-foreground">Total Nilai Tambah Stok</div>
+                      <div className="text-sm text-muted-foreground">
+                        Total Nilai Tambah Stok
+                      </div>
                       <div className="text-2xl font-bold">
-                        Rp {(formTambahStok.qty * formTambahStok.hargaBeli).toLocaleString("id-ID")}
+                        Rp{" "}
+                        {(
+                          formTambahStok.qty * formTambahStok.hargaBeli
+                        ).toLocaleString("id-ID")}
                       </div>
                     </div>
                   )}
@@ -1486,7 +1679,9 @@ export default function InventarisPage() {
                       <Input
                         id="nama"
                         value={formData.nama}
-                        onChange={(e) => setFormData({ ...formData, nama: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, nama: e.target.value })
+                        }
                         required
                       />
                     </div>
@@ -1495,7 +1690,9 @@ export default function InventarisPage() {
                       <Input
                         id="sku"
                         value={formData.sku}
-                        onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, sku: e.target.value })
+                        }
                         placeholder="Kode unik (opsional)"
                       />
                     </div>
@@ -1507,7 +1704,9 @@ export default function InventarisPage() {
                       <Input
                         id="kategori"
                         value={formData.kategori}
-                        onChange={(e) => setFormData({ ...formData, kategori: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, kategori: e.target.value })
+                        }
                         placeholder="Contoh: Elektronik, Makanan"
                         required
                       />
@@ -1517,7 +1716,9 @@ export default function InventarisPage() {
                       <Input
                         id="satuan"
                         value={formData.satuan}
-                        onChange={(e) => setFormData({ ...formData, satuan: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, satuan: e.target.value })
+                        }
                         placeholder="Contoh: pcs, kg, box"
                         required
                       />
@@ -1531,7 +1732,12 @@ export default function InventarisPage() {
                         id="stok"
                         type="number"
                         value={formData.stok}
-                        onChange={(e) => setFormData({ ...formData, stok: parseInt(e.target.value) || 0 })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            stok: parseInt(e.target.value) || 0,
+                          })
+                        }
                         required
                         min="0"
                       />
@@ -1542,7 +1748,12 @@ export default function InventarisPage() {
                         id="stokMinimum"
                         type="number"
                         value={formData.stokMinimum}
-                        onChange={(e) => setFormData({ ...formData, stokMinimum: parseInt(e.target.value) || 0 })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            stokMinimum: parseInt(e.target.value) || 0,
+                          })
+                        }
                         required
                         min="0"
                       />
@@ -1556,7 +1767,12 @@ export default function InventarisPage() {
                         id="hargaBeli"
                         type="number"
                         value={formData.hargaBeli}
-                        onChange={(e) => setFormData({ ...formData, hargaBeli: parseFloat(e.target.value) || 0 })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            hargaBeli: parseFloat(e.target.value) || 0,
+                          })
+                        }
                         required
                         min="0"
                       />
@@ -1567,7 +1783,12 @@ export default function InventarisPage() {
                         id="hargaJual"
                         type="number"
                         value={formData.hargaJual}
-                        onChange={(e) => setFormData({ ...formData, hargaJual: parseFloat(e.target.value) || 0 })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            hargaJual: parseFloat(e.target.value) || 0,
+                          })
+                        }
                         required
                         min="0"
                       />
@@ -1578,7 +1799,9 @@ export default function InventarisPage() {
                     <Label htmlFor="lokasiId">Lokasi *</Label>
                     <Select
                       value={formData.lokasiId}
-                      onValueChange={(value: string) => setFormData({ ...formData, lokasiId: value })}
+                      onValueChange={(value: string) =>
+                        setFormData({ ...formData, lokasiId: value })
+                      }
                       required
                     >
                       <SelectTrigger>
@@ -1599,7 +1822,9 @@ export default function InventarisPage() {
                     <Input
                       id="deskripsi"
                       value={formData.deskripsi}
-                      onChange={(e) => setFormData({ ...formData, deskripsi: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, deskripsi: e.target.value })
+                      }
                       placeholder="Informasi tambahan (opsional)"
                     />
                   </div>
@@ -1607,7 +1832,12 @@ export default function InventarisPage() {
               )}
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} disabled={loading}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setDialogOpen(false)}
+                disabled={loading}
+              >
                 Batal
               </Button>
               <Button type="submit" disabled={loading}>
@@ -1619,10 +1849,13 @@ export default function InventarisPage() {
       </Dialog>
 
       {/* Dialog Barang Keluar */}
-      <Dialog open={dialogKeluarOpen} onOpenChange={(open) => {
-        setDialogKeluarOpen(open)
-        if (!open) resetFormKeluar()
-      }}>
+      <Dialog
+        open={dialogKeluarOpen}
+        onOpenChange={(open) => {
+          setDialogKeluarOpen(open);
+          if (!open) resetFormKeluar();
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Transaksi Barang Keluar</DialogTitle>
@@ -1658,7 +1891,12 @@ export default function InventarisPage() {
                   id="qty-keluar"
                   type="number"
                   value={formKeluar.qty || ""}
-                  onChange={(e) => setFormKeluar({ ...formKeluar, qty: parseInt(e.target.value) || 0 })}
+                  onChange={(e) =>
+                    setFormKeluar({
+                      ...formKeluar,
+                      qty: parseInt(e.target.value) || 0,
+                    })
+                  }
                   required
                   min="1"
                 />
@@ -1669,7 +1907,9 @@ export default function InventarisPage() {
                 <Input
                   id="tujuan"
                   value={formKeluar.tujuan}
-                  onChange={(e) => setFormKeluar({ ...formKeluar, tujuan: e.target.value })}
+                  onChange={(e) =>
+                    setFormKeluar({ ...formKeluar, tujuan: e.target.value })
+                  }
                   placeholder="Contoh: Toko Cabang A, Retur Supplier, Rusak"
                   required
                 />
@@ -1679,7 +1919,9 @@ export default function InventarisPage() {
                 <Label htmlFor="lokasi-keluar">Lokasi Gudang *</Label>
                 <Select
                   value={formKeluar.lokasiId}
-                  onValueChange={(value) => setFormKeluar({ ...formKeluar, lokasiId: value })}
+                  onValueChange={(value) =>
+                    setFormKeluar({ ...formKeluar, lokasiId: value })
+                  }
                   required
                 >
                   <SelectTrigger>
@@ -1700,7 +1942,9 @@ export default function InventarisPage() {
                 <Input
                   id="keterangan-keluar"
                   value={formKeluar.keterangan}
-                  onChange={(e) => setFormKeluar({ ...formKeluar, keterangan: e.target.value })}
+                  onChange={(e) =>
+                    setFormKeluar({ ...formKeluar, keterangan: e.target.value })
+                  }
                   placeholder="Catatan tambahan (opsional)"
                 />
               </div>
@@ -1722,6 +1966,5 @@ export default function InventarisPage() {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }
-

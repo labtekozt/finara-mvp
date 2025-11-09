@@ -172,13 +172,7 @@ export async function POST(request: NextRequest) {
       return newTransaksi;
     });
 
-    // Create accounting journal entry (critical for balance)
-    await createJournalEntryForCompleteSale(
-      transaksi.nomorTransaksi,
-      totalRevenue,
-      items,
-      session.user.id,
-    );    // Fetch complete transaction data
+    // Fetch complete transaction data for accounting
     const completeTransaksi = await prisma.transaksiKasir.findUnique({
       where: { id: transaksi.id },
       include: {
@@ -190,6 +184,26 @@ export async function POST(request: NextRequest) {
         },
       },
     });
+
+    if (!completeTransaksi) {
+      throw new Error("Failed to fetch complete transaction");
+    }
+
+    // Prepare data for accounting journal entry
+    const totalRevenue = completeTransaksi.total;
+    const items = completeTransaksi.itemTransaksi.map((item) => ({
+      barangId: item.barangId,
+      qty: item.qty,
+      costPrice: item.hargaSatuan, // Assuming this is the cost price
+    }));
+
+    // Create accounting journal entry (critical for balance)
+    await createJournalEntryForCompleteSale(
+      transaksi.id,
+      totalRevenue,
+      items,
+      session.user.id,
+    );
 
     return NextResponse.json(completeTransaksi, { status: 201 });
   } catch (error) {
