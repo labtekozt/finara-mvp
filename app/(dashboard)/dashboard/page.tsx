@@ -7,7 +7,7 @@ export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-gray-100">
       <Header
         title={`Selamat Datang, ${session?.user?.name}`}
         description="Dashboard - Ringkasan Sistem"
