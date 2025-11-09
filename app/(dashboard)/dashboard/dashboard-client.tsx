@@ -108,7 +108,7 @@ export function DashboardClient() {
   };
 
   return (
-    <div className="flex-1 p-6 space-y-6">
+    <div className="flex-1 p-6 space-y-6 bg-gray-100">
       {/* Filter Section */}
       <Card>
         <CardHeader>
@@ -212,7 +212,7 @@ export function DashboardClient() {
             <CardTitle className="text-sm font-medium">
               Total Penjualan
             </CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <span className="text-lg font-bold text-muted-foreground">Rp</span>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
