@@ -174,6 +174,11 @@ export default function InventarisPage() {
     sumber: "",
     lokasiId: "",
     keterangan: "",
+    reason: "PURCHASE" as
+      | "PURCHASE"
+      | "STOCK_OPNAME_SURPLUS"
+      | "INTERNAL_ADJUSTMENT",
+    paymentMethod: "CREDIT" as "CASH" | "CREDIT" | undefined,
   });
 
   // Form untuk barang keluar
@@ -510,10 +515,19 @@ export default function InventarisPage() {
         toast.success("Barang baru berhasil ditambahkan");
       } else {
         // Mode tambah stok barang existing
+        const payload = {
+          ...formTambahStok,
+          reason: formTambahStok.reason,
+          paymentMethod:
+            formTambahStok.reason === "PURCHASE"
+              ? formTambahStok.paymentMethod
+              : undefined,
+        };
+
         const response = await fetch("/api/transaksi-masuk", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formTambahStok),
+          body: JSON.stringify(payload),
         });
 
         if (!response.ok) {
@@ -636,6 +650,8 @@ export default function InventarisPage() {
       sumber: "",
       lokasiId: "",
       keterangan: "",
+      reason: "PURCHASE",
+      paymentMethod: "CASH",
     });
   }
 
@@ -658,6 +674,9 @@ export default function InventarisPage() {
       barangId,
       hargaBeli: selectedBarang.hargaBeli,
       lokasiId: selectedBarang.lokasiId,
+      // Reset reason and payment method when changing item
+      reason: "PURCHASE",
+      paymentMethod: "CASH",
     });
   }
 
@@ -674,6 +693,8 @@ export default function InventarisPage() {
         sumber: "",
         lokasiId: "",
         keterangan: "",
+        reason: "PURCHASE",
+        paymentMethod: "CASH",
       });
       // reset formData untuk input barang baru
       setFormData({
@@ -1613,6 +1634,67 @@ export default function InventarisPage() {
                       required
                     />
                   </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="reason-tambah">
+                      Alasan Penambahan Stok *
+                    </Label>
+                    <Select
+                      value={formTambahStok.reason}
+                      onValueChange={(value: string) =>
+                        setFormTambahStok({
+                          ...formTambahStok,
+                          reason: value as
+                            | "PURCHASE"
+                            | "STOCK_OPNAME_SURPLUS"
+                            | "INTERNAL_ADJUSTMENT",
+                          paymentMethod:
+                            value === "PURCHASE"
+                              ? formTambahStok.paymentMethod
+                              : undefined,
+                        })
+                      }
+                      required
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih alasan" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="PURCHASE">Pembelian</SelectItem>
+                        <SelectItem value="STOCK_OPNAME_SURPLUS">
+                          Surplus Stock Opname
+                        </SelectItem>
+                        <SelectItem value="INTERNAL_ADJUSTMENT">
+                          Penyesuaian Internal
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {formTambahStok.reason === "PURCHASE" && (
+                    <div className="space-y-2">
+                      <Label htmlFor="payment-method-tambah">
+                        Metode Pembayaran *
+                      </Label>
+                      <Select
+                        value={formTambahStok.paymentMethod || ""}
+                        onValueChange={(value: string) =>
+                          setFormTambahStok({
+                            ...formTambahStok,
+                            paymentMethod: value as "CASH",
+                          })
+                        }
+                        required
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Pilih metode pembayaran" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="CASH">Tunai</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
 
                   <div className="space-y-2">
                     <Label htmlFor="lokasi-tambah">Lokasi Gudang *</Label>

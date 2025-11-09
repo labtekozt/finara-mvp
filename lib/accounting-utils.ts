@@ -1006,3 +1006,188 @@ export async function createJournalEntryForStockAdjustment(
 
   return jurnalEntry;
 }
+
+// Create journal entry for stock addition based on reason
+export async function createJournalEntryForStockAddition(
+  transaksiMasukId: string,
+  totalAmount: number,
+  reason: "PURCHASE" | "STOCK_OPNAME_SURPLUS" | "INTERNAL_ADJUSTMENT",
+  userId: string,
+  paymentMethod?: "CASH" | "CREDIT",
+) {
+  const periode = await getActiveAccountingPeriod();
+  if (!periode) {
+    throw new Error("Tidak ada periode akuntansi aktif");
+  }
+
+  const inventoryAccount = await getAccountByCode(ACCOUNT_CODES.INVENTORY);
+  const cashAccount = await getAccountByCode(ACCOUNT_CODES.CASH);
+  const accountsPayableAccount = await getAccountByCode(
+    ACCOUNT_CODES.ACCOUNTS_PAYABLE,
+  );
+  const otherRevenueAccount = await getAccountByCode(
+    ACCOUNT_CODES.OTHER_REVENUE,
+  );
+
+  if (!inventoryAccount) {
+    throw new Error("Akun persediaan tidak ditemukan");
+  }
+
+  const nomorJurnal = generateTransactionNumber("JR");
+
+  let jurnalEntry;
+
+  switch (reason) {
+    case "PURCHASE":
+      // Pembelian: Persediaan (Dr) + Kas/Utang (Cr)
+      if (!cashAccount || !accountsPayableAccount) {
+        throw new Error("Akun kas atau hutang tidak ditemukan");
+      }
+
+      const creditAccount =
+        paymentMethod === "CASH" ? cashAccount : accountsPayableAccount;
+
+      jurnalEntry = await prisma.jurnalEntry.create({
+        data: {
+          nomorJurnal,
+          tanggal: new Date(),
+          deskripsi: `Pembelian Barang - ${transaksiMasukId}`,
+          referensi: transaksiMasukId,
+          tipeReferensi: "PURCHASE",
+          periodeId: periode.id,
+          userId,
+          isPosted: true,
+          details: {
+            create: [
+              // Debit Inventory (Asset increases)
+              {
+                akunId: inventoryAccount.id,
+                debit: totalAmount,
+                kredit: 0,
+                deskripsi: "Pembelian persediaan",
+              },
+              // Credit Cash or Accounts Payable
+              {
+                akunId: creditAccount.id,
+                debit: 0,
+                kredit: totalAmount,
+                deskripsi:
+                  paymentMethod === "CASH"
+                    ? "Pembayaran tunai"
+                    : "Hutang pembelian",
+              },
+            ],
+          },
+        },
+        include: {
+          details: {
+            include: {
+              akun: true,
+            },
+          },
+        },
+      });
+      break;
+
+    case "STOCK_OPNAME_SURPLUS":
+      // Stock Opname Surplus: Persediaan (Dr) + Pendapatan Lain-lain (Cr)
+      if (!otherRevenueAccount) {
+        throw new Error("Akun pendapatan lain-lain tidak ditemukan");
+      }
+
+      jurnalEntry = await prisma.jurnalEntry.create({
+        data: {
+          nomorJurnal,
+          tanggal: new Date(),
+          deskripsi: `Penyesuaian Stok Surplus - ${transaksiMasukId}`,
+          referensi: transaksiMasukId,
+          tipeReferensi: "STOCK_ADJUSTMENT",
+          periodeId: periode.id,
+          userId,
+          isPosted: true,
+          details: {
+            create: [
+              // Debit Inventory (Asset increases)
+              {
+                akunId: inventoryAccount.id,
+                debit: totalAmount,
+                kredit: 0,
+                deskripsi: "Penambahan persediaan surplus",
+              },
+              // Credit Other Revenue
+              {
+                akunId: otherRevenueAccount.id,
+                debit: 0,
+                kredit: totalAmount,
+                deskripsi: "Pendapatan dari penyesuaian stok surplus",
+              },
+            ],
+          },
+        },
+        include: {
+          details: {
+            include: {
+              akun: true,
+            },
+          },
+        },
+      });
+      break;
+
+    case "INTERNAL_ADJUSTMENT":
+      // Internal Adjustment: Persediaan (Dr) + Beban Penyesuaian (Cr)
+      // For internal adjustments, we might need a specific expense account
+      // For now, we'll use OTHER_EXPENSE, but this could be customized
+      const otherExpenseAccount = await getAccountByCode(
+        ACCOUNT_CODES.OTHER_EXPENSE,
+      );
+
+      if (!otherExpenseAccount) {
+        throw new Error("Akun beban lain-lain tidak ditemukan");
+      }
+
+      jurnalEntry = await prisma.jurnalEntry.create({
+        data: {
+          nomorJurnal,
+          tanggal: new Date(),
+          deskripsi: `Penyesuaian Internal - ${transaksiMasukId}`,
+          referensi: transaksiMasukId,
+          tipeReferensi: "INTERNAL_ADJUSTMENT",
+          periodeId: periode.id,
+          userId,
+          isPosted: true,
+          details: {
+            create: [
+              // Debit Inventory (Asset increases)
+              {
+                akunId: inventoryAccount.id,
+                debit: totalAmount,
+                kredit: 0,
+                deskripsi: "Penambahan persediaan internal",
+              },
+              // Credit Other Expense (could be production cost, etc.)
+              {
+                akunId: otherExpenseAccount.id,
+                debit: 0,
+                kredit: totalAmount,
+                deskripsi: "Beban penyesuaian internal",
+              },
+            ],
+          },
+        },
+        include: {
+          details: {
+            include: {
+              akun: true,
+            },
+          },
+        },
+      });
+      break;
+
+    default:
+      throw new Error(`Tipe penambahan stok tidak valid: ${reason}`);
+  }
+
+  return jurnalEntry;
+}

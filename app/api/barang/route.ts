@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/prisma";
+import { createJournalEntryForStockAddition } from "@/lib/accounting-utils";
 import { z } from "zod";
 
 const barangSchema = z.object({
@@ -89,6 +90,17 @@ export async function POST(request: NextRequest) {
         description: `Menambah barang baru: ${barang.nama}`,
       },
     });
+
+    // Create journal entry for initial inventory if stock > 0
+    if (validatedData.stok > 0) {
+      const totalNilai = validatedData.stok * validatedData.hargaBeli;
+      await createJournalEntryForStockAddition(
+        `INITIAL-${barang.id}`,
+        totalNilai,
+        "INTERNAL_ADJUSTMENT",
+        session.user.id,
+      );
+    }
 
     return NextResponse.json(barang, { status: 201 });
   } catch (error) {

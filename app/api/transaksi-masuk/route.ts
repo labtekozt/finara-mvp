@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/prisma";
 import { generateMasukNumber } from "@/lib/transaction-number";
-import { createJournalEntryForPurchase } from "@/lib/accounting-utils";
+import { createJournalEntryForStockAddition } from "@/lib/accounting-utils";
 import { z } from "zod";
 
 const transaksiMasukSchema = z.object({
@@ -13,6 +13,10 @@ const transaksiMasukSchema = z.object({
   sumber: z.string().min(1, "Sumber barang harus diisi"),
   lokasiId: z.string().min(1, "Lokasi harus dipilih"),
   keterangan: z.string().optional(),
+  reason: z.enum(["PURCHASE", "STOCK_OPNAME_SURPLUS", "INTERNAL_ADJUSTMENT"], {
+    required_error: "Alasan penambahan stok harus dipilih",
+  }),
+  paymentMethod: z.enum(["CASH", "CREDIT"]).optional(),
 });
 
 // GET - List incoming transactions
@@ -117,10 +121,12 @@ export async function POST(request: NextRequest) {
     });
 
     // Create accounting journal entry (critical for balance)
-    await createJournalEntryForPurchase(
+    await createJournalEntryForStockAddition(
       transaksi.id,
       totalNilai,
+      validatedData.reason,
       session.user.id,
+      validatedData.paymentMethod,
     );
 
     return NextResponse.json(transaksi, { status: 201 });
