@@ -30,17 +30,14 @@ import { ReactNode } from "react";
 
 interface HistoryPenjualanTabProps {
   // Data
-  originalTransaksiKasir: TransaksiKasir[];
+  sortedTransaksiKasir: TransaksiKasir[];
   paginatedTransaksiKasir: Array<{ tr: TransaksiKasir; item: any }>;
-  kategoriList: string[];
+  startDateKasir: string;
+  endDateKasir: string;
 
   // Search & Filter state
   searchKasir: string;
   setSearchKasir: (value: string) => void;
-  kategoriFilterKasir: string;
-  setKategoriFilterKasir: (value: string) => void;
-  startDateKasir: string;
-  endDateKasir: string;
 
   // Sort handlers
   handleSortKasir: (column: string) => void;
@@ -58,15 +55,12 @@ interface HistoryPenjualanTabProps {
 }
 
 export function HistoryPenjualanTab({
-  originalTransaksiKasir,
+  sortedTransaksiKasir,
   paginatedTransaksiKasir,
-  kategoriList,
-  searchKasir,
-  setSearchKasir,
-  kategoriFilterKasir,
-  setKategoriFilterKasir,
   startDateKasir,
   endDateKasir,
+  searchKasir,
+  setSearchKasir,
   handleSortKasir,
   getSortIconKasir,
   currentPage,
@@ -76,34 +70,31 @@ export function HistoryPenjualanTab({
 }: HistoryPenjualanTabProps) {
   return (
     <div className="space-y-4">
+      {/* Statistics Cards */}
       <Card className="bg-linear-to-b from-blue-50 to-white">
-        <CardHeader>
-          <CardTitle>History Penjualan Barang</CardTitle>
-          <CardDescription>
-            Riwayat barang keluar dari transaksi kasir (per item)
-          </CardDescription>
-        </CardHeader>
         <CardContent>
-          {/* Statistics Cards */}
           <StatsGrid
             stats={[
               {
                 title: "Total Jenis Barang",
                 value: (() => {
                   const uniqueBarangIds = new Set<string>();
-                  originalTransaksiKasir.forEach((tr) => {
+                  sortedTransaksiKasir.forEach((tr) => {
                     tr.itemTransaksi.forEach((item) => {
                       uniqueBarangIds.add(item.barang.id);
                     });
                   });
                   return uniqueBarangIds.size;
                 })(),
-                description: "Total keseluruhan",
+                description:
+                  startDateKasir || endDateKasir
+                    ? `${startDateKasir ? format(new Date(startDateKasir), "dd/MM/yyyy") : "..."} - ${endDateKasir ? format(new Date(endDateKasir), "dd/MM/yyyy") : "..."}`
+                    : "Total keseluruhan",
                 icon: Package,
               },
               {
                 title: "Total Qty Keluar",
-                value: originalTransaksiKasir.reduce(
+                value: sortedTransaksiKasir.reduce(
                   (sum, tr) =>
                     sum +
                     tr.itemTransaksi.reduce((s, item) => s + item.qty, 0),
@@ -114,52 +105,46 @@ export function HistoryPenjualanTab({
               },
               {
                 title: "Total Nilai Penjualan",
-                value: `Rp ${originalTransaksiKasir.reduce((sum, tr) => sum + tr.total, 0).toLocaleString("id-ID")}`,
+                value: `Rp ${sortedTransaksiKasir.reduce((sum, tr) => sum + tr.total, 0).toLocaleString("id-ID")}`,
                 description: "Omset penjualan",
                 icon: TrendingDown,
               },
               {
                 title: "Rata-rata",
-                value: `Rp ${originalTransaksiKasir.length > 0 ? (originalTransaksiKasir.reduce((sum, tr) => sum + tr.total, 0) / originalTransaksiKasir.length).toLocaleString("id-ID") : "0"}`,
+                value: `Rp ${sortedTransaksiKasir.length > 0 ? (sortedTransaksiKasir.reduce((sum, tr) => sum + tr.total, 0) / sortedTransaksiKasir.length).toLocaleString("id-ID") : "0"}`,
                 description: "Per transaksi",
                 icon: TrendingDown,
               },
             ]}
           />
+        </CardContent>
+      </Card>
 
+      {/* Table History Kasir - Per Item */}
+      <Card className="mt-4">
+        <CardHeader>
+          <CardTitle>History Barang Keluar (Kasir)</CardTitle>
+          <CardDescription>
+            Riwayat barang keluar dari transaksi kasir (per item)
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
           {/* Filters */}
           <div className="flex flex-wrap gap-4 my-5">
             <div className="flex-1 min-w-[200px]">
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Cari no. transaksi, barang, kasir, atau metode bayar"
+                  placeholder="Cari nomor transaksi, nama barang, kasir, atau metode bayar..."
                   value={searchKasir}
                   onChange={(e) => setSearchKasir(e.target.value)}
                   className="pl-9 bg-white"
                 />
               </div>
             </div>
-            <Select
-              value={kategoriFilterKasir}
-              onValueChange={setKategoriFilterKasir}
-            >
-              <SelectTrigger className="w-[200px] bg-white">
-                <SelectValue placeholder="Semua Kategori" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">Semua Kategori</SelectItem>
-                {kategoriList.map((kat) => (
-                  <SelectItem key={kat} value={kat}>
-                    {kat}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
-
           {/* Table */}
-          <div className="rounded-md border mt-5">
+          <div className="rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>

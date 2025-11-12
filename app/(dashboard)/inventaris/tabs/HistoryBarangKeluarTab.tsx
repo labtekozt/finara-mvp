@@ -31,18 +31,18 @@ import { ReactNode } from "react";
 
 interface HistoryBarangKeluarTabProps {
   // Data
-  originalTransaksiKeluar: TransaksiKeluar[];
+  sortedTransaksiKeluar: TransaksiKeluar[];
   paginatedTransaksiKeluar: TransaksiKeluar[];
   lokasi: Lokasi[];
   kategoriList: string[];
 
   // Search & Filter state
-  searchKeluar: string;
-  setSearchKeluar: (value: string) => void;
-  kategoriFilterKeluar: string;
-  setKategoriFilterKeluar: (value: string) => void;
-  lokasiFilterKeluar: string;
-  setLokasiFilterKeluar: (value: string) => void;
+  search: string;
+  setSearch: (value: string) => void;
+  kategoriFilter: string;
+  setKategoriFilter: (value: string) => void;
+  lokasiFilter: string;
+  setLokasiFilter: (value: string) => void;
   startDateKeluar: string;
   endDateKeluar: string;
 
@@ -65,16 +65,16 @@ interface HistoryBarangKeluarTabProps {
 }
 
 export function HistoryBarangKeluarTab({
-  originalTransaksiKeluar,
+  sortedTransaksiKeluar,
   paginatedTransaksiKeluar,
   lokasi,
   kategoriList,
-  searchKeluar,
-  setSearchKeluar,
-  kategoriFilterKeluar,
-  setKategoriFilterKeluar,
-  lokasiFilterKeluar,
-  setLokasiFilterKeluar,
+  search,
+  setSearch,
+  kategoriFilter,
+  setKategoriFilter,
+  lokasiFilter,
+  setLokasiFilter,
   startDateKeluar,
   endDateKeluar,
   handleSortKeluar,
@@ -104,14 +104,17 @@ export function HistoryBarangKeluarTab({
               {
                 title: "Total Jenis Barang Keluar",
                 value: new Set(
-                  originalTransaksiKeluar.map((tr) => tr.barang.id),
+                  sortedTransaksiKeluar.map((tr) => tr.barang.id),
                 ).size,
-                description: "Total keseluruhan",
+                description:
+                  startDateKeluar || endDateKeluar
+                    ? `${startDateKeluar ? format(new Date(startDateKeluar), "dd/MM/yyyy") : "..."} - ${endDateKeluar ? format(new Date(endDateKeluar), "dd/MM/yyyy") : "..."}`
+                    : "Total keseluruhan",
                 icon: TrendingDown,
               },
               {
                 title: "Total Jumlah Barang",
-                value: originalTransaksiKeluar.reduce(
+                value: sortedTransaksiKeluar.reduce(
                   (sum, tr) => sum + tr.qty,
                   0,
                 ),
@@ -120,13 +123,13 @@ export function HistoryBarangKeluarTab({
               },
               {
                 title: "Total Nilai",
-                value: `Rp ${originalTransaksiKeluar.reduce((sum, tr) => sum + tr.totalNilai, 0).toLocaleString("id-ID")}`,
+                value: `Rp ${sortedTransaksiKeluar.reduce((sum, tr) => sum + tr.totalNilai, 0).toLocaleString("id-ID")}`,
                 description: "Nilai barang keluar",
                 icon: TrendingDown,
               },
               {
                 title: "Rata-rata",
-                value: `Rp ${originalTransaksiKeluar.length > 0 ? (originalTransaksiKeluar.reduce((sum, tr) => sum + tr.totalNilai, 0) / originalTransaksiKeluar.length).toLocaleString("id-ID") : "0"}`,
+                value: `Rp ${sortedTransaksiKeluar.length > 0 ? (sortedTransaksiKeluar.reduce((sum, tr) => sum + tr.totalNilai, 0) / sortedTransaksiKeluar.length).toLocaleString("id-ID") : "0"}`,
                 description: "Per transaksi",
                 icon: TrendingDown,
               },
@@ -139,16 +142,16 @@ export function HistoryBarangKeluarTab({
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Cari no. transaksi, barang, tujuan, atau lokasi"
-                  value={searchKeluar}
-                  onChange={(e) => setSearchKeluar(e.target.value)}
+                  placeholder="Cari nama atau SKU..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
                   className="pl-9 bg-white"
                 />
               </div>
             </div>
             <Select
-              value={kategoriFilterKeluar}
-              onValueChange={setKategoriFilterKeluar}
+              value={kategoriFilter}
+              onValueChange={setKategoriFilter}
             >
               <SelectTrigger className="w-[200px] bg-white">
                 <SelectValue placeholder="Semua Kategori" />
@@ -163,8 +166,8 @@ export function HistoryBarangKeluarTab({
               </SelectContent>
             </Select>
             <Select
-              value={lokasiFilterKeluar}
-              onValueChange={setLokasiFilterKeluar}
+              value={lokasiFilter}
+              onValueChange={setLokasiFilter}
             >
               <SelectTrigger className="w-[200px] bg-white">
                 <SelectValue placeholder="Semua Lokasi" />
