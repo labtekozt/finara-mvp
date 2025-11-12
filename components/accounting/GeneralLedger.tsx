@@ -50,7 +50,7 @@ import { AccountingService } from "@/services/accounting";
 import { toast } from "sonner";
 import { JournalPDFExporter } from "@/lib/pdf-export";
 import jsPDF from "jspdf";
-import { autoTable } from "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 
 interface GeneralLedgerProps {
   className?: string;
@@ -227,7 +227,7 @@ export function GeneralLedger({ className }: GeneralLedgerProps) {
           {/* Filters */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div>
-              <Label htmlFor="akun">Pilih Akun</Label>
+              <Label htmlFor="akun" className="mb-2">Pilih Akun</Label>
               <Select value={selectedAkunId} onValueChange={handleAkunChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="Pilih akun..." />
@@ -243,7 +243,7 @@ export function GeneralLedger({ className }: GeneralLedgerProps) {
             </div>
 
             <div>
-              <Label htmlFor="startDate">Tanggal Mulai</Label>
+              <Label htmlFor="startDate" className="mb-2">Tanggal Mulai</Label>
               <Input
                 id="startDate"
                 type="date"
@@ -253,7 +253,7 @@ export function GeneralLedger({ className }: GeneralLedgerProps) {
             </div>
 
             <div>
-              <Label htmlFor="endDate">Tanggal Akhir</Label>
+              <Label htmlFor="endDate" className="mb-2">Tanggal Akhir</Label>
               <Input
                 id="endDate"
                 type="date"

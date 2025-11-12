@@ -204,7 +204,7 @@ export function AccountsManagement({ className }: AccountsManagementProps) {
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <Label htmlFor="search">Cari Akun</Label>
-              <div className="relative">
+              <div className="relative mt-2">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="search"
@@ -218,7 +218,7 @@ export function AccountsManagement({ className }: AccountsManagementProps) {
             <div className="w-full sm:w-40">
               <Label htmlFor="tipe">Tipe Akun</Label>
               <Select value={filterTipe} onValueChange={setFilterTipe}>
-                <SelectTrigger>
+                <SelectTrigger className="mt-2">
                   <SelectValue placeholder="Semua Tipe" />
                 </SelectTrigger>
                 <SelectContent>
@@ -234,7 +234,7 @@ export function AccountsManagement({ className }: AccountsManagementProps) {
             <div className="w-full sm:w-40">
               <Label htmlFor="kategori">Kategori</Label>
               <Select value={filterKategori} onValueChange={setFilterKategori}>
-                <SelectTrigger>
+                <SelectTrigger className="mt-2">
                   <SelectValue placeholder="Semua Kategori" />
                 </SelectTrigger>
                 <SelectContent>

@@ -166,7 +166,7 @@ export function JournalsManagement({
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-1">
                   <Label htmlFor="search">Cari Jurnal</Label>
-                  <div className="relative">
+                  <div className="relative mt-2">
                     <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="search"
@@ -181,6 +181,7 @@ export function JournalsManagement({
                   <Label htmlFor="start-date">Tanggal Mulai</Label>
                   <Input
                     id="start-date"
+                    className="mt-2"
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
@@ -189,6 +190,7 @@ export function JournalsManagement({
                 <div className="w-full sm:w-32">
                   <Label htmlFor="end-date">Tanggal Akhir</Label>
                   <Input
+                    className="mt-2"
                     id="end-date"
                     type="date"
                     value={endDate}
