@@ -24,7 +24,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Search, Package, TrendingDown } from "lucide-react";
 import { format } from "date-fns";
-import { StatsGrid } from "../components/StatsGrid";
+import { StatsGrid } from "@/components/inventory";
 import { TransaksiKasir } from "../types";
 import { ReactNode } from "react";
 

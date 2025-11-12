@@ -31,7 +31,7 @@ import {
   Package,
   AlertTriangle,
 } from "lucide-react";
-import { StatsGrid } from "../components/StatsGrid";
+import { StatsGrid } from "@/components/inventory";
 import { Barang, Lokasi } from "../types";
 import { ReactNode } from "react";
 

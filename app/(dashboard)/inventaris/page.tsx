@@ -20,15 +20,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -53,7 +44,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { StatsGrid, StatItem } from "./components/StatsGrid";
+import { StatsGrid, StatItem, TambahEditBarangDialog, BarangKeluarDialog } from "@/components/inventory";
 import { Button as StatsButton } from "@/components/ui/button";
 
 interface Barang {
@@ -819,23 +810,22 @@ export default function InventarisPage() {
 
       <div className="flex-1 p-3 space-y-6">
         {/* Tabs: Daftar Barang & History Keluar */}
+        <h1 className="text-lg font-bold">Pilih Menu</h1>
         <Tabs defaultValue="barang" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <TabsList>
+            <TabsList className="bg-amber-400">
               <TabsTrigger value="barang">
                 <Package className="mr-2 h-4 w-4" />
-                Daftar Barang ({barang.length})
+                Daftar Barang
               </TabsTrigger>
               <TabsTrigger value="history">
                 <History className="mr-2 h-4 w-4" />
-                History Barang Keluar ({transaksiKeluar.length})
+                History Barang Keluar
               </TabsTrigger>
               <TabsTrigger value="kasir">
                 <TrendingDown className="mr-2 h-4 w-4" />
-                History Penjualan Barang ({transaksiKasir.length})
+                History Penjualan Barang
               </TabsTrigger>
             </TabsList>
-          </div>
           {/* Tab Daftar Barang */}
           <TabsContent value="barang">
             <Card className="bg-linear-to-b from-blue-50 to-white">
@@ -843,9 +833,6 @@ export default function InventarisPage() {
                 <CardTitle>Daftar Barang</CardTitle>
                 <CardDescription>
                   <div className="flex justify-between items-center">
-                    {stokRendahFilter
-                      ? `Menampilkan ${sortedBarang.length} barang dengan stok rendah dari total ${barang.length} barang`
-                      : `Total: ${sortedBarang.length} barang`}
                     <Button onClick={openTambahDialog} className="my-3">
                       <Plus className="mr-2 h-4 w-4" />
                       Tambah Barang
@@ -894,8 +881,6 @@ export default function InventarisPage() {
 
                 {/* Filters */}
                 <div className="flex flex-wrap gap-4 my-5">
-                  <h1 className="text-lg font-bold">Cari Barang</h1>
-
                   <div className="flex-1 min-w-[200px]">
                     <div className="relative">
                       <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -1093,7 +1078,7 @@ export default function InventarisPage() {
           <TabsContent value="history">
             <div className="space-y-4">
               {/* Filter Tanggal Range */}
-              <Card className="bg-gradient-to-b from-blue-50 to-white">
+              <Card className="bg-linear-to-b from-blue-50 to-white">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0">
                   <CardTitle>History Barang Keluar</CardTitle>
                   <CardDescription>
@@ -1147,8 +1132,6 @@ export default function InventarisPage() {
                   {/* History Barang Keluar */}
                   {/* Filters */}
                   <div className="flex flex-wrap gap-4 my-5">
-                    <h1 className="text-lg font-bold">Cari Barang</h1>
-
                     <div className="flex-1 min-w-[200px]">
                       <div className="relative">
                         <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -1327,7 +1310,7 @@ export default function InventarisPage() {
           {/* Tab Barang Keluar dari Kasir */}
           <TabsContent value="kasir">
             <div className="space-y-4">
-              {/* Filter Tanggal Range */}
+              {/* Filter Tanggal Range
               <Card>
                 <CardHeader>
                   <CardTitle>Filter Transaksi</CardTitle>
@@ -1373,9 +1356,10 @@ export default function InventarisPage() {
                     )}
                   </div>
                 </CardContent>
-              </Card>
+              </Card> */}
 
               {/* Statistics Cards */}
+              <Card className="bg-linear-to-b from-blue-50 to-white">
               <StatsGrid
                 stats={[
                   {
@@ -1530,523 +1514,43 @@ export default function InventarisPage() {
                   )}
                 </CardContent>
               </Card>
+              </Card>
             </div>
           </TabsContent>
         </Tabs>
       </div>
 
       {/* Dialog Tambah/Edit Barang */}
-      <Dialog
+      <TambahEditBarangDialog
         open={dialogOpen}
-        onOpenChange={(open: boolean) => {
-          setDialogOpen(open);
-          if (!open) resetForm();
-        }}
-      >
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingItem ? "Edit Barang" : "Tambah Barang"}
-            </DialogTitle>
-          </DialogHeader>
-
-          <form onSubmit={handleSubmit}>
-            <div className="grid gap-4 py-4">
-              {/* Pilih barang atau tambah baru (gabungan) - tampil jika bukan edit */}
-              {!editingItem && (
-                <div className="space-y-2">
-                  <Label>Pilih Barang atau Tambah Baru</Label>
-                  <Select
-                    value={
-                      tambahMode === "new"
-                        ? "NEW"
-                        : formTambahStok.barangId || ""
-                    }
-                    onValueChange={(value: string) =>
-                      handleSelectForTambah(value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih barang atau tambah baru" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="NEW">➕ Tambah Barang Baru</SelectItem>
-                      {barang.map((b) => (
-                        <SelectItem key={b.id} value={b.id}>
-                          {b.nama} - Stok: {b.stok} {b.satuan}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              {/* Form untuk TAMBAH STOK (existing) */}
-              {!editingItem && tambahMode === "existing" && (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="qty-tambah">Jumlah Tambah Stok *</Label>
-                      <Input
-                        id="qty-tambah"
-                        type="number"
-                        value={formTambahStok.qty || ""}
-                        onChange={(e) =>
-                          setFormTambahStok({
-                            ...formTambahStok,
-                            qty: parseInt(e.target.value) || 0,
-                          })
-                        }
-                        required
-                        min="1"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="harga-beli-tambah">Harga Beli *</Label>
-                      <Input
-                        id="harga-beli-tambah"
-                        type="number"
-                        value={formTambahStok.hargaBeli || ""}
-                        onChange={(e) =>
-                          setFormTambahStok({
-                            ...formTambahStok,
-                            hargaBeli: parseFloat(e.target.value) || 0,
-                          })
-                        }
-                        required
-                        min="0"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="sumber-tambah">Sumber Barang *</Label>
-                    <Input
-                      id="sumber-tambah"
-                      value={formTambahStok.sumber}
-                      onChange={(e) =>
-                        setFormTambahStok({
-                          ...formTambahStok,
-                          sumber: e.target.value,
-                        })
-                      }
-                      placeholder="Contoh: Supplier A, Pembelian Lokal, Transfer Cabang"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="reason-tambah">
-                      Alasan Penambahan Stok *
-                    </Label>
-                    <Select
-                      value={formTambahStok.reason}
-                      onValueChange={(value: string) =>
-                        setFormTambahStok({
-                          ...formTambahStok,
-                          reason: value as
-                            | "PURCHASE"
-                            | "STOCK_OPNAME_SURPLUS"
-                            | "INTERNAL_ADJUSTMENT",
-                          paymentMethod:
-                            value === "PURCHASE"
-                              ? formTambahStok.paymentMethod
-                              : undefined,
-                        })
-                      }
-                      required
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih alasan" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="PURCHASE">Pembelian</SelectItem>
-                        <SelectItem value="STOCK_OPNAME_SURPLUS">
-                          Surplus Stock Opname
-                        </SelectItem>
-                        <SelectItem value="INTERNAL_ADJUSTMENT">
-                          Penyesuaian Internal
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {formTambahStok.reason === "PURCHASE" && (
-                    <div className="space-y-2">
-                      <Label htmlFor="payment-method-tambah">
-                        Metode Pembayaran *
-                      </Label>
-                      <Select
-                        value={formTambahStok.paymentMethod || ""}
-                        onValueChange={(value: string) =>
-                          setFormTambahStok({
-                            ...formTambahStok,
-                            paymentMethod: value as "CASH",
-                          })
-                        }
-                        required
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Pilih metode pembayaran" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="CASH">Tunai</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-
-                  <div className="space-y-2">
-                    <Label htmlFor="lokasi-tambah">Lokasi Gudang *</Label>
-                    <Select
-                      value={formTambahStok.lokasiId}
-                      onValueChange={(value: string) =>
-                        setFormTambahStok({
-                          ...formTambahStok,
-                          lokasiId: value,
-                        })
-                      }
-                      required
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih lokasi" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {lokasi.map((lok) => (
-                          <SelectItem key={lok.id} value={lok.id}>
-                            {lok.namaLokasi}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="keterangan-tambah">Keterangan</Label>
-                    <Input
-                      id="keterangan-tambah"
-                      value={formTambahStok.keterangan}
-                      onChange={(e) =>
-                        setFormTambahStok({
-                          ...formTambahStok,
-                          keterangan: e.target.value,
-                        })
-                      }
-                      placeholder="Catatan tambahan (opsional)"
-                    />
-                  </div>
-
-                  {formTambahStok.qty > 0 && formTambahStok.hargaBeli > 0 && (
-                    <div className="p-4 bg-muted rounded-lg">
-                      <div className="text-sm text-muted-foreground">
-                        Total Nilai Tambah Stok
-                      </div>
-                      <div className="text-2xl font-bold">
-                        Rp{" "}
-                        {(
-                          formTambahStok.qty * formTambahStok.hargaBeli
-                        ).toLocaleString("id-ID")}
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-
-              {/* Form untuk BARANG BARU (custom) atau EDIT */}
-              {(editingItem || tambahMode === "new") && (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="nama">Nama Barang *</Label>
-                      <Input
-                        id="nama"
-                        value={formData.nama}
-                        onChange={(e) =>
-                          setFormData({ ...formData, nama: e.target.value })
-                        }
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="sku">SKU</Label>
-                      <Input
-                        id="sku"
-                        value={formData.sku}
-                        onChange={(e) =>
-                          setFormData({ ...formData, sku: e.target.value })
-                        }
-                        placeholder="Kode unik (opsional)"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="kategori">Kategori *</Label>
-                      <Input
-                        id="kategori"
-                        value={formData.kategori}
-                        onChange={(e) =>
-                          setFormData({ ...formData, kategori: e.target.value })
-                        }
-                        placeholder="Contoh: Elektronik, Makanan"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="satuan">Satuan *</Label>
-                      <Input
-                        id="satuan"
-                        value={formData.satuan}
-                        onChange={(e) =>
-                          setFormData({ ...formData, satuan: e.target.value })
-                        }
-                        placeholder="Contoh: pcs, kg, box"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="stok">Stok Awal *</Label>
-                      <Input
-                        id="stok"
-                        type="number"
-                        value={formData.stok}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            stok: parseInt(e.target.value) || 0,
-                          })
-                        }
-                        required
-                        min="0"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="stokMinimum">Stok Minimum *</Label>
-                      <Input
-                        id="stokMinimum"
-                        type="number"
-                        value={formData.stokMinimum}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            stokMinimum: parseInt(e.target.value) || 0,
-                          })
-                        }
-                        required
-                        min="0"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="hargaBeli">Harga Beli *</Label>
-                      <Input
-                        id="hargaBeli"
-                        type="number"
-                        value={formData.hargaBeli}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            hargaBeli: parseFloat(e.target.value) || 0,
-                          })
-                        }
-                        required
-                        min="0"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="hargaJual">Harga Jual *</Label>
-                      <Input
-                        id="hargaJual"
-                        type="number"
-                        value={formData.hargaJual}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            hargaJual: parseFloat(e.target.value) || 0,
-                          })
-                        }
-                        required
-                        min="0"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="lokasiId">Lokasi *</Label>
-                    <Select
-                      value={formData.lokasiId}
-                      onValueChange={(value: string) =>
-                        setFormData({ ...formData, lokasiId: value })
-                      }
-                      required
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih lokasi" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {lokasi.map((lok) => (
-                          <SelectItem key={lok.id} value={lok.id}>
-                            {lok.namaLokasi}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="deskripsi">Deskripsi</Label>
-                    <Input
-                      id="deskripsi"
-                      value={formData.deskripsi}
-                      onChange={(e) =>
-                        setFormData({ ...formData, deskripsi: e.target.value })
-                      }
-                      placeholder="Informasi tambahan (opsional)"
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setDialogOpen(false)}
-                disabled={loading}
-              >
-                Batal
-              </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? "Menyimpan..." : editingItem ? "Update" : "Simpan"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+        onOpenChange={setDialogOpen}
+        editingItem={editingItem}
+        tambahMode={tambahMode}
+        formData={formData}
+        setFormData={setFormData}
+        formTambahStok={formTambahStok}
+        setFormTambahStok={setFormTambahStok}
+        barang={barang}
+        lokasi={lokasi}
+        loading={loading}
+        handleSubmit={handleSubmit}
+        handleSelectForTambah={handleSelectForTambah}
+        resetForm={resetForm}
+      />
 
       {/* Dialog Barang Keluar */}
-      <Dialog
+      <BarangKeluarDialog
         open={dialogKeluarOpen}
-        onOpenChange={(open) => {
-          setDialogKeluarOpen(open);
-          if (!open) resetFormKeluar();
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Transaksi Barang Keluar</DialogTitle>
-            <DialogDescription>
-              Catat barang keluar dari gudang
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmitKeluar}>
-            <div className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="barang-keluar">Barang *</Label>
-                <Select
-                  value={formKeluar.barangId}
-                  onValueChange={handleBarangChangeKeluar}
-                  required
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih barang" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {barang.map((b) => (
-                      <SelectItem key={b.id} value={b.id}>
-                        {b.nama} - Stok: {b.stok} {b.satuan}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="qty-keluar">Jumlah *</Label>
-                <Input
-                  id="qty-keluar"
-                  type="number"
-                  value={formKeluar.qty || ""}
-                  onChange={(e) =>
-                    setFormKeluar({
-                      ...formKeluar,
-                      qty: parseInt(e.target.value) || 0,
-                    })
-                  }
-                  required
-                  min="1"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="tujuan">Tujuan *</Label>
-                <Input
-                  id="tujuan"
-                  value={formKeluar.tujuan}
-                  onChange={(e) =>
-                    setFormKeluar({ ...formKeluar, tujuan: e.target.value })
-                  }
-                  placeholder="Contoh: Toko Cabang A, Retur Supplier, Rusak"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="lokasi-keluar">Lokasi Gudang *</Label>
-                <Select
-                  value={formKeluar.lokasiId}
-                  onValueChange={(value) =>
-                    setFormKeluar({ ...formKeluar, lokasiId: value })
-                  }
-                  required
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih lokasi" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {lokasi.map((l) => (
-                      <SelectItem key={l.id} value={l.id}>
-                        {l.namaLokasi}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="keterangan-keluar">Keterangan</Label>
-                <Input
-                  id="keterangan-keluar"
-                  value={formKeluar.keterangan}
-                  onChange={(e) =>
-                    setFormKeluar({ ...formKeluar, keterangan: e.target.value })
-                  }
-                  placeholder="Catatan tambahan (opsional)"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setDialogKeluarOpen(false)}
-                disabled={loading}
-              >
-                Batal
-              </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? "Menyimpan..." : "Simpan"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+        onOpenChange={setDialogKeluarOpen}
+        formKeluar={formKeluar}
+        setFormKeluar={setFormKeluar}
+        barang={barang}
+        lokasi={lokasi}
+        loading={loading}
+        handleSubmitKeluar={handleSubmitKeluar}
+        handleBarangChangeKeluar={handleBarangChangeKeluar}
+        resetFormKeluar={resetFormKeluar}
+      />
     </div>
   );
 }
