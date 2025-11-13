@@ -31,7 +31,7 @@ import {
   Package,
   AlertTriangle,
 } from "lucide-react";
-import { StatsGrid } from "../components/StatsGrid";
+import { StatsGrid } from "@/components/inventory";
 import { Barang, Lokasi } from "../types";
 import { ReactNode } from "react";
 
@@ -155,7 +155,7 @@ export function DaftarBarangTab({
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Cari nama"
+                placeholder="Cari nama atau SKU..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9 bg-white"

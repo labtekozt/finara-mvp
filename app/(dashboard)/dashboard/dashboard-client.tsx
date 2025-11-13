@@ -24,6 +24,7 @@ import {
   AlertTriangle,
   Calendar,
   TrendingUpIcon,
+  Loader2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
@@ -112,7 +113,9 @@ export function DashboardClient() {
   if (loading || !data) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="animate-pulse text-lg">Loading...</div>
+        <div className="animate-pulse text-lg">
+          <Loader2 className="h-32 w-32 animate-spin" />
+          </div>
       </div>
     );
   }
@@ -155,7 +158,7 @@ export function DashboardClient() {
             {/* Quick Period Selection */}
             <div className="flex-1">
               <label className="text-sm font-medium mb-2 block">
-                Periode Cepat
+                Pilih Periode Waktu
               </label>
               <Select
                 value={period}
@@ -184,7 +187,7 @@ export function DashboardClient() {
                 Atau Pilih Range Tanggal Custom
               </label>
               <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1">
+                <div className="">
                   <label className="text-xs text-muted-foreground mb-1 block">
                     Dari Tanggal
                   </label>
@@ -198,7 +201,7 @@ export function DashboardClient() {
                     max={format(new Date(), "yyyy-MM-dd")}
                   />
                 </div>
-                <div className="flex-1">
+                <div className="">
                   <label className="text-xs text-muted-foreground mb-1 block">
                     Sampai Tanggal
                   </label>
@@ -304,7 +307,7 @@ export function DashboardClient() {
       </div>
 
       {/* Charts Section */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-1">
         {/* Top Selling Items Chart */}
         <Card>
           <CardHeader>
@@ -370,13 +373,13 @@ export function DashboardClient() {
                       {
                         label: "Pendapatan",
                         data: data.dailyRevenueData.map((item) => item.revenue),
-                        borderColor: "#0e0e0eff",
-                        backgroundColor: "rgba(14, 14, 14, 0.1)",
+                        borderColor: "blue",
+                        backgroundColor: "lightblue",
                         tension: 0.4,
                         fill: true,
                         pointRadius: 3,
                         pointHoverRadius: 5,
-                        pointBackgroundColor: "#0e0e0eff",
+                        pointBackgroundColor: "blue",
                         pointBorderColor: "#fff",
                         pointBorderWidth: 2,
                       },
@@ -477,13 +480,6 @@ export function DashboardClient() {
                         </p>
                         <p className="text-xs text-muted-foreground">
                           {transaction.kasir.nama}
-                        </p>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                            {transaction.metodePembayaran === "tunai"
-                              ? "💵 Tunai"
-                              : "💳 Kartu"}
-                          </span>
                         </p>
                       </div>
                       <div className="text-right">

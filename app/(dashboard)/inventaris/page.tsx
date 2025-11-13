@@ -3,58 +3,20 @@
 import { useState, useEffect, useMemo } from "react";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Plus,
-  Minus,
-  Search,
-  Edit,
-  Trash2,
   Package,
-  AlertTriangle,
+  TrendingDown,
+  History,
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  TrendingDown,
-  History,
 } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
-import { StatsGrid, StatItem } from "./components/StatsGrid";
-import { Button as StatsButton } from "@/components/ui/button";
+import { TambahEditBarangDialog, BarangKeluarDialog } from "@/components/inventory";
+import { DaftarBarangTab } from "./tabs/DaftarBarangTab";
+import { HistoryBarangKeluarTab } from "./tabs/HistoryBarangKeluarTab";
+import { HistoryPenjualanTab } from "./tabs/HistoryPenjualanTab";
 
 interface Barang {
   id: string;
@@ -123,6 +85,7 @@ export default function InventarisPage() {
   const [transaksiKasir, setTransaksiKasir] = useState<TransaksiKasir[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [searchKasir, setSearchKasir] = useState("");
   const [kategoriFilter, setKategoriFilter] = useState("ALL");
   const [lokasiFilter, setLokasiFilter] = useState("ALL");
   const [stokRendahFilter, setStokRendahFilter] = useState(false);
@@ -212,7 +175,7 @@ export default function InventarisPage() {
 
   useEffect(() => {
     setCurrentPageKasir(1);
-  }, [startDateKasir, endDateKasir, sortColumnKasir, sortDirectionKasir]);
+  }, [startDateKasir, endDateKasir, sortColumnKasir, sortDirectionKasir, searchKasir]);
 
   const sortedBarang = useMemo(() => {
     let filtered = [...barang];
@@ -324,6 +287,30 @@ export default function InventarisPage() {
       });
     }
 
+    // Filter berdasarkan search term (cari di nomor transaksi, nama barang, kasir, metode pembayaran)
+    if (searchKasir.trim()) {
+      const searchLower = searchKasir.toLowerCase().trim();
+      filtered = filtered.filter((tr) => {
+        // Cek nomor transaksi
+        if (tr.nomorTransaksi.toLowerCase().includes(searchLower)) {
+          return true;
+        }
+        // Cek kasir
+        if (tr.kasir.nama.toLowerCase().includes(searchLower)) {
+          return true;
+        }
+        // Cek metode pembayaran
+        if (tr.metodePembayaran.toLowerCase().includes(searchLower)) {
+          return true;
+        }
+        // Cek nama barang di item transaksi
+        const hasMatchingItem = tr.itemTransaksi.some((item) =>
+          item.namaBarang.toLowerCase().includes(searchLower)
+        );
+        return hasMatchingItem;
+      });
+    }
+
     return filtered.sort((a, b) => {
       let aValue: any = a[sortColumnKasir as keyof TransaksiKasir];
       let bValue: any = b[sortColumnKasir as keyof TransaksiKasir];
@@ -352,6 +339,7 @@ export default function InventarisPage() {
     sortDirectionKasir,
     startDateKasir,
     endDateKasir,
+    searchKasir,
   ]);
 
   // Pagination untuk Barang
@@ -819,1234 +807,126 @@ export default function InventarisPage() {
 
       <div className="flex-1 p-3 space-y-6">
         {/* Tabs: Daftar Barang & History Keluar */}
+        <h1 className="text-lg font-bold">Pilih Menu</h1>
         <Tabs defaultValue="barang" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <TabsList>
+          <TabsList className="bg-amber-400">
               <TabsTrigger value="barang">
                 <Package className="mr-2 h-4 w-4" />
-                Daftar Barang ({barang.length})
+              Daftar Barang
               </TabsTrigger>
               <TabsTrigger value="history">
                 <History className="mr-2 h-4 w-4" />
-                History Barang Keluar ({transaksiKeluar.length})
+              History Barang Keluar
               </TabsTrigger>
               <TabsTrigger value="kasir">
                 <TrendingDown className="mr-2 h-4 w-4" />
-                History Penjualan Barang ({transaksiKasir.length})
+              History Penjualan Barang
               </TabsTrigger>
             </TabsList>
-          </div>
           {/* Tab Daftar Barang */}
           <TabsContent value="barang">
-            <Card className="bg-linear-to-b from-blue-50 to-white">
-              <CardHeader>
-                <CardTitle>Daftar Barang</CardTitle>
-                <CardDescription>
-                  <div className="flex justify-between items-center">
-                    {stokRendahFilter
-                      ? `Menampilkan ${sortedBarang.length} barang dengan stok rendah dari total ${barang.length} barang`
-                      : `Total: ${sortedBarang.length} barang`}
-                    <Button onClick={openTambahDialog} className="my-3">
-                      <Plus className="mr-2 h-4 w-4" />
-                      Tambah Barang
-                    </Button>
-                  </div>
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {/* Statistics */}
-                <StatsGrid
-                  stats={[
-                    {
-                      title: "Total Barang",
-                      value: barang.length,
-                      description: "Item dalam inventaris",
-                      icon: Package,
-                    },
-                    {
-                      title: "Total Nilai",
-                      value: `Rp ${barang.reduce((sum, item) => sum + item.stok * item.hargaBeli, 0).toLocaleString("id-ID")}`,
-                      description: "Berdasarkan harga beli",
-                      icon: Package,
-                    },
-                    {
-                      title: "Stok Rendah",
-                      value: barang.filter(
-                        (item) => item.stok <= item.stokMinimum,
-                      ).length,
-                      description: "Perlu restock",
-                      icon: AlertTriangle,
-                      action: (
-                        <Button
-                          variant={stokRendahFilter ? "default" : "outline"}
-                          onClick={() => setStokRendahFilter(!stokRendahFilter)}
-                          className="w-full"
-                        >
-                          <AlertTriangle className="mr-2 h-4 w-4" />
-                          {stokRendahFilter
-                            ? "Stok Rendah Aktif"
-                            : "Tampilkan Stok Rendah"}
-                        </Button>
-                      ),
-                    },
-                  ]}
-                />
-
-                {/* Filters */}
-                <div className="flex flex-wrap gap-4 my-5">
-                  <h1 className="text-lg font-bold">Cari Barang</h1>
-
-                  <div className="flex-1 min-w-[200px]">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Cari nama atau SKU..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="pl-9 bg-white"
-                      />
-                    </div>
-                  </div>
-                  <Select
-                    value={kategoriFilter}
-                    onValueChange={setKategoriFilter}
-                  >
-                    <SelectTrigger className="w-[200px] bg-white">
-                      <SelectValue placeholder="Semua Kategori" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ALL">Semua Kategori</SelectItem>
-                      {kategoriList.map((kat) => (
-                        <SelectItem key={kat} value={kat}>
-                          {kat}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select value={lokasiFilter} onValueChange={setLokasiFilter}>
-                    <SelectTrigger className="w-[200px] bg-white">
-                      <SelectValue placeholder="Semua Lokasi" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ALL">Semua Lokasi</SelectItem>
-                      {lokasi.map((lok) => (
-                        <SelectItem key={lok.id} value={lok.id}>
-                          {lok.namaLokasi}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {/* Table */}
-                <div className="rounded-md border bg-white">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead
-                          className="cursor-pointer select-none"
-                          onClick={() => handleSort("nama")}
-                        >
-                          <div className="flex items-center">
-                            Nama
-                            {getSortIcon("nama")}
-                          </div>
-                        </TableHead>
-                        <TableHead
-                          className="cursor-pointer select-none"
-                          onClick={() => handleSort("sku")}
-                        >
-                          <div className="flex items-center">
-                            SKU
-                            {getSortIcon("sku")}
-                          </div>
-                        </TableHead>
-                        <TableHead
-                          className="cursor-pointer select-none"
-                          onClick={() => handleSort("kategori")}
-                        >
-                          <div className="flex items-center">
-                            Kategori
-                            {getSortIcon("kategori")}
-                          </div>
-                        </TableHead>
-                        <TableHead
-                          className="cursor-pointer select-none"
-                          onClick={() => handleSort("stok")}
-                        >
-                          <div className="flex items-center">
-                            Stok
-                            {getSortIcon("stok")}
-                          </div>
-                        </TableHead>
-                        <TableHead
-                          className="cursor-pointer select-none"
-                          onClick={() => handleSort("hargaBeli")}
-                        >
-                          <div className="flex items-center">
-                            Harga Beli
-                            {getSortIcon("hargaBeli")}
-                          </div>
-                        </TableHead>
-                        <TableHead
-                          className="cursor-pointer select-none"
-                          onClick={() => handleSort("hargaJual")}
-                        >
-                          <div className="flex items-center">
-                            Harga Jual
-                            {getSortIcon("hargaJual")}
-                          </div>
-                        </TableHead>
-                        <TableHead
-                          className="cursor-pointer select-none"
-                          onClick={() => handleSort("lokasi")}
-                        >
-                          <div className="flex items-center">
-                            Lokasi
-                            {getSortIcon("lokasi")}
-                          </div>
-                        </TableHead>
-                        <TableHead className="text-right">Aksi</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {loading ? (
-                        <TableRow>
-                          <TableCell colSpan={8} className="text-center">
-                            Memuat data...
-                          </TableCell>
-                        </TableRow>
-                      ) : paginatedBarang.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={8} className="text-center">
-                            Tidak ada data
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        paginatedBarang.map((item) => (
-                          <TableRow key={item.id}>
-                            <TableCell className="font-medium">
-                              <div className="flex items-center gap-2">
-                                {item.stok <= item.stokMinimum && (
-                                  <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                                )}
-                                {item.nama}
-                              </div>
-                            </TableCell>
-                            <TableCell>{item.sku || "-"}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline">{item.kategori}</Badge>
-                            </TableCell>
-                            <TableCell>
-                              <span
-                                className={
-                                  item.stok <= item.stokMinimum
-                                    ? "text-red-600 font-semibold"
-                                    : ""
-                                }
-                              >
-                                {item.stok} {item.satuan}
-                              </span>
-                            </TableCell>
-                            <TableCell>
-                              Rp {item.hargaBeli.toLocaleString("id-ID")}
-                            </TableCell>
-                            <TableCell>
-                              Rp {item.hargaJual.toLocaleString("id-ID")}
-                            </TableCell>
-                            <TableCell>{item.lokasi.namaLokasi}</TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex justify-end gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => openEditDialog(item)}
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleDelete(item.id)}
-                                >
-                                  <Trash2 className="h-4 w-4 text-red-600" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-                {totalPagesBarang > 1 && (
-                  <Pagination
+            <DaftarBarangTab
+              originalBarang={barang}
+              paginatedBarang={paginatedBarang}
+              lokasi={lokasi}
+              kategoriList={kategoriList}
+              loading={loading}
+              search={search}
+              setSearch={setSearch}
+              kategoriFilter={kategoriFilter}
+              setKategoriFilter={setKategoriFilter}
+              lokasiFilter={lokasiFilter}
+              setLokasiFilter={setLokasiFilter}
+              stokRendahFilter={stokRendahFilter}
+              setStokRendahFilter={setStokRendahFilter}
+              handleSort={handleSort}
+              getSortIcon={getSortIcon}
+              openTambahDialog={openTambahDialog}
+              openEditDialog={openEditDialog}
+              handleDelete={handleDelete}
                     currentPage={currentPageBarang}
                     totalPages={totalPagesBarang}
-                    onPageChange={setCurrentPageBarang}
+              setCurrentPage={setCurrentPageBarang}
+              PaginationComponent={Pagination}
                   />
-                )}
-              </CardContent>
-            </Card>
           </TabsContent>
 
           {/* Tab History Barang Keluar */}
           <TabsContent value="history">
-            <div className="space-y-4">
-              {/* Filter Tanggal Range */}
-              <Card className="bg-gradient-to-b from-blue-50 to-white">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                  <CardTitle>History Barang Keluar</CardTitle>
-                  <CardDescription>
-                    <Button
-                      onClick={() => setDialogKeluarOpen(true)}
-                      variant="default"
-                    >
-                      <Minus className="mr-2 h-4 w-4" />
-                      Catat Barang Keluar
-                    </Button>
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {/* Statistics Cards */}
-                  <StatsGrid
-                    stats={[
-                      {
-                        title: "Total Jenis Barang Keluar",
-                        value: new Set(
-                          sortedTransaksiKeluar.map((tr) => tr.barang.id),
-                        ).size,
-                        description:
-                          startDateKeluar || endDateKeluar
-                            ? `${startDateKeluar ? format(new Date(startDateKeluar), "dd/MM/yyyy") : "..."} - ${endDateKeluar ? format(new Date(endDateKeluar), "dd/MM/yyyy") : "..."}`
-                            : "Total keseluruhan",
-                        icon: TrendingDown,
-                      },
-                      {
-                        title: "Total Jumlah Barang",
-                        value: sortedTransaksiKeluar.reduce(
-                          (sum, tr) => sum + tr.qty,
-                          0,
-                        ),
-                        description: "Unit keluar",
-                        icon: TrendingDown,
-                      },
-                      {
-                        title: "Total Nilai",
-                        value: `Rp ${sortedTransaksiKeluar.reduce((sum, tr) => sum + tr.totalNilai, 0).toLocaleString("id-ID")}`,
-                        description: "Nilai barang keluar",
-                        icon: TrendingDown,
-                      },
-                      {
-                        title: "Rata-rata",
-                        value: `Rp ${sortedTransaksiKeluar.length > 0 ? (sortedTransaksiKeluar.reduce((sum, tr) => sum + tr.totalNilai, 0) / sortedTransaksiKeluar.length).toLocaleString("id-ID") : "0"}`,
-                        description: "Per transaksi",
-                        icon: TrendingDown,
-                      },
-                    ]}
-                  />
-                  {/* History Barang Keluar */}
-                  {/* Filters */}
-                  <div className="flex flex-wrap gap-4 my-5">
-                    <h1 className="text-lg font-bold">Cari Barang</h1>
-
-                    <div className="flex-1 min-w-[200px]">
-                      <div className="relative">
-                        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          placeholder="Cari nama atau SKU..."
-                          value={search}
-                          onChange={(e) => setSearch(e.target.value)}
-                          className="pl-9 bg-white"
-                        />
-                      </div>
-                    </div>
-                    <Select
-                      value={kategoriFilter}
-                      onValueChange={setKategoriFilter}
-                    >
-                      <SelectTrigger className="w-[200px] bg-white">
-                        <SelectValue placeholder="Semua Kategori" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ALL">Semua Kategori</SelectItem>
-                        {kategoriList.map((kat) => (
-                          <SelectItem key={kat} value={kat}>
-                            {kat}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Select
-                      value={lokasiFilter}
-                      onValueChange={setLokasiFilter}
-                    >
-                      <SelectTrigger className="w-[200px] bg-white">
-                        <SelectValue placeholder="Semua Lokasi" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ALL">Semua Lokasi</SelectItem>
-                        {lokasi.map((lok) => (
-                          <SelectItem key={lok.id} value={lok.id}>
-                            {lok.namaLokasi}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead
-                            className="cursor-pointer select-none"
-                            onClick={() => handleSortKeluar("nomorTransaksi")}
-                          >
-                            <div className="flex items-center">
-                              No. Transaksi
-                              {getSortIconKeluar("nomorTransaksi")}
-                            </div>
-                          </TableHead>
-                          <TableHead
-                            className="cursor-pointer select-none"
-                            onClick={() => handleSortKeluar("tanggal")}
-                          >
-                            <div className="flex items-center">
-                              Tanggal
-                              {getSortIconKeluar("tanggal")}
-                            </div>
-                          </TableHead>
-                          <TableHead
-                            className="cursor-pointer select-none"
-                            onClick={() => handleSortKeluar("barang")}
-                          >
-                            <div className="flex items-center">
-                              Barang
-                              {getSortIconKeluar("barang")}
-                            </div>
-                          </TableHead>
-                          <TableHead
-                            className="cursor-pointer select-none"
-                            onClick={() => handleSortKeluar("qty")}
-                          >
-                            <div className="flex items-center">
-                              Qty
-                              {getSortIconKeluar("qty")}
-                            </div>
-                          </TableHead>
-                          <TableHead
-                            className="cursor-pointer select-none"
-                            onClick={() => handleSortKeluar("hargaBarang")}
-                          >
-                            <div className="flex items-center">
-                              Harga
-                              {getSortIconKeluar("hargaBarang")}
-                            </div>
-                          </TableHead>
-                          <TableHead
-                            className="cursor-pointer select-none"
-                            onClick={() => handleSortKeluar("totalNilai")}
-                          >
-                            <div className="flex items-center">
-                              Total Nilai
-                              {getSortIconKeluar("totalNilai")}
-                            </div>
-                          </TableHead>
-                          <TableHead
-                            className="cursor-pointer select-none"
-                            onClick={() => handleSortKeluar("tujuan")}
-                          >
-                            <div className="flex items-center">
-                              Tujuan
-                              {getSortIconKeluar("tujuan")}
-                            </div>
-                          </TableHead>
-                          <TableHead
-                            className="cursor-pointer select-none"
-                            onClick={() => handleSortKeluar("lokasi")}
-                          >
-                            <div className="flex items-center">
-                              Lokasi
-                              {getSortIconKeluar("lokasi")}
-                            </div>
-                          </TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {paginatedTransaksiKeluar.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={8} className="text-center">
-                              {startDateKeluar || endDateKeluar
-                                ? "Tidak ada transaksi pada rentang tanggal tersebut"
-                                : "Belum ada transaksi"}
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          paginatedTransaksiKeluar.map((tr) => (
-                            <TableRow key={tr.id}>
-                              <TableCell className="font-medium">
-                                {tr.nomorTransaksi}
-                              </TableCell>
-                              <TableCell>
-                                {format(
-                                  new Date(tr.tanggal),
-                                  "dd/MM/yyyy HH:mm",
-                                )}
-                              </TableCell>
-                              <TableCell>{tr.barang.nama}</TableCell>
-                              <TableCell>
-                                <Badge variant="outline">
-                                  {tr.qty} {tr.barang.satuan}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                Rp {tr.hargaBarang.toLocaleString("id-ID")}
-                              </TableCell>
-                              <TableCell className="font-semibold">
-                                Rp {tr.totalNilai.toLocaleString("id-ID")}
-                              </TableCell>
-                              <TableCell>{tr.tujuan}</TableCell>
-                              <TableCell>{tr.lokasi.namaLokasi}</TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                  {totalPagesKeluar > 1 && (
-                    <Pagination
-                      currentPage={currentPageKeluar}
-                      totalPages={totalPagesKeluar}
-                      onPageChange={setCurrentPageKeluar}
-                    />
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+            <HistoryBarangKeluarTab
+              sortedTransaksiKeluar={sortedTransaksiKeluar}
+              paginatedTransaksiKeluar={paginatedTransaksiKeluar}
+              lokasi={lokasi}
+              kategoriList={kategoriList}
+              search={search}
+              setSearch={setSearch}
+              kategoriFilter={kategoriFilter}
+              setKategoriFilter={setKategoriFilter}
+              lokasiFilter={lokasiFilter}
+              setLokasiFilter={setLokasiFilter}
+              startDateKeluar={startDateKeluar}
+              endDateKeluar={endDateKeluar}
+              handleSortKeluar={handleSortKeluar}
+              getSortIconKeluar={getSortIconKeluar}
+              setDialogKeluarOpen={setDialogKeluarOpen}
+              currentPage={currentPageKeluar}
+              totalPages={totalPagesKeluar}
+              setCurrentPage={setCurrentPageKeluar}
+              PaginationComponent={Pagination}
+            />
           </TabsContent>
 
           {/* Tab Barang Keluar dari Kasir */}
           <TabsContent value="kasir">
-            <div className="space-y-4">
-              {/* Filter Tanggal Range */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Filter Transaksi</CardTitle>
-                  <CardDescription>
-                    Filter transaksi berdasarkan rentang tanggal
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex gap-4 items-end">
-                    <div className="flex-1">
-                      <Label>Dari Tanggal</Label>
-                      <Input
-                        type="date"
-                        className="mt-2"
-                        value={startDateKasir}
-                        onChange={(e) => setStartDateKasir(e.target.value)}
-                        max={endDateKasir || format(new Date(), "yyyy-MM-dd")}
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <Label>Sampai Tanggal</Label>
-                      <Input
-                        type="date"
-                        className="mt-2"
-                        value={endDateKasir}
-                        onChange={(e) => setEndDateKasir(e.target.value)}
-                        min={startDateKasir}
-                        max={format(new Date(), "yyyy-MM-dd")}
-                      />
-                    </div>
-                    {(startDateKasir || endDateKasir) && (
-                      <div>
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setStartDateKasir("");
-                            setEndDateKasir("");
-                          }}
-                        >
-                          Reset Filter
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Statistics Cards */}
-              <StatsGrid
-                stats={[
-                  {
-                    title: "Total Jenis Barang",
-                    value: (() => {
-                      const uniqueBarangIds = new Set<string>();
-                      sortedTransaksiKasir.forEach((tr) => {
-                        tr.itemTransaksi.forEach((item) => {
-                          uniqueBarangIds.add(item.barang.id);
-                        });
-                      });
-                      return uniqueBarangIds.size;
-                    })(),
-                    description:
-                      startDateKasir || endDateKasir
-                        ? `${startDateKasir ? format(new Date(startDateKasir), "dd/MM/yyyy") : "..."} - ${endDateKasir ? format(new Date(endDateKasir), "dd/MM/yyyy") : "..."}`
-                        : "Total keseluruhan",
-                    icon: Package,
-                  },
-                  {
-                    title: "Total Qty Keluar",
-                    value: sortedTransaksiKasir.reduce(
-                      (sum, tr) =>
-                        sum +
-                        tr.itemTransaksi.reduce((s, item) => s + item.qty, 0),
-                      0,
-                    ),
-                    description: "Unit terjual",
-                    icon: TrendingDown,
-                  },
-                  {
-                    title: "Total Nilai Penjualan",
-                    value: `Rp ${sortedTransaksiKasir.reduce((sum, tr) => sum + tr.total, 0).toLocaleString("id-ID")}`,
-                    description: "Omset penjualan",
-                    icon: TrendingDown,
-                  },
-                  {
-                    title: "Rata-rata",
-                    value: `Rp ${sortedTransaksiKasir.length > 0 ? (sortedTransaksiKasir.reduce((sum, tr) => sum + tr.total, 0) / sortedTransaksiKasir.length).toLocaleString("id-ID") : "0"}`,
-                    description: "Per transaksi",
-                    icon: TrendingDown,
-                  },
-                ]}
-              />
-
-              {/* Table History Kasir - Per Item */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>History Barang Keluar (Kasir)</CardTitle>
-                  <CardDescription>
-                    Riwayat barang keluar dari transaksi kasir (per item)
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead
-                            className="cursor-pointer select-none"
-                            onClick={() => handleSortKasir("nomorTransaksi")}
-                          >
-                            <div className="flex items-center">
-                              No. Transaksi
-                              {getSortIconKasir("nomorTransaksi")}
-                            </div>
-                          </TableHead>
-                          <TableHead
-                            className="cursor-pointer select-none"
-                            onClick={() => handleSortKasir("tanggal")}
-                          >
-                            <div className="flex items-center">
-                              Tanggal
-                              {getSortIconKasir("tanggal")}
-                            </div>
-                          </TableHead>
-                          <TableHead>Nama Barang</TableHead>
-                          <TableHead>Qty</TableHead>
-                          <TableHead>Harga Satuan</TableHead>
-                          <TableHead>Subtotal</TableHead>
-                          <TableHead
-                            className="cursor-pointer select-none"
-                            onClick={() => handleSortKasir("metodePembayaran")}
-                          >
-                            <div className="flex items-center">
-                              Metode Bayar
-                              {getSortIconKasir("metodePembayaran")}
-                            </div>
-                          </TableHead>
-                          <TableHead
-                            className="cursor-pointer select-none"
-                            onClick={() => handleSortKasir("kasir")}
-                          >
-                            <div className="flex items-center">
-                              Kasir
-                              {getSortIconKasir("kasir")}
-                            </div>
-                          </TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {paginatedTransaksiKasir.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={8} className="text-center">
-                              {startDateKasir || endDateKasir
-                                ? "Tidak ada transaksi pada rentang tanggal tersebut"
-                                : "Belum ada transaksi"}
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          paginatedTransaksiKasir.map(({ tr, item }) => (
-                            <TableRow key={`${tr.id}-${item.id}`}>
-                              <TableCell className="font-medium">
-                                {tr.nomorTransaksi}
-                              </TableCell>
-                              <TableCell>
-                                {format(
-                                  new Date(tr.tanggal),
-                                  "dd/MM/yyyy HH:mm",
-                                )}
-                              </TableCell>
-                              <TableCell>{item.namaBarang}</TableCell>
-                              <TableCell>
-                                <Badge variant="outline">
-                                  {item.qty} {item.barang.satuan}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                Rp {item.hargaSatuan.toLocaleString("id-ID")}
-                              </TableCell>
-                              <TableCell className="font-semibold">
-                                Rp {item.subtotal.toLocaleString("id-ID")}
-                              </TableCell>
-                              <TableCell>
-                                <Badge variant="outline">
-                                  {tr.metodePembayaran}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>{tr.kasir.nama}</TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                  {totalPagesKasir > 1 && (
-                    <Pagination
-                      currentPage={currentPageKasir}
-                      totalPages={totalPagesKasir}
-                      onPageChange={setCurrentPageKasir}
-                    />
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+            <HistoryPenjualanTab
+              sortedTransaksiKasir={sortedTransaksiKasir}
+              paginatedTransaksiKasir={paginatedTransaksiKasir}
+              startDateKasir={startDateKasir}
+              endDateKasir={endDateKasir}
+              searchKasir={searchKasir}
+              setSearchKasir={setSearchKasir}
+              handleSortKasir={handleSortKasir}
+              getSortIconKasir={getSortIconKasir}
+              currentPage={currentPageKasir}
+              totalPages={totalPagesKasir}
+              setCurrentPage={setCurrentPageKasir}
+              PaginationComponent={Pagination}
+            />
           </TabsContent>
         </Tabs>
       </div>
 
       {/* Dialog Tambah/Edit Barang */}
-      <Dialog
+      <TambahEditBarangDialog
         open={dialogOpen}
-        onOpenChange={(open: boolean) => {
-          setDialogOpen(open);
-          if (!open) resetForm();
-        }}
-      >
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingItem ? "Edit Barang" : "Tambah Barang"}
-            </DialogTitle>
-          </DialogHeader>
-
-          <form onSubmit={handleSubmit}>
-            <div className="grid gap-4 py-4">
-              {/* Pilih barang atau tambah baru (gabungan) - tampil jika bukan edit */}
-              {!editingItem && (
-                <div className="space-y-2">
-                  <Label>Pilih Barang atau Tambah Baru</Label>
-                  <Select
-                    value={
-                      tambahMode === "new"
-                        ? "NEW"
-                        : formTambahStok.barangId || ""
-                    }
-                    onValueChange={(value: string) =>
-                      handleSelectForTambah(value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih barang atau tambah baru" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="NEW">➕ Tambah Barang Baru</SelectItem>
-                      {barang.map((b) => (
-                        <SelectItem key={b.id} value={b.id}>
-                          {b.nama} - Stok: {b.stok} {b.satuan}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              {/* Form untuk TAMBAH STOK (existing) */}
-              {!editingItem && tambahMode === "existing" && (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="qty-tambah">Jumlah Tambah Stok *</Label>
-                      <Input
-                        id="qty-tambah"
-                        type="number"
-                        value={formTambahStok.qty || ""}
-                        onChange={(e) =>
-                          setFormTambahStok({
-                            ...formTambahStok,
-                            qty: parseInt(e.target.value) || 0,
-                          })
-                        }
-                        required
-                        min="1"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="harga-beli-tambah">Harga Beli *</Label>
-                      <Input
-                        id="harga-beli-tambah"
-                        type="number"
-                        value={formTambahStok.hargaBeli || ""}
-                        onChange={(e) =>
-                          setFormTambahStok({
-                            ...formTambahStok,
-                            hargaBeli: parseFloat(e.target.value) || 0,
-                          })
-                        }
-                        required
-                        min="0"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="sumber-tambah">Sumber Barang *</Label>
-                    <Input
-                      id="sumber-tambah"
-                      value={formTambahStok.sumber}
-                      onChange={(e) =>
-                        setFormTambahStok({
-                          ...formTambahStok,
-                          sumber: e.target.value,
-                        })
-                      }
-                      placeholder="Contoh: Supplier A, Pembelian Lokal, Transfer Cabang"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="reason-tambah">
-                      Alasan Penambahan Stok *
-                    </Label>
-                    <Select
-                      value={formTambahStok.reason}
-                      onValueChange={(value: string) =>
-                        setFormTambahStok({
-                          ...formTambahStok,
-                          reason: value as
-                            | "PURCHASE"
-                            | "STOCK_OPNAME_SURPLUS"
-                            | "INTERNAL_ADJUSTMENT",
-                          paymentMethod:
-                            value === "PURCHASE"
-                              ? formTambahStok.paymentMethod
-                              : undefined,
-                        })
-                      }
-                      required
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih alasan" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="PURCHASE">Pembelian</SelectItem>
-                        <SelectItem value="STOCK_OPNAME_SURPLUS">
-                          Surplus Stock Opname
-                        </SelectItem>
-                        <SelectItem value="INTERNAL_ADJUSTMENT">
-                          Penyesuaian Internal
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {formTambahStok.reason === "PURCHASE" && (
-                    <div className="space-y-2">
-                      <Label htmlFor="payment-method-tambah">
-                        Metode Pembayaran *
-                      </Label>
-                      <Select
-                        value={formTambahStok.paymentMethod || ""}
-                        onValueChange={(value: string) =>
-                          setFormTambahStok({
-                            ...formTambahStok,
-                            paymentMethod: value as "CASH",
-                          })
-                        }
-                        required
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Pilih metode pembayaran" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="CASH">Tunai</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-
-                  <div className="space-y-2">
-                    <Label htmlFor="lokasi-tambah">Lokasi Gudang *</Label>
-                    <Select
-                      value={formTambahStok.lokasiId}
-                      onValueChange={(value: string) =>
-                        setFormTambahStok({
-                          ...formTambahStok,
-                          lokasiId: value,
-                        })
-                      }
-                      required
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih lokasi" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {lokasi.map((lok) => (
-                          <SelectItem key={lok.id} value={lok.id}>
-                            {lok.namaLokasi}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="keterangan-tambah">Keterangan</Label>
-                    <Input
-                      id="keterangan-tambah"
-                      value={formTambahStok.keterangan}
-                      onChange={(e) =>
-                        setFormTambahStok({
-                          ...formTambahStok,
-                          keterangan: e.target.value,
-                        })
-                      }
-                      placeholder="Catatan tambahan (opsional)"
-                    />
-                  </div>
-
-                  {formTambahStok.qty > 0 && formTambahStok.hargaBeli > 0 && (
-                    <div className="p-4 bg-muted rounded-lg">
-                      <div className="text-sm text-muted-foreground">
-                        Total Nilai Tambah Stok
-                      </div>
-                      <div className="text-2xl font-bold">
-                        Rp{" "}
-                        {(
-                          formTambahStok.qty * formTambahStok.hargaBeli
-                        ).toLocaleString("id-ID")}
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-
-              {/* Form untuk BARANG BARU (custom) atau EDIT */}
-              {(editingItem || tambahMode === "new") && (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="nama">Nama Barang *</Label>
-                      <Input
-                        id="nama"
-                        value={formData.nama}
-                        onChange={(e) =>
-                          setFormData({ ...formData, nama: e.target.value })
-                        }
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="sku">SKU</Label>
-                      <Input
-                        id="sku"
-                        value={formData.sku}
-                        onChange={(e) =>
-                          setFormData({ ...formData, sku: e.target.value })
-                        }
-                        placeholder="Kode unik (opsional)"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="kategori">Kategori *</Label>
-                      <Input
-                        id="kategori"
-                        value={formData.kategori}
-                        onChange={(e) =>
-                          setFormData({ ...formData, kategori: e.target.value })
-                        }
-                        placeholder="Contoh: Elektronik, Makanan"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="satuan">Satuan *</Label>
-                      <Input
-                        id="satuan"
-                        value={formData.satuan}
-                        onChange={(e) =>
-                          setFormData({ ...formData, satuan: e.target.value })
-                        }
-                        placeholder="Contoh: pcs, kg, box"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="stok">Stok Awal *</Label>
-                      <Input
-                        id="stok"
-                        type="number"
-                        value={formData.stok}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            stok: parseInt(e.target.value) || 0,
-                          })
-                        }
-                        required
-                        min="0"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="stokMinimum">Stok Minimum *</Label>
-                      <Input
-                        id="stokMinimum"
-                        type="number"
-                        value={formData.stokMinimum}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            stokMinimum: parseInt(e.target.value) || 0,
-                          })
-                        }
-                        required
-                        min="0"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="hargaBeli">Harga Beli *</Label>
-                      <Input
-                        id="hargaBeli"
-                        type="number"
-                        value={formData.hargaBeli}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            hargaBeli: parseFloat(e.target.value) || 0,
-                          })
-                        }
-                        required
-                        min="0"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="hargaJual">Harga Jual *</Label>
-                      <Input
-                        id="hargaJual"
-                        type="number"
-                        value={formData.hargaJual}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            hargaJual: parseFloat(e.target.value) || 0,
-                          })
-                        }
-                        required
-                        min="0"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="lokasiId">Lokasi *</Label>
-                    <Select
-                      value={formData.lokasiId}
-                      onValueChange={(value: string) =>
-                        setFormData({ ...formData, lokasiId: value })
-                      }
-                      required
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih lokasi" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {lokasi.map((lok) => (
-                          <SelectItem key={lok.id} value={lok.id}>
-                            {lok.namaLokasi}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="deskripsi">Deskripsi</Label>
-                    <Input
-                      id="deskripsi"
-                      value={formData.deskripsi}
-                      onChange={(e) =>
-                        setFormData({ ...formData, deskripsi: e.target.value })
-                      }
-                      placeholder="Informasi tambahan (opsional)"
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setDialogOpen(false)}
-                disabled={loading}
-              >
-                Batal
-              </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? "Menyimpan..." : editingItem ? "Update" : "Simpan"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+        onOpenChange={setDialogOpen}
+        editingItem={editingItem}
+        tambahMode={tambahMode}
+        formData={formData}
+        setFormData={setFormData}
+        formTambahStok={formTambahStok}
+        setFormTambahStok={setFormTambahStok}
+        barang={barang}
+        lokasi={lokasi}
+        loading={loading}
+        handleSubmit={handleSubmit}
+        handleSelectForTambah={handleSelectForTambah}
+        resetForm={resetForm}
+      />
 
       {/* Dialog Barang Keluar */}
-      <Dialog
+      <BarangKeluarDialog
         open={dialogKeluarOpen}
-        onOpenChange={(open) => {
-          setDialogKeluarOpen(open);
-          if (!open) resetFormKeluar();
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Transaksi Barang Keluar</DialogTitle>
-            <DialogDescription>
-              Catat barang keluar dari gudang
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmitKeluar}>
-            <div className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="barang-keluar">Barang *</Label>
-                <Select
-                  value={formKeluar.barangId}
-                  onValueChange={handleBarangChangeKeluar}
-                  required
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih barang" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {barang.map((b) => (
-                      <SelectItem key={b.id} value={b.id}>
-                        {b.nama} - Stok: {b.stok} {b.satuan}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="qty-keluar">Jumlah *</Label>
-                <Input
-                  id="qty-keluar"
-                  type="number"
-                  value={formKeluar.qty || ""}
-                  onChange={(e) =>
-                    setFormKeluar({
-                      ...formKeluar,
-                      qty: parseInt(e.target.value) || 0,
-                    })
-                  }
-                  required
-                  min="1"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="tujuan">Tujuan *</Label>
-                <Input
-                  id="tujuan"
-                  value={formKeluar.tujuan}
-                  onChange={(e) =>
-                    setFormKeluar({ ...formKeluar, tujuan: e.target.value })
-                  }
-                  placeholder="Contoh: Toko Cabang A, Retur Supplier, Rusak"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="lokasi-keluar">Lokasi Gudang *</Label>
-                <Select
-                  value={formKeluar.lokasiId}
-                  onValueChange={(value) =>
-                    setFormKeluar({ ...formKeluar, lokasiId: value })
-                  }
-                  required
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih lokasi" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {lokasi.map((l) => (
-                      <SelectItem key={l.id} value={l.id}>
-                        {l.namaLokasi}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="keterangan-keluar">Keterangan</Label>
-                <Input
-                  id="keterangan-keluar"
-                  value={formKeluar.keterangan}
-                  onChange={(e) =>
-                    setFormKeluar({ ...formKeluar, keterangan: e.target.value })
-                  }
-                  placeholder="Catatan tambahan (opsional)"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setDialogKeluarOpen(false)}
-                disabled={loading}
-              >
-                Batal
-              </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? "Menyimpan..." : "Simpan"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+        onOpenChange={setDialogKeluarOpen}
+        formKeluar={formKeluar}
+        setFormKeluar={setFormKeluar}
+        barang={barang}
+        lokasi={lokasi}
+        loading={loading}
+        handleSubmitKeluar={handleSubmitKeluar}
+        handleBarangChangeKeluar={handleBarangChangeKeluar}
+        resetFormKeluar={resetFormKeluar}
+      />
     </div>
   );
 }
