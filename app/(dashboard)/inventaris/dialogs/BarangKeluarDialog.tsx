@@ -60,9 +60,7 @@ export function BarangKeluarDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Transaksi Barang Keluar</DialogTitle>
-          <DialogDescription>
-            Catat barang keluar dari gudang
-          </DialogDescription>
+          <DialogDescription>Catat barang keluar dari gudang</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmitKeluar}>
           <div className="grid gap-4 py-4">
@@ -168,4 +166,3 @@ export function BarangKeluarDialog({
     </Dialog>
   );
 }
-

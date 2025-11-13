@@ -105,8 +105,7 @@ export function HistoryPenjualanTab({
                 title: "Total Qty Keluar",
                 value: originalTransaksiKasir.reduce(
                   (sum, tr) =>
-                    sum +
-                    tr.itemTransaksi.reduce((s, item) => s + item.qty, 0),
+                    sum + tr.itemTransaksi.reduce((s, item) => s + item.qty, 0),
                   0,
                 ),
                 description: "Unit terjual",
@@ -258,4 +257,3 @@ export function HistoryPenjualanTab({
     </div>
   );
 }
-

@@ -91,9 +91,7 @@ export function TambahEditBarangDialog({
                 <Label>Pilih Barang atau Tambah Baru</Label>
                 <Select
                   value={
-                    tambahMode === "new"
-                      ? "NEW"
-                      : formTambahStok.barangId || ""
+                    tambahMode === "new" ? "NEW" : formTambahStok.barangId || ""
                   }
                   onValueChange={(value: string) =>
                     handleSelectForTambah(value)
@@ -403,4 +401,3 @@ export function TambahEditBarangDialog({
     </Dialog>
   );
 }
-
