@@ -40,7 +40,7 @@ import { TrialBalanceEntry, PeriodeAkuntansi } from "@/types/accounting";
 import { AccountingService } from "@/services/accounting";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
-import { autoTable } from "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 
 interface TrialBalanceProps {
   className?: string;
@@ -219,7 +219,7 @@ export function TrialBalance({ className }: TrialBalanceProps) {
         <CardContent>
           {/* Period Selector */}
           <div className="mb-6">
-            <Label htmlFor="periode">Pilih Periode</Label>
+            <Label htmlFor="periode" className="mb-2">Pilih Periode</Label>
             <Select
               value={selectedPeriodeId}
               onValueChange={setSelectedPeriodeId}

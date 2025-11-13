@@ -53,7 +53,7 @@ import { AccountingService } from "@/services/accounting";
 import { toast } from "sonner";
 import { JournalPDFExporter } from "@/lib/pdf-export";
 import jsPDF from "jspdf";
-import { autoTable } from "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 
 interface JournalRecapitulationProps {
   selectedPeriode?: string;
@@ -736,7 +736,7 @@ export function JournalRecapitulation({
           {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="w-full sm:w-48">
-              <Label htmlFor="period-type">Tipe Periode</Label>
+              <Label htmlFor="period-type" className="mb-2">Tipe Periode</Label>
               <Select
                 value={accumulationPeriod}
                 onValueChange={handlePeriodChange}
@@ -757,6 +757,7 @@ export function JournalRecapitulation({
               <Label htmlFor="start-date">Tanggal Mulai</Label>
               <Input
                 id="start-date"
+                className="mt-2"
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
@@ -766,6 +767,7 @@ export function JournalRecapitulation({
               <Label htmlFor="end-date">Tanggal Akhir</Label>
               <Input
                 id="end-date"
+                className="mt-2"
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}

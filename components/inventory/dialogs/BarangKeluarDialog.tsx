@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Barang, Lokasi } from "../types";
+import { Barang, Lokasi } from "@/app/(dashboard)/inventaris/types";
 
 interface BarangKeluarDialogProps {
   open: boolean;

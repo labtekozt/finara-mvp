@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Barang, Lokasi } from "../types";
+import { Barang, Lokasi } from "@/app/(dashboard)/inventaris/types";
 
 interface TambahEditBarangDialogProps {
   open: boolean;
@@ -42,6 +42,8 @@ interface TambahEditBarangDialogProps {
     sumber: string;
     lokasiId: string;
     keterangan: string;
+    reason: "PURCHASE" | "STOCK_OPNAME_SURPLUS" | "INTERNAL_ADJUSTMENT";
+    paymentMethod?: "CASH" | "CREDIT";
   };
   setFormTambahStok: (data: any) => void;
   barang: Barang[];
@@ -165,6 +167,68 @@ export function TambahEditBarangDialog({
                     required
                   />
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="reason-tambah">
+                    Alasan Penambahan Stok *
+                  </Label>
+                  <Select
+                    value={formTambahStok.reason}
+                    onValueChange={(value: string) =>
+                      setFormTambahStok({
+                        ...formTambahStok,
+                        reason: value as
+                          | "PURCHASE"
+                          | "STOCK_OPNAME_SURPLUS"
+                          | "INTERNAL_ADJUSTMENT",
+                        paymentMethod:
+                          value === "PURCHASE"
+                            ? formTambahStok.paymentMethod
+                            : undefined,
+                      })
+                    }
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih alasan" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="PURCHASE">Pembelian</SelectItem>
+                      <SelectItem value="STOCK_OPNAME_SURPLUS">
+                        Surplus Stock Opname
+                      </SelectItem>
+                      <SelectItem value="INTERNAL_ADJUSTMENT">
+                        Penyesuaian Internal
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {formTambahStok.reason === "PURCHASE" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="payment-method-tambah">
+                      Metode Pembayaran *
+                    </Label>
+                    <Select
+                      value={formTambahStok.paymentMethod || ""}
+                      onValueChange={(value: string) =>
+                        setFormTambahStok({
+                          ...formTambahStok,
+                          paymentMethod: value as "CASH" | "CREDIT",
+                        })
+                      }
+                      required
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih metode pembayaran" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="CASH">Tunai</SelectItem>
+                        <SelectItem value="CREDIT">Kredit</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="lokasi-tambah">Lokasi Gudang *</Label>

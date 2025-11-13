@@ -1,6 +1,6 @@
 import { AccumulationData, AccumulationPeriod, JurnalEntry } from "@/types";
 import jsPDF from "jspdf";
-import { autoTable } from "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 
 export class JournalPDFExporter {
   static async exportRecapitulationReport(
