@@ -64,10 +64,10 @@ const menuItems = [
     permission: "canAccessInventaris" as const,
   },
   {
-    title: "Transaksi Barang",
-    href: "/transaksi",
-    icon: ArrowLeftRight,
-    permission: "canAccessTransaksi" as const,
+    title: "Kalkulator Rabat",
+    href: "/kalkulator-rabat",
+    icon: Calculator,
+    permission: "canAccessInventaris" as const,
   },
   {
     title: "Retur Pembelian",
