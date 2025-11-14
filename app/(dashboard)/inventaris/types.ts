@@ -57,4 +57,3 @@ export interface TransaksiKasir {
   };
   itemTransaksi: ItemTransaksiKasir[];
 }
-

@@ -8,9 +8,7 @@ export default function BukuBesarPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Buku Besar</h2>
-          <p className="text-muted-foreground mt-1">
-            Lihat buku besar akun
-          </p>
+          <p className="text-muted-foreground mt-1">Lihat buku besar akun</p>
         </div>
       </div>
 

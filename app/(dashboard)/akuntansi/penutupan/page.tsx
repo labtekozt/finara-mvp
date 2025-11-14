@@ -25,15 +25,11 @@ export default function PenutupanPage() {
           <h2 className="text-3xl font-bold tracking-tight">
             Penutupan Periode
           </h2>
-          <p className="text-muted-foreground mt-1">
-            Tutup periode akuntansi
-          </p>
+          <p className="text-muted-foreground mt-1">Tutup periode akuntansi</p>
         </div>
       </div>
 
-      <PeriodClosing
-        periode={periods.find((p) => p.id === selectedPeriode)!}
-      />
+      <PeriodClosing periode={periods.find((p) => p.id === selectedPeriode)!} />
     </div>
   );
 }

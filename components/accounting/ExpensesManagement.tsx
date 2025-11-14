@@ -175,7 +175,9 @@ export function ExpensesManagement({ className }: ExpensesManagementProps) {
         <CardContent className="pt-6">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
-              <Label htmlFor="search" className="mb-2">Cari Pengeluaran</Label>
+              <Label htmlFor="search" className="mb-2">
+                Cari Pengeluaran
+              </Label>
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -188,7 +190,9 @@ export function ExpensesManagement({ className }: ExpensesManagementProps) {
               </div>
             </div>
             <div className="w-full sm:w-40">
-              <Label htmlFor="kategori" className="mb-2">Kategori</Label>
+              <Label htmlFor="kategori" className="mb-2">
+                Kategori
+              </Label>
               <Select value={kategoriFilter} onValueChange={setKategoriFilter}>
                 <SelectTrigger>
                   <SelectValue placeholder="Semua Kategori" />
@@ -204,7 +208,9 @@ export function ExpensesManagement({ className }: ExpensesManagementProps) {
               </Select>
             </div>
             <div className="w-full sm:w-32">
-              <Label htmlFor="start-date" className="mb-2">Tanggal Mulai</Label>
+              <Label htmlFor="start-date" className="mb-2">
+                Tanggal Mulai
+              </Label>
               <Input
                 id="start-date"
                 type="date"
@@ -213,7 +219,9 @@ export function ExpensesManagement({ className }: ExpensesManagementProps) {
               />
             </div>
             <div className="w-full sm:w-32">
-              <Label htmlFor="end-date" className="mb-2">Tanggal Akhir</Label>
+              <Label htmlFor="end-date" className="mb-2">
+                Tanggal Akhir
+              </Label>
               <Input
                 id="end-date"
                 type="date"
