@@ -18,6 +18,8 @@ export default function PenutupanPage() {
     }
   }, [periods, selectedPeriode]);
 
+  const selectedPeriod = periods.find((p) => p.id === selectedPeriode);
+
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between">
@@ -29,7 +31,17 @@ export default function PenutupanPage() {
         </div>
       </div>
 
-      <PeriodClosing periode={periods.find((p) => p.id === selectedPeriode)!} />
+      {selectedPeriod ? (
+        <PeriodClosing periode={selectedPeriod} />
+      ) : (
+        <div className="flex items-center justify-center py-8">
+          <p className="text-muted-foreground">
+            {periods.length === 0
+              ? "Memuat periode..."
+              : "Pilih periode untuk melihat detail penutupan"}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
