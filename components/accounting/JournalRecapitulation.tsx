@@ -736,7 +736,9 @@ export function JournalRecapitulation({
           {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="w-full sm:w-48">
-              <Label htmlFor="period-type" className="mb-2">Tipe Periode</Label>
+              <Label htmlFor="period-type" className="mb-2">
+                Tipe Periode
+              </Label>
               <Select
                 value={accumulationPeriod}
                 onValueChange={handlePeriodChange}

@@ -115,7 +115,7 @@ export function DashboardClient() {
       <div className="flex items-center justify-center h-full">
         <div className="animate-pulse text-lg">
           <Loader2 className="h-32 w-32 animate-spin" />
-          </div>
+        </div>
       </div>
     );
   }
@@ -154,7 +154,7 @@ export function DashboardClient() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col lg:flex-row gap-6">
             {/* Quick Period Selection */}
             <div className="flex-1">
               <label className="text-sm font-medium mb-2 block">
@@ -168,7 +168,7 @@ export function DashboardClient() {
                   setEndDate("");
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Pilih periode" />
                 </SelectTrigger>
                 <SelectContent>
@@ -181,13 +181,18 @@ export function DashboardClient() {
               </Select>
             </div>
 
+            {/* Separator */}
+            <div className="hidden lg:flex items-center">
+              <div className="h-12 w-px bg-border"></div>
+            </div>
+
             {/* Custom Date Range */}
-            <div className="border-t pt-4">
-              <label className="text-sm font-medium mb-3 block">
+            <div className="flex-1 lg:flex-[1.5]">
+              <label className="text-sm font-medium mb-2 block">
                 Atau Pilih Range Tanggal Custom
               </label>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex-1">
                   <label className="text-xs text-muted-foreground mb-1 block">
                     Dari Tanggal
                   </label>
@@ -199,9 +204,10 @@ export function DashboardClient() {
                       setPeriod("custom");
                     }}
                     max={format(new Date(), "yyyy-MM-dd")}
+                    className="w-full"
                   />
                 </div>
-                <div className="">
+                <div className="flex-1">
                   <label className="text-xs text-muted-foreground mb-1 block">
                     Sampai Tanggal
                   </label>
@@ -214,6 +220,7 @@ export function DashboardClient() {
                     }}
                     min={startDate}
                     max={format(new Date(), "yyyy-MM-dd")}
+                    className="w-full"
                   />
                 </div>
                 <div className="flex items-end">
@@ -234,54 +241,52 @@ export function DashboardClient() {
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-3">
         {/* Total Penjualan & Barang Terjual */}
-        <Card>
+        <Card className="bg-blue-50 border-blue-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-sm font-medium text-blue-900">
               Penjualan & Transaksi
             </CardTitle>
-            <span className="text-lg font-bold text-muted-foreground">Rp</span>
+            <span className="text-lg font-bold text-blue-600">Rp</span>
           </CardHeader>
           <CardContent className="space-y-3">
             <div>
-              <div className="text-2xl font-bold">
+              <div className="text-2xl font-bold text-blue-900">
                 Rp {data.stats.totalPenjualan.toLocaleString("id-ID")}
               </div>
-              <p className="text-xs text-muted-foreground">Total Pendapatan</p>
+              <p className="text-xs text-blue-700">Total Pendapatan</p>
             </div>
-            <div className="border-t pt-3">
-              <div className="text-xl font-bold">
+            <div className="border-t border-blue-200 pt-3">
+              <div className="text-xl font-bold text-blue-900">
                 {data.stats.totalTransaksi}
               </div>
-              <p className="text-xs text-muted-foreground">
-                Jumlah Barang Terjual
-              </p>
+              <p className="text-xs text-blue-700">Jumlah Barang Terjual</p>
             </div>
           </CardContent>
         </Card>
 
         {/* Barang Stok Rendah */}
-        <Card>
+        <Card className="bg-orange-50 border-orange-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-sm font-medium text-orange-900">
               Barang Stok Rendah
             </CardTitle>
-            <AlertTriangle className="h-4 w-4 text-yellow-600" />
+            <AlertTriangle className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold text-orange-900">
               {data.stats.barangStokRendah}
             </div>
-            <p className="text-xs text-muted-foreground">Perlu restock</p>
+            <p className="text-xs text-orange-700">Perlu restock</p>
           </CardContent>
         </Card>
 
         {/* Barang Masuk & Keluar */}
-        <Card>
+        <Card className="bg-blue-50 border-blue-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-sm font-medium text-blue-900">
               Pergerakan Barang
             </CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <TrendingUp className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent className="space-y-3">
             <div>
@@ -291,16 +296,16 @@ export function DashboardClient() {
                   {data.stats.totalBarangMasuk}
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground">Barang Masuk</p>
+              <p className="text-xs text-blue-700">Barang Masuk</p>
             </div>
-            <div className="border-t pt-3">
+            <div className="border-t border-blue-200 pt-3">
               <div className="flex items-center gap-2">
                 <TrendingDown className="h-4 w-4 text-red-600" />
                 <div className="text-xl font-bold text-red-600">
                   {data.stats.totalBarangKeluar}
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground">Barang Keluar</p>
+              <p className="text-xs text-blue-700">Barang Keluar</p>
             </div>
           </CardContent>
         </Card>

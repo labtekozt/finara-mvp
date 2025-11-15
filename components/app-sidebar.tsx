@@ -3,7 +3,7 @@
 import * as React from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -42,6 +42,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { hasPermission } from "@/lib/permissions";
 
 const menuItems = [
@@ -163,10 +164,10 @@ export function AppSidebar() {
   }, [pathname]);
 
   return (
-    <Sidebar>
-      <SidebarHeader className="border-b px-6 py-4">
-        <h2 className="text-xl font-bold">FINARA</h2>
-        <p className="text-xs text-muted-foreground">Sistem Manajemen Ritel</p>
+    <Sidebar className="bg-blue-50">
+      <SidebarHeader className="border-b border-blue-200 px-6 py-4">
+        <h2 className="text-xl font-bold text-blue-900">FINARA</h2>
+        <p className="text-xs text-blue-700">Sistem Manajemen Ritel</p>
       </SidebarHeader>
       <SidebarContent className="px-3 py-4">
         <SidebarMenu>
@@ -191,27 +192,31 @@ export function AppSidebar() {
                           e.preventDefault();
                           setOpenSubmenu(isOpen ? null : item.href);
                         }}
+                        className="hover:bg-blue-100 data-[active=true]:bg-blue-100"
                       >
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
+                        <item.icon className="h-4 w-4 text-blue-600" />
+                        <span className="text-black">{item.title}</span>
                         <ChevronRight
-                          className={`ml-auto h-4 w-4 transition-transform duration-200 ${
+                          className={`ml-auto h-4 w-4 text-blue-600 transition-transform duration-200 ${
                             isOpen ? "rotate-90" : ""
                           }`}
                         />
                       </SidebarMenuButton>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
-                      <SidebarMenuSub>
+                      <SidebarMenuSub className="border-blue-200">
                         {item.submenu.map((subItem) => (
                           <SidebarMenuSubItem key={subItem.href}>
                             <SidebarMenuSubButton
                               asChild
                               isActive={pathname === subItem.href}
+                              className="hover:bg-blue-100 data-[active=true]:bg-blue-100"
                             >
                               <Link href={subItem.href}>
-                                <subItem.icon className="h-4 w-4" />
-                                <span>{subItem.title}</span>
+                                <subItem.icon className="h-4 w-4 text-blue-600" />
+                                <span className="text-black">
+                                  {subItem.title}
+                                </span>
                               </Link>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
@@ -225,10 +230,14 @@ export function AppSidebar() {
 
             return (
               <SidebarMenuItem key={item.href}>
-                <SidebarMenuButton asChild isActive={pathname === item.href}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === item.href}
+                  className="hover:bg-blue-100 data-[active=true]:bg-blue-100"
+                >
                   <Link href={item.href}>
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.title}</span>
+                    <item.icon className="h-4 w-4 text-blue-600" />
+                    <span className="text-black">{item.title}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -236,22 +245,29 @@ export function AppSidebar() {
           })}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="border-t p-4">
+      <SidebarFooter className="border-t border-blue-200 p-4 space-y-3 bg-blue-50">
         <div className="flex items-center gap-3">
-          <Avatar>
-            <AvatarFallback>
+          <Avatar className="border border-blue-200">
+            <AvatarFallback className="bg-blue-100 text-blue-800">
               {session?.user?.name?.charAt(0).toUpperCase() || "U"}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 overflow-hidden">
-            <p className="text-sm font-medium truncate">
+            <p className="text-sm font-medium truncate text-blue-900">
               {session?.user?.name}
             </p>
-            <p className="text-xs text-muted-foreground">
-              {session?.user?.role}
-            </p>
+            <p className="text-xs text-blue-700">{session?.user?.role}</p>
           </div>
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          className="w-full border-blue-200 text-blue-700 hover:bg-blue-100 hover:text-blue-800"
+        >
+          <LogOut className="mr-2 h-4 w-4 text-blue-600" />
+          Logout
+        </Button>
       </SidebarFooter>
     </Sidebar>
   );

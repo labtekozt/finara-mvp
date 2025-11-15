@@ -232,7 +232,7 @@ export function PeriodClosing({ periode }: PeriodClosingProps) {
                       </div>
                     </div>
                     <div className="text-center">
-                      <div className="text-lg font-semibold text-orange-600">
+                      <div className="text-lg font-semibold text-blue-600">
                         {preCloseValidation.summary.unpostedJournals}
                       </div>
                       <div className="text-sm text-muted-foreground">

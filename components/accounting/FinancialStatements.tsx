@@ -311,7 +311,9 @@ export function FinancialStatements({ className }: FinancialStatementsProps) {
         <CardContent>
           {/* Period Selector */}
           <div className="mb-6">
-            <Label htmlFor="periode" className="mb-2">Pilih Periode</Label>
+            <Label htmlFor="periode" className="mb-2">
+              Pilih Periode
+            </Label>
             <Select
               value={selectedPeriodeId}
               onValueChange={setSelectedPeriodeId}
