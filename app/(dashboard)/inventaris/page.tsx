@@ -3,7 +3,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TabsContent } from "@/components/ui/tabs";
+import { StyledTabs, StyledTabsList, StyledTabsTrigger } from "@/components/ui/styled-tabs";
 import {
   Package,
   TrendingDown,
@@ -827,21 +828,21 @@ export default function InventarisPage() {
       <div className="flex-1 p-3 space-y-6">
         {/* Tabs: Daftar Barang & History Keluar */}
         <h1 className="text-lg font-bold">Pilih Menu</h1>
-        <Tabs defaultValue="barang" className="space-y-4">
-          <TabsList className="bg-blue-400">
-            <TabsTrigger value="barang">
+        <StyledTabs defaultValue="barang">
+          <StyledTabsList>
+            <StyledTabsTrigger value="barang">
               <Package className="mr-2 h-4 w-4" />
               Daftar Barang
-            </TabsTrigger>
-            <TabsTrigger value="history">
+            </StyledTabsTrigger>
+            <StyledTabsTrigger value="history">
               <History className="mr-2 h-4 w-4" />
               History Barang Keluar
-            </TabsTrigger>
-            <TabsTrigger value="kasir">
+            </StyledTabsTrigger>
+            <StyledTabsTrigger value="kasir">
               <TrendingDown className="mr-2 h-4 w-4" />
               History Penjualan Barang
-            </TabsTrigger>
-          </TabsList>
+            </StyledTabsTrigger>
+          </StyledTabsList>
           {/* Tab Daftar Barang */}
           <TabsContent value="barang">
             <DaftarBarangTab
@@ -912,7 +913,7 @@ export default function InventarisPage() {
               PaginationComponent={Pagination}
             />
           </TabsContent>
-        </Tabs>
+        </StyledTabs>
       </div>
 
       {/* Dialog Tambah/Edit Barang */}

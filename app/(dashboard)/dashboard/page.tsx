@@ -8,10 +8,10 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex flex-col h-full bg-gray-100">
-      <Header
+      {/* <Header
         title={`Selamat Datang, ${session?.user?.name}`}
         description="Dashboard - Ringkasan Sistem"
-      />
+      /> */}
 
       <DashboardClient />
     </div>

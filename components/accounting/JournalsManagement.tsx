@@ -35,7 +35,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TabsContent } from "@/components/ui/tabs";
+import { StyledTabs, StyledTabsList, StyledTabsTrigger } from "@/components/ui/styled-tabs";
 import {
   BookOpen,
   Plus,
@@ -135,17 +136,17 @@ export function JournalsManagement({
 
   return (
     <div className={className}>
-      <Tabs defaultValue="entries" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="entries">
+      <StyledTabs defaultValue="entries">
+        <StyledTabsList>
+          <StyledTabsTrigger value="entries">
             <BookOpen className="mr-2 h-4 w-4" />
             Daftar Jurnal
-          </TabsTrigger>
-          <TabsTrigger value="recapitulation">
+          </StyledTabsTrigger>
+          <StyledTabsTrigger value="recapitulation">
             <BarChart3 className="mr-2 h-4 w-4" />
             Rekapitulasi
-          </TabsTrigger>
-        </TabsList>
+          </StyledTabsTrigger>
+        </StyledTabsList>
 
         <TabsContent value="entries" className="space-y-4">
           <div className="flex items-center justify-between">
@@ -309,7 +310,7 @@ export function JournalsManagement({
         <TabsContent value="recapitulation" className="space-y-4">
           <JournalRecapitulation selectedPeriode={selectedPeriode} />
         </TabsContent>
-      </Tabs>
+      </StyledTabs>
 
       {/* Journal Form Dialog */}
       <Dialog open={isFormDialogOpen} onOpenChange={setIsFormDialogOpen}>

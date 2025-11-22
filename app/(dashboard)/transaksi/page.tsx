@@ -35,7 +35,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TabsContent } from "@/components/ui/tabs";
+import { StyledTabs, StyledTabsList, StyledTabsTrigger } from "@/components/ui/styled-tabs";
 import { Badge } from "@/components/ui/badge";
 import {
   Plus,
@@ -311,17 +312,17 @@ export default function TransaksiPage() {
         </div>
 
         {/* Transactions Tabs */}
-        <Tabs defaultValue="masuk" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="masuk">
+        <StyledTabs defaultValue="masuk">
+          <StyledTabsList className="grid w-full grid-cols-2">
+            <StyledTabsTrigger value="masuk">
               <TrendingUp className="mr-2 h-4 w-4" />
               Barang Masuk ({transaksiMasuk.length})
-            </TabsTrigger>
-            <TabsTrigger value="keluar">
+            </StyledTabsTrigger>
+            <StyledTabsTrigger value="keluar">
               <TrendingDown className="mr-2 h-4 w-4" />
               Barang Keluar ({transaksiKeluar.length})
-            </TabsTrigger>
-          </TabsList>
+            </StyledTabsTrigger>
+          </StyledTabsList>
 
           {/* Barang Masuk Tab */}
           <TabsContent value="masuk">
@@ -625,7 +626,7 @@ export default function TransaksiPage() {
               </CardContent>
             </Card>
           </TabsContent>
-        </Tabs>
+        </StyledTabs>
       </div>
 
       {/* Dialog Barang Masuk */}
