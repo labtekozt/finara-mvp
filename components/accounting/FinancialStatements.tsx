@@ -27,7 +27,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TabsContent } from "@/components/ui/tabs";
+import { StyledTabs, StyledTabsList, StyledTabsTrigger } from "@/components/ui/styled-tabs";
 import {
   FileText,
   Download,
@@ -332,13 +333,13 @@ export function FinancialStatements({ className }: FinancialStatementsProps) {
             </Select>
           </div>
 
-          <Tabs defaultValue="balance-sheet" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="balance-sheet">Neraca</TabsTrigger>
-              <TabsTrigger value="income-statement">
+          <StyledTabs defaultValue="balance-sheet" className="w-full">
+            <StyledTabsList className="grid w-full grid-cols-2">
+              <StyledTabsTrigger value="balance-sheet">Neraca</StyledTabsTrigger>
+              <StyledTabsTrigger value="income-statement">
                 Laporan Laba Rugi
-              </TabsTrigger>
-            </TabsList>
+              </StyledTabsTrigger>
+            </StyledTabsList>
 
             {/* Balance Sheet Tab */}
             <TabsContent value="balance-sheet" className="space-y-4">
@@ -773,7 +774,7 @@ export function FinancialStatements({ className }: FinancialStatementsProps) {
                 </div>
               )}
             </TabsContent>
-          </Tabs>
+          </StyledTabs>
         </CardContent>
       </Card>
     </div>

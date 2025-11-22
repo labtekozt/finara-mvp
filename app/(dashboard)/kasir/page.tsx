@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { StyledTabs, StyledTabsList, StyledTabsTrigger } from "@/components/ui/styled-tabs";
 import {
   Plus,
   Minus,
@@ -369,28 +369,28 @@ export default function KasirPage() {
                   </div>
                 </div>
                 <div className="mt-4 w-full overflow-x-auto">
-                  <Tabs
+                  <StyledTabs
                     value={selectedCategory}
                     onValueChange={setSelectedCategory}
                   >
-                    <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-auto p-1 bg-blue-100">
-                      <TabsTrigger
+                    <StyledTabsList className="w-full justify-start overflow-x-auto flex-nowrap">
+                      <StyledTabsTrigger
                         value="all"
-                        className="whitespace-nowrap m-2"
+                        className="whitespace-nowrap"
                       >
                         Semua
-                      </TabsTrigger>
+                      </StyledTabsTrigger>
                       {categories.map((category) => (
-                        <TabsTrigger
+                        <StyledTabsTrigger
                           key={category}
                           value={category}
                           className="whitespace-nowrap"
                         >
                           {category}
-                        </TabsTrigger>
+                        </StyledTabsTrigger>
                       ))}
-                    </TabsList>
-                  </Tabs>
+                    </StyledTabsList>
+                  </StyledTabs>
                 </div>
               </CardHeader>
               <CardContent className="flex-1 overflow-y-auto">

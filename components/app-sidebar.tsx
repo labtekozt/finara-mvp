@@ -166,8 +166,8 @@ export function AppSidebar() {
   return (
     <Sidebar className="bg-blue-50">
       <SidebarHeader className="border-b border-blue-200 px-6 py-4">
-        <h2 className="text-xl font-bold text-blue-900">FINARA</h2>
-        <p className="text-xs text-blue-700">Sistem Manajemen Ritel</p>
+        <h2 className="text-xl font-bold">FINARA</h2>
+        <p className="text-xs">Sistem Manajemen Ritel</p>
       </SidebarHeader>
       <SidebarContent className="px-3 py-4">
         <SidebarMenu>
@@ -194,7 +194,9 @@ export function AppSidebar() {
                         }}
                         className="hover:bg-blue-100 data-[active=true]:bg-blue-100"
                       >
-                        <item.icon className="h-4 w-4 text-blue-600" />
+                        <div className="bg-blue-600 rounded-lg p-2">
+                          <item.icon className="h-4 w-4 text-white" />
+                        </div>
                         <span className="text-black">{item.title}</span>
                         <ChevronRight
                           className={`ml-auto h-4 w-4 text-blue-600 transition-transform duration-200 ${
@@ -206,14 +208,16 @@ export function AppSidebar() {
                     <CollapsibleContent>
                       <SidebarMenuSub className="border-blue-200">
                         {item.submenu.map((subItem) => (
-                          <SidebarMenuSubItem key={subItem.href}>
+                          <SidebarMenuSubItem key={subItem.href} className="">
                             <SidebarMenuSubButton
                               asChild
                               isActive={pathname === subItem.href}
-                              className="hover:bg-blue-100 data-[active=true]:bg-blue-100"
+                              className="hover:bg-blue-100 data-[active=true]:bg-blue-100 py-5"
                             >
                               <Link href={subItem.href}>
-                                <subItem.icon className="h-4 w-4 text-blue-600" />
+                                <div className="bg-blue-500 rounded-lg p-2">
+                                  <subItem.icon className="h-4 w-4 text-white" />
+                                </div>
                                 <span className="text-black">
                                   {subItem.title}
                                 </span>
@@ -233,11 +237,13 @@ export function AppSidebar() {
                 <SidebarMenuButton
                   asChild
                   isActive={pathname === item.href}
-                  className="hover:bg-blue-100 data-[active=true]:bg-blue-100"
+                  className="hover:bg-blue-100 data-[active=true]:bg-blue-100 py-5"
                 >
                   <Link href={item.href}>
-                    <item.icon className="h-4 w-4 text-blue-600" />
-                    <span className="text-black">{item.title}</span>
+                    <div className="bg-blue-600 rounded-lg p-2">
+                      <item.icon className="h-4 w-4 text-white" />
+                    </div>
+                    <span className="text-gray-900">{item.title}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -248,25 +254,25 @@ export function AppSidebar() {
       <SidebarFooter className="border-t border-blue-200 p-4 space-y-3 bg-blue-50">
         <div className="flex items-center gap-3">
           <Avatar className="border border-blue-200">
-            <AvatarFallback className="bg-blue-100 text-blue-800">
+            <AvatarFallback className="bg-blue-100">
               {session?.user?.name?.charAt(0).toUpperCase() || "U"}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 overflow-hidden">
-            <p className="text-sm font-medium truncate text-blue-900">
+            <p className="text-sm font-medium truncate">
               {session?.user?.name}
             </p>
-            <p className="text-xs text-blue-700">{session?.user?.role}</p>
+            <p className="text-xs">{session?.user?.role}</p>
           </div>
         </div>
         <Button
           variant="outline"
           size="sm"
           onClick={() => signOut({ callbackUrl: "/login" })}
-          className="w-full border-blue-200 text-blue-700 hover:bg-blue-100 hover:text-blue-800"
+          className="w-full border-red-200 bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800"
         >
-          <LogOut className="mr-2 h-4 w-4 text-blue-600" />
-          Logout
+          <LogOut className="mr-2 h-4 w-4 text-red-600" />
+          Keluar Akun
         </Button>
       </SidebarFooter>
     </Sidebar>
