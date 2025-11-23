@@ -254,8 +254,9 @@ export default function ReturPembelianPage() {
             <CardTitle>Filter & Pencarian</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap gap-4">
-              <div className="flex-1 min-w-[200px]">
+            <div className="flex flex-wrap gap-4 items-end">
+              <div className="flex-1 min-w-[200px] space-y-1">
+                <Label className="text-xs">Pencarian</Label>
                 <div className="relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -266,40 +267,42 @@ export default function ReturPembelianPage() {
                   />
                 </div>
               </div>
-              <Select value={lokasiFilter} onValueChange={setLokasiFilter}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Semua Lokasi" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">Semua Lokasi</SelectItem>
-                  {lokasi.map((lok) => (
-                    <SelectItem key={lok.id} value={lok.id}>
-                      {lok.namaLokasi}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div className="flex gap-2">
-                <div className="space-y-1">
-                  <Label className="text-xs">Dari Tanggal</Label>
-                  <Input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="w-[140px]"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Sampai Tanggal</Label>
-                  <Input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="w-[140px]"
-                  />
-                </div>
+              <div className="w-[200px] space-y-1">
+                <Label className="text-xs">Lokasi</Label>
+                <Select value={lokasiFilter} onValueChange={setLokasiFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Semua Lokasi" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">Semua Lokasi</SelectItem>
+                    {lokasi.map((lok) => (
+                      <SelectItem key={lok.id} value={lok.id}>
+                        {lok.namaLokasi}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <Button onClick={() => setDialogOpen(true)} className="self-end">
+              <div className="w-[140px] space-y-1">
+                <Label className="text-xs">Dari Tanggal</Label>
+                <Input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
+              <div className="w-[140px] space-y-1">
+                <Label className="text-xs">Sampai Tanggal</Label>
+                <Input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+              </div>
+              <Button
+                onClick={() => setDialogOpen(true)}
+                className="bg-blue-500 hover:bg-blue-700"
+              >
                 <Plus className="mr-2 h-4 w-4" />
                 Retur Pembelian Baru
               </Button>

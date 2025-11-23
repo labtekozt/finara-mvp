@@ -3,7 +3,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TabsContent } from "@/components/ui/tabs";
+import { StyledTabs, StyledTabsList, StyledTabsTrigger } from "@/components/ui/styled-tabs";
 import {
   Package,
   TrendingDown,
@@ -13,7 +14,10 @@ import {
   ArrowDown,
 } from "lucide-react";
 import { toast } from "sonner";
-import { TambahEditBarangDialog, BarangKeluarDialog } from "@/components/inventory";
+import {
+  TambahEditBarangDialog,
+  BarangKeluarDialog,
+} from "@/components/inventory";
 import { DaftarBarangTab } from "./tabs/DaftarBarangTab";
 import { HistoryBarangKeluarTab } from "./tabs/HistoryBarangKeluarTab";
 import { HistoryPenjualanTab } from "./tabs/HistoryPenjualanTab";
@@ -175,7 +179,13 @@ export default function InventarisPage() {
 
   useEffect(() => {
     setCurrentPageKasir(1);
-  }, [startDateKasir, endDateKasir, sortColumnKasir, sortDirectionKasir, searchKasir]);
+  }, [
+    startDateKasir,
+    endDateKasir,
+    sortColumnKasir,
+    sortDirectionKasir,
+    searchKasir,
+  ]);
 
   const sortedBarang = useMemo(() => {
     let filtered = [...barang];
@@ -305,7 +315,7 @@ export default function InventarisPage() {
         }
         // Cek nama barang di item transaksi
         const hasMatchingItem = tr.itemTransaksi.some((item) =>
-          item.namaBarang.toLowerCase().includes(searchLower)
+          item.namaBarang.toLowerCase().includes(searchLower),
         );
         return hasMatchingItem;
       });
@@ -465,6 +475,16 @@ export default function InventarisPage() {
       toast.error("Gagal memuat data");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function refreshLokasi() {
+    try {
+      const lokasiRes = await fetch("/api/lokasi");
+      const lokasiData = await lokasiRes.json();
+      setLokasi(lokasiData);
+    } catch (error) {
+      toast.error("Gagal memuat lokasi");
     }
   }
 
@@ -808,21 +828,21 @@ export default function InventarisPage() {
       <div className="flex-1 p-3 space-y-6">
         {/* Tabs: Daftar Barang & History Keluar */}
         <h1 className="text-lg font-bold">Pilih Menu</h1>
-        <Tabs defaultValue="barang" className="space-y-4">
-          <TabsList className="bg-amber-400">
-              <TabsTrigger value="barang">
-                <Package className="mr-2 h-4 w-4" />
+        <StyledTabs defaultValue="barang">
+          <StyledTabsList>
+            <StyledTabsTrigger value="barang">
+              <Package className="mr-2 h-4 w-4" />
               Daftar Barang
-              </TabsTrigger>
-              <TabsTrigger value="history">
-                <History className="mr-2 h-4 w-4" />
+            </StyledTabsTrigger>
+            <StyledTabsTrigger value="history">
+              <History className="mr-2 h-4 w-4" />
               History Barang Keluar
-              </TabsTrigger>
-              <TabsTrigger value="kasir">
-                <TrendingDown className="mr-2 h-4 w-4" />
+            </StyledTabsTrigger>
+            <StyledTabsTrigger value="kasir">
+              <TrendingDown className="mr-2 h-4 w-4" />
               History Penjualan Barang
-              </TabsTrigger>
-            </TabsList>
+            </StyledTabsTrigger>
+          </StyledTabsList>
           {/* Tab Daftar Barang */}
           <TabsContent value="barang">
             <DaftarBarangTab
@@ -844,11 +864,11 @@ export default function InventarisPage() {
               openTambahDialog={openTambahDialog}
               openEditDialog={openEditDialog}
               handleDelete={handleDelete}
-                    currentPage={currentPageBarang}
-                    totalPages={totalPagesBarang}
+              currentPage={currentPageBarang}
+              totalPages={totalPagesBarang}
               setCurrentPage={setCurrentPageBarang}
               PaginationComponent={Pagination}
-                  />
+            />
           </TabsContent>
 
           {/* Tab History Barang Keluar */}
@@ -893,7 +913,7 @@ export default function InventarisPage() {
               PaginationComponent={Pagination}
             />
           </TabsContent>
-        </Tabs>
+        </StyledTabs>
       </div>
 
       {/* Dialog Tambah/Edit Barang */}
@@ -912,6 +932,7 @@ export default function InventarisPage() {
         handleSubmit={handleSubmit}
         handleSelectForTambah={handleSelectForTambah}
         resetForm={resetForm}
+        onLokasiAdded={refreshLokasi}
       />
 
       {/* Dialog Barang Keluar */}
@@ -926,6 +947,7 @@ export default function InventarisPage() {
         handleSubmitKeluar={handleSubmitKeluar}
         handleBarangChangeKeluar={handleBarangChangeKeluar}
         resetFormKeluar={resetFormKeluar}
+        onLokasiAdded={refreshLokasi}
       />
     </div>
   );

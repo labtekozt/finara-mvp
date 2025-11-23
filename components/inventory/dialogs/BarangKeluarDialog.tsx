@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +18,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Barang, Lokasi } from "@/app/(dashboard)/inventaris/types";
+import { Plus } from "lucide-react";
+import { toast } from "sonner";
 
 interface BarangKeluarDialogProps {
   open: boolean;
@@ -35,6 +38,7 @@ interface BarangKeluarDialogProps {
   handleSubmitKeluar: (e: React.FormEvent) => void;
   handleBarangChangeKeluar: (value: string) => void;
   resetFormKeluar: () => void;
+  onLokasiAdded?: () => void;
 }
 
 export function BarangKeluarDialog({
@@ -48,7 +52,59 @@ export function BarangKeluarDialog({
   handleSubmitKeluar,
   handleBarangChangeKeluar,
   resetFormKeluar,
+  onLokasiAdded,
 }: BarangKeluarDialogProps) {
+  const [lokasiDialogOpen, setLokasiDialogOpen] = useState(false);
+  const [lokasiFormData, setLokasiFormData] = useState({
+    namaLokasi: "",
+    alamat: "",
+  });
+  const [lokasiLoading, setLokasiLoading] = useState(false);
+
+  const handleCreateLokasi = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!lokasiFormData.namaLokasi.trim()) {
+      toast.error("Nama lokasi harus diisi");
+      return;
+    }
+
+    try {
+      setLokasiLoading(true);
+      const response = await fetch("/api/lokasi", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          namaLokasi: lokasiFormData.namaLokasi.trim(),
+          alamat: lokasiFormData.alamat.trim() || null,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Gagal menambah lokasi");
+      }
+
+      toast.success("Lokasi berhasil ditambahkan");
+      setLokasiDialogOpen(false);
+      setLokasiFormData({ namaLokasi: "", alamat: "" });
+
+      // Refresh lokasi list
+      if (onLokasiAdded) {
+        onLokasiAdded();
+      }
+
+      // Auto-select the newly created location
+      setFormKeluar({ ...formKeluar, lokasiId: data.id });
+    } catch (error: any) {
+      toast.error(error.message || "Terjadi kesalahan");
+    } finally {
+      setLokasiLoading(false);
+    }
+  };
   return (
     <Dialog
       open={open}
@@ -116,24 +172,37 @@ export function BarangKeluarDialog({
 
             <div className="space-y-2">
               <Label htmlFor="lokasi-keluar">Lokasi Gudang *</Label>
-              <Select
-                value={formKeluar.lokasiId}
-                onValueChange={(value) =>
-                  setFormKeluar({ ...formKeluar, lokasiId: value })
-                }
-                required
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih lokasi" />
-                </SelectTrigger>
-                <SelectContent>
-                  {lokasi.map((l) => (
-                    <SelectItem key={l.id} value={l.id}>
-                      {l.namaLokasi}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <Select
+                    value={formKeluar.lokasiId}
+                    onValueChange={(value) =>
+                      setFormKeluar({ ...formKeluar, lokasiId: value })
+                    }
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih lokasi" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {lokasi.map((l) => (
+                        <SelectItem key={l.id} value={l.id}>
+                          {l.namaLokasi}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setLokasiDialogOpen(true)}
+                  title="Tambah Lokasi Baru"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -163,6 +232,67 @@ export function BarangKeluarDialog({
           </DialogFooter>
         </form>
       </DialogContent>
+
+      {/* Dialog Tambah Lokasi */}
+      <Dialog open={lokasiDialogOpen} onOpenChange={setLokasiDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Tambah Lokasi Baru</DialogTitle>
+            <DialogDescription>
+              Tambahkan lokasi gudang baru ke sistem
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleCreateLokasi}>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="namaLokasi">Nama Lokasi *</Label>
+                <Input
+                  id="namaLokasi"
+                  value={lokasiFormData.namaLokasi}
+                  onChange={(e) =>
+                    setLokasiFormData({
+                      ...lokasiFormData,
+                      namaLokasi: e.target.value,
+                    })
+                  }
+                  placeholder="Contoh: Gudang Utama, Cabang A"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="alamat">Alamat</Label>
+                <Input
+                  id="alamat"
+                  value={lokasiFormData.alamat}
+                  onChange={(e) =>
+                    setLokasiFormData({
+                      ...lokasiFormData,
+                      alamat: e.target.value,
+                    })
+                  }
+                  placeholder="Alamat lokasi (opsional)"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setLokasiDialogOpen(false);
+                  setLokasiFormData({ namaLokasi: "", alamat: "" });
+                }}
+                disabled={lokasiLoading}
+              >
+                Batal
+              </Button>
+              <Button type="submit" disabled={lokasiLoading}>
+                {lokasiLoading ? "Menyimpan..." : "Simpan"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }

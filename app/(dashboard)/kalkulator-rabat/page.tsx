@@ -170,7 +170,10 @@ export default function KalkulatorRabatPage() {
             {/* Pilih Barang */}
             <div className="space-y-2">
               <Label htmlFor="barang">Pilih Barang</Label>
-              <Select value={selectedBarangId} onValueChange={setSelectedBarangId}>
+              <Select
+                value={selectedBarangId}
+                onValueChange={setSelectedBarangId}
+              >
                 <SelectTrigger className="mt-2">
                   <SelectValue placeholder="Pilih barang dari inventaris" />
                 </SelectTrigger>
@@ -207,7 +210,8 @@ export default function KalkulatorRabatPage() {
               />
               {selectedBarang && (
                 <p className="text-xs text-muted-foreground">
-                  Harga Jual Saat Ini: {formatCurrency(selectedBarang.hargaJual)}
+                  Harga Jual Saat Ini:{" "}
+                  {formatCurrency(selectedBarang.hargaJual)}
                 </p>
               )}
             </div>
@@ -257,7 +261,9 @@ export default function KalkulatorRabatPage() {
               </div>
 
               <div className="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
-                <span className="text-sm font-medium">Harga Jual (+ {persenMdl}%):</span>
+                <span className="text-sm font-medium">
+                  Harga Jual (+ {persenMdl}%):
+                </span>
                 <span className="font-bold text-blue-600 dark:text-blue-400">
                   {formatCurrency(hargaPas)}
                 </span>
@@ -276,7 +282,7 @@ export default function KalkulatorRabatPage() {
                 className={`flex justify-between items-center p-3 rounded-lg ${
                   isValid
                     ? "bg-emerald-50 dark:bg-emerald-950"
-                    : "bg-orange-50 dark:bg-orange-950"
+                    : "bg-blue-50 dark:bg-blue-950"
                 }`}
               >
                 <span className="text-sm font-medium">Selisih:</span>
@@ -284,7 +290,7 @@ export default function KalkulatorRabatPage() {
                   className={`font-bold ${
                     isValid
                       ? "text-emerald-600 dark:text-emerald-400"
-                      : "text-orange-600 dark:text-orange-400"
+                      : "text-blue-600 dark:text-blue-400"
                   }`}
                 >
                   {formatCurrency(selisih)} ({persenSelisih.toFixed(2)}%)
@@ -325,7 +331,9 @@ export default function KalkulatorRabatPage() {
                 onClick={() => applyPreset(preset)}
                 className="flex flex-col h-auto py-3"
               >
-                <span className="text-xs text-muted-foreground">MDL + Rabat</span>
+                <span className="text-xs text-muted-foreground">
+                  MDL + Rabat
+                </span>
                 <span className="font-bold">
                   {preset.mdl}% + {preset.rabat}%
                 </span>

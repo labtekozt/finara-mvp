@@ -103,9 +103,8 @@ export function HistoryBarangKeluarTab({
             stats={[
               {
                 title: "Total Jenis Barang Keluar",
-                value: new Set(
-                  sortedTransaksiKeluar.map((tr) => tr.barang.id),
-                ).size,
+                value: new Set(sortedTransaksiKeluar.map((tr) => tr.barang.id))
+                  .size,
                 description:
                   startDateKeluar || endDateKeluar
                     ? `${startDateKeluar ? format(new Date(startDateKeluar), "dd/MM/yyyy") : "..."} - ${endDateKeluar ? format(new Date(endDateKeluar), "dd/MM/yyyy") : "..."}`
@@ -149,10 +148,7 @@ export function HistoryBarangKeluarTab({
                 />
               </div>
             </div>
-            <Select
-              value={kategoriFilter}
-              onValueChange={setKategoriFilter}
-            >
+            <Select value={kategoriFilter} onValueChange={setKategoriFilter}>
               <SelectTrigger className="w-[200px] bg-white">
                 <SelectValue placeholder="Semua Kategori" />
               </SelectTrigger>
@@ -165,10 +161,7 @@ export function HistoryBarangKeluarTab({
                 ))}
               </SelectContent>
             </Select>
-            <Select
-              value={lokasiFilter}
-              onValueChange={setLokasiFilter}
-            >
+            <Select value={lokasiFilter} onValueChange={setLokasiFilter}>
               <SelectTrigger className="w-[200px] bg-white">
                 <SelectValue placeholder="Semua Lokasi" />
               </SelectTrigger>
